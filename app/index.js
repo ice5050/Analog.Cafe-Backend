@@ -20,7 +20,7 @@ app.use((err, req, res, next) => {
 })
 app.use(Ability)
 app.get('/', (req, res) => {
-  res.json({ status: 'API is alive!' })
+  res.json({ status: 'Analog Cafe API' })
 })
 
 require('./authentication').init(app)
