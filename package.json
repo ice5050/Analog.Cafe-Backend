@@ -35,6 +35,6 @@
     "start": "node index.js",
     "dev": "nodemon --harmony index.js",
     "postinstall": "npm run db:migrate",
-    "db:migrate": "sequelize db:migrate --config=config/postgres.json"
+    "db:migrate": "sequelize db:migrate --config=config/postgres.js"
   }
 }
