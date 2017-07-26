@@ -1,0 +1,40 @@
+{
+  "name": "analog-cafe-server",
+  "version": "0.0.1",
+  "description": "(Loosely) Collaborative Blogging App by Analog.Cafe (Server)",
+  "license": "MPL-2.0",
+  "private": true,
+  "engines": {
+    "node": "8.x",
+    "npm": "5.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dmitrizzle/Analog.Cafe"
+  },
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "dotenv": "^4.0.0",
+    "express": "^4.15.3",
+    "express-session": "^1.15.3",
+    "mongoose": "^4.11.1",
+    "mongoose-auto-increment": "^5.0.1",
+    "passport": "^0.3.2",
+    "passport-twitter": "^1.0.4",
+    "pg": "^6.4.0",
+    "pg-hstore": "^2.3.2",
+    "sequelize": "^4.2.0",
+    "sequelize-cli": "^2.7.0",
+    "url-pattern": ""
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0",
+    "standard": "^10.0.2"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon --harmony index.js",
+    "postinstall": "npm run db:migrate",
+    "db:migrate": "sequelize db:migrate --config=config/postgres.json"
+  }
+}
