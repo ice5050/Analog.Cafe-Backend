@@ -15,6 +15,9 @@ function init (app) {
         const username = sanitizeUsername(profile.username)
         User.findOrCreate({
           where: {
+            twitterId: profile.id
+          },
+          defaults: {
             realUsername: profile.username,
             username: username,
             name: profile.displayName,
