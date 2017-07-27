@@ -33,7 +33,7 @@
     "standard": "^10.0.2"
   },
   "scripts": {
-    "start": "node index.js",
+    "start": "node --harmony index.js",
     "dev": "nodemon --harmony index.js",
     "postinstall": "npm run db:migrate",
     "db:migrate": "sequelize db:migrate --config=config/postgres.js"
