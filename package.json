@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "body-parser": "^1.17.2",
+    "connect-redis": "^3.3.0",
     "dotenv": "^4.0.0",
     "express": "^4.15.3",
     "express-session": "^1.15.3",
@@ -32,9 +33,9 @@
     "standard": "^10.0.2"
   },
   "scripts": {
-    "start": "node index.js",
+    "start": "node --harmony index.js",
     "dev": "nodemon --harmony index.js",
     "postinstall": "npm run db:migrate",
-    "db:migrate": "sequelize db:migrate --config=config/postgres.json"
+    "db:migrate": "sequelize db:migrate --config=config/postgres.js"
   }
 }

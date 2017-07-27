@@ -5,7 +5,7 @@ let path = require('path')
 let Sequelize = require('sequelize')
 let basename = path.basename(module.filename)
 let env = process.env.NODE_ENV || 'development'
-let config = require(path.join(__dirname, '../../config/postgres.json'))[env]
+let config = require(path.join(__dirname, '../../config/postgres.js'))[env]
 let db = {}
 let sequelize
 
