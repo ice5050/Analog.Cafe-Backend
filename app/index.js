@@ -23,17 +23,15 @@ app.use((err, req, res, next) => {
   console.log(err)
 })
 app.use(Ability)
-app.get('/', (req, res) => {
+
+app.get('/api', (req, res) => {
   res.json({ status: 'Analog Cafe API' })
 })
 
-require('./authentication').init(app)
-
-app.get('/me', passport.authenticationMiddleware(), (req, res) => {
-  res.json({ data: req.user })
-})
-
-require('./submission').init(app)
-require('./article').init(app)
+app.use('/api',
+  require('./authentication'),
+  require('./submission'),
+  require('./article')
+)
 
 module.exports = app
