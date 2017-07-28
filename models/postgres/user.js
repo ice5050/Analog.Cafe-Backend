@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     realUsername: DataTypes.STRING,
     name: DataTypes.STRING,
     profilePic: DataTypes.STRING,
-    role: DataTypes.STRING
+    role: DataTypes.STRING,
+    twitterId: DataTypes.STRING
   })
 }
