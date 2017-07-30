@@ -10,11 +10,11 @@ authApp.get('/auth/twitter', passport.authenticate('twitter'))
 authApp.get(
   '/auth/twitter/callback',
   passport.authenticate('twitter', {
-    successRedirect: '/',
-    failureRedirect: '/login'
+    successRedirect: process.env.ANALOG_FRONTEND_URL,
+    failureRedirect: process.env.ANALOG_FRONTEND_URL + '/sign-in'
   })
 )
-authApp.get('/me', passport.authenticationMiddleware(), (req, res) => {
+authApp.get('/auth/user', passport.authenticationMiddleware(), (req, res) => {
   res.json({ data: req.user })
 })
 

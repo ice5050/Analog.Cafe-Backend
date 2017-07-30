@@ -8,11 +8,6 @@ var permissions = [
   },
   {
     method: 'get',
-    url: '/api/me',
-    roles: ['member', 'admin']
-  },
-  {
-    method: 'get',
     url: '/api/submissions',
     roles: ['member', 'admin', 'guest']
   },
@@ -40,6 +35,11 @@ var permissions = [
     method: 'get',
     url: '/api/auth/twitter/callback',
     roles: ['member', 'admin', 'guest']
+  },
+  {
+    method: 'get',
+    url: '/api/auth/user',
+    roles: ['member', 'admin']
   }
 ]
 
