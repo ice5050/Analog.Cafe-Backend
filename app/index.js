@@ -35,7 +35,8 @@ app.get('/api', (req, res) => {
 app.use('/api',
   require('./authentication'),
   require('./submission'),
-  require('./article')
+  require('./article'),
+  require('./author')
 )
 
 module.exports = app
