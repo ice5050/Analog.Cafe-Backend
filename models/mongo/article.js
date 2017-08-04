@@ -5,7 +5,6 @@ const connection = require('./index.js')
 const Schema = mongoose.Schema
 
 const articleSchema = new Schema({
-  category: String,
   slug: String,
   title: String,
   subtitle: String,
