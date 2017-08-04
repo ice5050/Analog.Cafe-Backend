@@ -18,7 +18,6 @@ submissionApp.get('/submissions/:submissionId', (req, res) => {
 
 submissionApp.post('/submissions', (req, res) => {
   const newSubmission = new Submission({
-    category: req.body.category,
     slug: req.body.slug,
     title: req.body.title,
     subtitle: req.body.subtitle,
@@ -46,7 +45,6 @@ submissionApp.put('/submissions/:submissionId', (req, res) => {
     submission = {
       ...submission,
       ...{
-        category: req.body.category,
         title: req.body.title,
         subtitle: req.body.subtitle,
         stats: {

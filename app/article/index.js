@@ -4,7 +4,7 @@ const Submission = require('../../models/mongo/submission.js')
 const User = require('../../models/postgres/index.js').user
 const articleApp = express()
 
-articleApp.get('/articles', (req, res) => {
+articleApp.get(['/articles', '/list'], (req, res) => {
   const tags = req.query.tag && req.query.tag.split(':')
   const repostOk = req.query['repost-ok']
   const author = req.query.author
@@ -22,15 +22,15 @@ articleApp.get('/articles', (req, res) => {
     })
   }
   query.exec((err, articles) => {
-    res.json({ items: articles })
+    res.json({ status: 'ok', items: articles })
   })
 })
 
-articleApp.get('/articles/:articleId', (req, res) => {
+articleApp.get('/articles/:articleSlug', (req, res) => {
   Article
-    .findOne({ articleId: req.params.articleId })
+    .findOne({ slug: req.params.articleSlug })
     .then(article => {
-      res.json({ data: article })
+      res.json({ status: 'ok', data: article })
     })
 })
 
@@ -39,7 +39,6 @@ articleApp.post('/articles/:submissionId', (req, res) => {
     const article = {
       ...submission,
       ...{
-        category: req.body.category,
         title: req.body.title,
         subtitle: req.body.subtitle,
         stats: {
