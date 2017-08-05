@@ -13,7 +13,7 @@ const submissionSchema = new Schema({
     images: Number,
     words: Number
   },
-  authorId: Number,
+  author: String,
   articleId: Number,
   poster: {
     small: String,

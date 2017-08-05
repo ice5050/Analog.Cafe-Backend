@@ -25,7 +25,7 @@ submissionApp.post('/submissions', (req, res) => {
       images: req.body.images,
       words: req.body.words
     },
-    authorId: req.user.id,
+    author: req.user.id,
     articleId: req.body.articleId,
     poster: {
       small: req.body.poster.small,

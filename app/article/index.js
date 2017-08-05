@@ -1,12 +1,12 @@
 const express = require('express')
 const Article = require('../../models/mongo/article.js')
-const User = require('../../models/postgres/index.js').user
+const User = require('../../models/mongo/user.js')
 const articleApp = express()
 
-articleApp.get(['/articles', '/list'], (req, res) => {
+articleApp.get(['/articles', '/list', '/author/:author'], (req, res) => {
   const tags = req.query.tag && req.query.tag.split(':')
   const repostOk = req.query['repost-ok']
-  const author = req.query.author
+  const author = req.query.author || req.params.author
 
   let query = Article.find()
   if (tags && tags.length !== 0) {
@@ -16,9 +16,7 @@ articleApp.get(['/articles', '/list'], (req, res) => {
     query = query.find({ repostOk: true })
   }
   if (author) {
-    User.findOne({ where: { username: author } }).then(author => {
-      query = query.find({ author: author.id })
-    })
+    query = query.find({ author })
   }
 
   query.exec((err, articles) => {
