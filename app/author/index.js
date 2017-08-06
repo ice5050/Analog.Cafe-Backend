@@ -6,7 +6,7 @@ authorApp.get('/authors/:author', (req, res) => {
   User
     .findOne({ id: req.params.author })
     .then(author => {
-      res.json({ data: author })
+      res.json({ status: 'ok', info: author })
     })
 })
 module.exports = authorApp
