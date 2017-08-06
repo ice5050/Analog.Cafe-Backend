@@ -5,7 +5,7 @@ const passportJWT = require('passport-jwt')
 const ExtractJwt = passportJWT.ExtractJwt
 const JwtStrategy = passportJWT.Strategy
 const TwitterStrategy = require('passport-twitter').Strategy
-const User = require('../../models/postgres/index.js').user
+const User = require('../../models/mongo/user.js')
 const authApp = express()
 const jwtOptions = {}
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
@@ -38,16 +38,17 @@ function setupPassport () {
       },
       (token, tokenSecret, profile, cb) => {
         const username = sanitizeUsername(profile.username)
-        User.findOrCreate({
-          where: { twitterId: profile.id },
-          defaults: {
-            realUsername: profile.username,
-            username: username,
-            name: profile.displayName,
-            profilePic: profile.photos[0] && profile.photos[0].value
+        User.findOne({ twitterId: profile.id }).exec((err, user) => {
+          if (!user) {
+            User.create({
+              twitterId: profile.id,
+              id: username,
+              title: profile.displayName,
+              image: profile.photos[0] && profile.photos[0].value
+            }, (err, user) => { cb(null, user) })
+          } else {
+            cb(null, user)
           }
-        }).spread((user, created) => {
-          cb(null, user)
         })
       }
     )
@@ -55,7 +56,7 @@ function setupPassport () {
 
   passport.use(new JwtStrategy(jwtOptions, function (jwtPayload, next) {
     console.log(jwtPayload)
-    User.findById(jwtPayload.id).then(user => {
+    User.findOne({ id: jwtPayload.id }).then(user => {
       if (user) {
         next(null, user)
       } else {
@@ -69,7 +70,7 @@ function setupPassport () {
   })
 
   passport.deserializeUser((id, done) => {
-    User.findById(id).then(user => {
+    User.findOne({ id }).then(user => {
       done(null, user)
     })
   })

@@ -5,7 +5,7 @@
 
 ###Setting up a local development Server
 ```
-# You need to have Postgres, Mongodb and Redis running.
+# You need to have Mongodb and Redis running.
 # Then rename .env.example to be .env and change it to match your requirement
 npm install
 npm run dev

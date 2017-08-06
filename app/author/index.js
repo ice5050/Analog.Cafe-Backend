@@ -1,10 +1,10 @@
 const express = require('express')
-const Author = require('../../models/mongo/author.js')
+const User = require('../../models/mongo/user.js')
 const authorApp = express()
 
-authorApp.get('/authors/:authorId', (req, res) => {
-  Author
-    .findOne({ "info.id": req.params.authorId })
+authorApp.get('/authors/:author', (req, res) => {
+  User
+    .findOne({ id: req.params.author })
     .then(author => {
       res.json({ data: author })
     })

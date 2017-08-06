@@ -13,7 +13,7 @@ const articleSchema = new Schema({
     images: Number,
     words: Number
   },
-  authorId: Number,
+  author: String,
   poster: {
     small: String,
     medium: String,
