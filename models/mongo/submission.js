@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const autoIncrement = require('mongoose-auto-increment')
 const connection = require('./index.js')
 
 const Schema = mongoose.Schema
@@ -8,13 +7,12 @@ const submissionSchema = new Schema({
   slug: String,
   title: String,
   subtitle: String,
-  submissionId: Number,
   stats: {
     images: Number,
     words: Number
   },
   author: String,
-  articleId: Number,
+  articleId: String,
   poster: {
     small: String,
     medium: String,
@@ -28,8 +26,6 @@ const submissionSchema = new Schema({
 }, {
   timestamps: true
 })
-
-submissionSchema.plugin(autoIncrement.plugin, { model: 'Submission', field: 'submissionId', startAt: 1 })
 
 const Submission = connection.model('Submission', submissionSchema)
 

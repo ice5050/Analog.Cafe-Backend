@@ -28,37 +28,37 @@ articleApp.get('/articles/:articleSlug', (req, res) => {
   Article
     .findOne({ slug: req.params.articleSlug })
     .then(article => {
-      res.json({ status: 'ok', data: article })
+      res.json({ ...article })
     })
 })
 
-articleApp.post('/articles/:articleId', (req, res) => {
-  Article.findOne({ articleId: req.params.articleId }).then(article => {
-    article = {
-      ...article,
-      ...{
-        title: req.body.title,
-        subtitle: req.body.subtitle,
-        stats: {
-          images: req.body.images,
-          words: req.body.words
-        },
-        poster: {
-          small: req.body.poster.small,
-          medium: req.body.poster.medium,
-          large: req.body.poster.large
-        },
-        repostOK: req.body['repost-ok'],
-        tag: req.body.tag,
-        status: req.body.status,
-        summary: req.body.summary,
-        content: req.body.content
-      }
-    }
-    return article.save()
-  }).then(article => {
-    res.json({ data: article })
-  })
-})
+// articleApp.post('/articles/:articleId', (req, res) => {
+//   Article.findOne({ articleId: req.params.articleId }).then(article => {
+//     article = {
+//       ...article,
+//       ...{
+//         title: req.body.title,
+//         subtitle: req.body.subtitle,
+//         stats: {
+//           images: req.body.images,
+//           words: req.body.words
+//         },
+//         poster: {
+//           small: req.body.poster.small,
+//           medium: req.body.poster.medium,
+//           large: req.body.poster.large
+//         },
+//         repostOK: req.body['repost-ok'],
+//         tag: req.body.tag,
+//         status: req.body.status,
+//         summary: req.body.summary,
+//         content: req.body.content
+//       }
+//     }
+//     return article.save()
+//   }).then(article => {
+//     res.json({ data: article })
+//   })
+// })
 
 module.exports = articleApp
