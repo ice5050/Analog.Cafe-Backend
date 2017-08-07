@@ -28,7 +28,7 @@ articleApp.get('/articles/:articleSlug', (req, res) => {
   Article
     .findOne({ slug: req.params.articleSlug })
     .then(article => {
-      res.json({ ...article })
+      res.json(article)
     })
 })
 
