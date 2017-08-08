@@ -20,6 +20,7 @@ const articleSchema = new Schema({
     medium: String,
     large: String
   },
+  'post-date': String,
   tag: String,
   repostOk: Boolean,
   status: { type: String, default: 'published' },
