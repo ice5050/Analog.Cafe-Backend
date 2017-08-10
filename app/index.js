@@ -2,8 +2,12 @@ const express = require('express')
 const passport = require('passport')
 const bodyParser = require('body-parser')
 const session = require('express-session')
+const cors = require('cors')
 const RedisStore = require('connect-redis')(session)
-const Ability = require('./authentication/ability')
+
+const corsOptions = {
+  origin: process.env.ANALOG_FRONTEND_URL
+}
 
 const app = express()
 app.use(bodyParser.json())
@@ -22,7 +26,7 @@ app.use(passport.session())
 app.use((err, req, res, next) => {
   console.log(err)
 })
-app.use(Ability)
+app.use(cors(corsOptions))
 
 app.get('/api', (req, res) => {
   res.json({ status: 'Analog Cafe API' })
@@ -31,7 +35,8 @@ app.get('/api', (req, res) => {
 app.use('/api',
   require('./authentication'),
   require('./submission'),
-  require('./article')
+  require('./article'),
+  require('./author')
 )
 
 module.exports = app

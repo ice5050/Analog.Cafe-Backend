@@ -15,17 +15,16 @@
   "dependencies": {
     "body-parser": "^1.17.2",
     "connect-redis": "^3.3.0",
+    "cors": "^2.8.4",
     "dotenv": "^4.0.0",
     "express": "^4.15.3",
     "express-session": "^1.15.3",
+    "jsonwebtoken": "^7.4.1",
     "mongoose": "^4.11.1",
     "mongoose-auto-increment": "^5.0.1",
     "passport": "^0.3.2",
+    "passport-jwt": "^2.2.1",
     "passport-twitter": "^1.0.4",
-    "pg": "^6.4.0",
-    "pg-hstore": "^2.3.2",
-    "sequelize": "^4.2.0",
-    "sequelize-cli": "^2.7.0",
     "url-pattern": ""
   },
   "devDependencies": {
@@ -34,8 +33,6 @@
   },
   "scripts": {
     "start": "node --harmony index.js",
-    "dev": "nodemon --harmony index.js",
-    "postinstall": "npm run db:migrate",
-    "db:migrate": "sequelize db:migrate --config=config/postgres.js"
+    "dev": "nodemon --harmony index.js"
   }
 }

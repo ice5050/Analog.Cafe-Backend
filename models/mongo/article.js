@@ -1,25 +1,26 @@
 const mongoose = require('mongoose')
-const autoIncrement = require('mongoose-auto-increment')
 const connection = require('./index.js')
 
 const Schema = mongoose.Schema
 
 const articleSchema = new Schema({
-  category: String,
   slug: String,
   title: String,
   subtitle: String,
-  articleId: Number,
   stats: {
     images: Number,
     words: Number
   },
-  authorId: Number,
+  author: {
+    id: String,
+    name: String
+  },
   poster: {
     small: String,
     medium: String,
     large: String
   },
+  'post-date': String,
   tag: String,
   repostOk: Boolean,
   status: { type: String, default: 'published' },
@@ -28,8 +29,6 @@ const articleSchema = new Schema({
 }, {
   timestamps: true
 })
-
-articleSchema.plugin(autoIncrement.plugin, { model: 'Article', field: 'articleId', startAt: 1 })
 
 const Article = connection.model('Article', articleSchema)
 
