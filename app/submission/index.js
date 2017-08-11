@@ -42,25 +42,22 @@ submissionApp.post('/submissions', (req, res) => {
 
 submissionApp.put('/submissions/:submissionId', (req, res) => {
   Submission.findOne({ submissionId: req.params.submissionId }).then(submission => {
-    submission = {
-      ...submission,
-      ...{
-        title: req.body.title,
-        subtitle: req.body.subtitle,
-        stats: {
-          images: req.body.images,
-          words: req.body.words
-        },
-        poster: {
-          small: req.body.poster.small,
-          medium: req.body.poster.medium,
-          large: req.body.poster.large
-        },
-        status: req.body.status,
-        summary: req.body.summary,
-        content: req.body.content
-      }
-    }
+    submission = Object.assign(submission, {
+      title: req.body.title,
+      subtitle: req.body.subtitle,
+      stats: {
+        images: req.body.images,
+        words: req.body.words
+      },
+      poster: {
+        small: req.body.poster.small,
+        medium: req.body.poster.medium,
+        large: req.body.poster.large
+      },
+      status: req.body.status,
+      summary: req.body.summary,
+      content: req.body.content
+    })
     return submission.save()
   }).then(submission => {
     res.json({ data: submission })
