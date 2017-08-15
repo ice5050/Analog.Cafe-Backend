@@ -1,9 +1,10 @@
 const express = require('express')
 const Article = require('../../models/mongo/article.js')
+const Image = require('../../models/mongo/image')
 const User = require('../../models/mongo/user.js')
 const articleApp = express()
 
-articleApp.get(['/articles', '/list'], (req, res) => {
+articleApp.get(['/articles', '/list'], async (req, res) => {
   const tags = (req.query.tag && req.query.tag.split(':')) || []
   const repostOk = req.query['repost-ok']
   const author = req.query.author
@@ -21,8 +22,26 @@ articleApp.get(['/articles', '/list'], (req, res) => {
     countQuery = countQuery.find({ repostOk: true })
   }
   if (author) {
-    query = query.find({ 'author.id': author })
-    countQuery = countQuery.find({ 'author.id': author })
+    const images = await Image.find({'author.id': author})
+    const imagesRegex = images.map(i => new RegExp(`.*${i.id}.*`, 'g'))
+    query = query.or([
+      {'author.id': author},
+      {'content.raw.document.nodes': {
+        $elemMatch: { $and: [
+          {'type': 'image'},
+          {'data.src': {$in: imagesRegex}}
+        ]}
+      }}
+    ])
+    countQuery = countQuery.or([
+      {'author.id': author},
+      {'content.raw.document.nodes': {
+        $elemMatch: { $and: [
+          {'type': 'image'},
+          {'data.src': {$in: imagesRegex}}
+        ]}
+      }}
+    ])
   }
 
   query
