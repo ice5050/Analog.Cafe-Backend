@@ -25,7 +25,9 @@
     "passport": "^0.3.2",
     "passport-jwt": "^2.2.1",
     "passport-twitter": "^1.0.4",
-    "url-pattern": ""
+    "url-pattern": "",
+    "word-count": "",
+    "slugify": ""
   },
   "devDependencies": {
     "bluebird": "^3.5.0",
