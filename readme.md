@@ -10,3 +10,8 @@
 npm install
 npm run dev
 ```
+
+###Seed the initial data
+```
+npm run seed
+```
