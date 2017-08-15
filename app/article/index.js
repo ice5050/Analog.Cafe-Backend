@@ -45,7 +45,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   }
 
   query
-    .select('id slug title subtitle stats author poster tag repostOk status summary updatedAt createdAt post-date')
+    .select('_id id slug title subtitle stats author poster tag repostOk status summary updatedAt createdAt post-date')
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     .sort({'post-date': 'desc'})
