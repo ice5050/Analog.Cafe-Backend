@@ -63,6 +63,19 @@ function slugGenerator (str) {
   return slugify(str) + randomString(4)
 }
 
+function getPoster (raw) {
+  for (var i = 0; i < raw.document.nodes.length; i++) {
+    if (raw.document.nodes[i].type === 'image') {
+      var poster_url = raw.document.nodes[i].data.src
+      return {
+        small: poster_url,
+        medium: poster_url,
+        large: poster_url
+      }
+    }
+  }
+}
+
 submissionApp.post(
   '/submissions',
   passport.authenticate('jwt', { session: false }),
@@ -80,15 +93,8 @@ submissionApp.post(
         images: rawImageCount(rawObj),
         words: count(rawText)
       },
+      poster: getPoster(rawObj),
       author: req.user.id,
-      poster: {
-        // small: req.body.poster.small,
-        // medium: req.body.poster.medium,
-        // large: req.body.poster.large
-        small: '',
-        medium: '',
-        large: ''
-      },
       summary: rawText.substring(0, 250),
       content: { raw: rawObj }
     })
