@@ -3,7 +3,12 @@ const passport = require('passport')
 const count = require('word-count')
 const slugify = require('slugify')
 const Submission = require('../../models/mongo/submission.js')
+const Image = require('../../models/mongo/image.js')
 const submissionApp = express()
+const cloudinary = require('cloudinary')
+
+const multipart = require('connect-multiparty');
+const multipartMiddleware = multipart();
 
 submissionApp.get('/submissions', (req, res) => {
   Submission.find().then(submissions => {
@@ -63,6 +68,9 @@ submissionApp.post(
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     var rawObj = req.body.raw
+    if(typeof req.body.raw === 'string' || req.body.raw instanceof String){
+      var rawObj = JSON.parse(req.body.raw)
+    }
     var rawText = raw2Text(rawObj)
     const newSubmission = new Submission({
       slug: slugGenerator(req.body.title),
@@ -115,5 +123,33 @@ submissionApp.put('/submissions/:submissionId', (req, res) => {
       res.json({ data: submission })
     })
 })
+
+submissionApp.post(
+  '/submissions/upload',
+  multipartMiddleware,
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
+    });
+    cloudinary.uploader.upload(req.files.file.path, function(result) {
+      var image = new Image({
+        id: result.public_id,
+        author: {
+          name: req.user.title,
+          id: req.user.id
+        }
+      })
+      image.save().then(function(){
+        res.json({
+          url: result.url
+        })
+      })
+
+    });
+  }
+)
 
 module.exports = submissionApp

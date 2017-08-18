@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "body-parser": "^1.17.2",
+    "cloudinary": "",
+    "connect-multiparty": "^2.0.0",
     "connect-redis": "^3.3.0",
     "cors": "^2.8.4",
     "dotenv": "^4.0.0",
@@ -25,9 +27,9 @@
     "passport": "^0.3.2",
     "passport-jwt": "^2.2.1",
     "passport-twitter": "^1.0.4",
+    "slugify": "",
     "url-pattern": "",
-    "word-count": "",
-    "slugify": ""
+    "word-count": ""
   },
   "devDependencies": {
     "bluebird": "^3.5.0",
