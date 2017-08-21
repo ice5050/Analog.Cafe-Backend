@@ -6,7 +6,7 @@ const cors = require('cors')
 const RedisStore = require('connect-redis')(session)
 
 const corsOptions = {
-  origin: process.env.ANALOG_FRONTEND_URL
+  origin: process.env.ANALOG_FRONTEND_URL.split(',')
 }
 
 const app = express()

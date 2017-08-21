@@ -11,7 +11,11 @@ npm install
 npm run dev
 ```
 
-###Seed the initial data
+### Database script
 ```
-npm run seed
+*Seed the initial data*
+npm run db:seed
+
+*Clean all collection*
+npm run db:clean
 ```
