@@ -57,14 +57,16 @@ function slugGenerator (str) {
   return slugify(str) + randomString(4)
 }
 
-function getPoster (raw) {
+function getImageUrl (raw) {
   return raw.document.nodes
     .filter(node => node.type === 'image')
-    .map(imgNode => ({
-      small: imgNode.data.src,
-      medium: imgNode.data.src,
-      large: imgNode.data.src
-    }))
+    .map(imgNode => imgNode.data.src)
+}
+
+function getImageId (imageURLs) {
+  return imageURLs.map(url =>
+    url.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
+  )
 }
 
 submissionApp.post(
@@ -72,7 +74,11 @@ submissionApp.post(
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
     let rawObj = req.body.raw
-    var rawText = raw2Text(rawObj)
+    if (typeof req.body.raw === 'string' || req.body.raw instanceof String) {
+      rawObj = JSON.parse(req.body.raw)
+    }
+    let rawText = raw2Text(rawObj)
+    let imageURLs = getImageUrl(rawObj)
     const newSubmission = new Submission({
       slug: slugGenerator(req.body.title),
       title: req.body.title,
@@ -81,13 +87,43 @@ submissionApp.post(
         images: rawImageCount(rawObj),
         words: count(rawText)
       },
-      poster: getPoster(rawObj),
+      poster: {
+        small: imageURLs[0],
+        medium: imageURLs[0],
+        large: imageURLs[0]
+      },
       author: req.user.id,
       summary: rawText.substring(0, 250),
       content: { raw: rawObj }
     })
     newSubmission.save().then(submission => {
-      res.json({ data: submission })
+      res.json({
+        info: {
+          image: '/images/banners/image-suggestions-action.jpg',
+          title: 'More Exposure?',
+          text:
+            'If you choose “Yes,” we may suggest other authors to feature your images within their articles. You will be credited every time.',
+          buttons: [
+            {
+              request: {
+                method: 'get',
+                params: {
+                  images: getImageId(imageURLs)
+                },
+                url: `${req.protocol}://${req.headers
+                  .host}/api/submit/confirm_full_consent`
+              },
+              to: '#1',
+              text: 'Yes',
+              red: true
+            },
+            {
+              to: '#2',
+              text: 'No'
+            }
+          ]
+        }
+      })
     })
   }
 )
@@ -144,5 +180,15 @@ submissionApp.post(
     })
   }
 )
+
+submissionApp.get('/submit/confirm_full_consent', (req, res) => {
+  Image.update(
+    { id: { $in: req.query.images } },
+    { $set: { fullConsent: true } },
+    { multi: true }
+  ).then(images => {
+    res.sendStatus(200)
+  })
+})
 
 module.exports = submissionApp
