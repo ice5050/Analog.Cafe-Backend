@@ -9,7 +9,8 @@ const imageSchema = new Schema(
     author: {
       id: String,
       name: String
-    }
+    },
+    fullConsent: Boolean
   }
 )
 
