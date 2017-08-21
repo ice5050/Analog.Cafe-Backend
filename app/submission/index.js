@@ -2,8 +2,15 @@ const express = require('express')
 const passport = require('passport')
 const count = require('word-count')
 const slugify = require('slugify')
+const multipart = require('connect-multiparty')
+const cloudinary = require('cloudinary')
+const Chance = require('chance')
 const Submission = require('../../models/mongo/submission.js')
+const Image = require('../../models/mongo/image.js')
+
+const chance = new Chance()
 const submissionApp = express()
+const multipartMiddleware = multipart()
 
 submissionApp.get('/submissions', (req, res) => {
   Submission.find().then(submissions => {
@@ -20,14 +27,14 @@ submissionApp.get('/submissions/:submissionId', (req, res) => {
 })
 
 function raw2Text (raw) {
-  var text = ''
-  for (var i = 0; i < raw.document.nodes.length; i++) {
-    var nodeI = raw.document.nodes[i]
+  let text = ''
+  for (let i = 0; i < raw.document.nodes.length; i++) {
+    let nodeI = raw.document.nodes[i]
     text = text + ' ' // new line
-    for (var j = 0; j < nodeI.nodes.length; j++) {
-      var nodeJ = nodeI.nodes[j]
-      for (var k = 0; k < nodeJ.ranges.length; k++) {
-        var ranges = nodeJ.ranges[k]
+    for (let j = 0; j < nodeI.nodes.length; j++) {
+      let nodeJ = nodeI.nodes[j]
+      for (let k = 0; k < nodeJ.ranges.length; k++) {
+        let ranges = nodeJ.ranges[k]
         text = text + ranges.text
       }
     }
@@ -36,33 +43,35 @@ function raw2Text (raw) {
 }
 
 function rawImageCount (raw) {
-  var imgCount = 0
-  for (var i = 0; i < raw.document.nodes.length; i++) {
-    if (raw.document.nodes[i].type === 'image') {
-      imgCount++
-    }
-  }
-  return imgCount
+  return raw.document.nodes.filter(node => node.type === 'image').length
 }
 
 function randomString (length) {
-  var text = ''
-  var charset = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  for (var i = 0; i < length; i++) {
-    text += charset.charAt(Math.floor(Math.random() * charset.length))
-  }
-  return text
+  return chance.string({
+    pool: 'abcdefghijklmnopqrstuvwxyz0123456789',
+    length: 4
+  })
 }
 
 function slugGenerator (str) {
   return slugify(str) + randomString(4)
 }
 
+function getPoster (raw) {
+  return raw.document.nodes
+    .filter(node => node.type === 'image')
+    .map(imgNode => ({
+      small: imgNode.data.src,
+      medium: imgNode.data.src,
+      large: imgNode.data.src
+    }))
+}
+
 submissionApp.post(
   '/submissions',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-    var rawObj = req.body.raw
+    let rawObj = req.body.raw
     var rawText = raw2Text(rawObj)
     const newSubmission = new Submission({
       slug: slugGenerator(req.body.title),
@@ -72,15 +81,8 @@ submissionApp.post(
         images: rawImageCount(rawObj),
         words: count(rawText)
       },
+      poster: getPoster(rawObj),
       author: req.user.id,
-      poster: {
-        // small: req.body.poster.small,
-        // medium: req.body.poster.medium,
-        // large: req.body.poster.large
-        small: '',
-        medium: '',
-        large: ''
-      },
       summary: rawText.substring(0, 250),
       content: { raw: rawObj }
     })
@@ -115,5 +117,32 @@ submissionApp.put('/submissions/:submissionId', (req, res) => {
       res.json({ data: submission })
     })
 })
+
+submissionApp.post(
+  '/submissions/upload',
+  multipartMiddleware,
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
+    })
+    cloudinary.uploader.upload(req.files.file.path, result => {
+      const image = new Image({
+        id: result.public_id,
+        author: {
+          name: req.user.title,
+          id: req.user.id
+        }
+      })
+      image.save().then(() =>
+        res.json({
+          url: result.url
+        })
+      )
+    })
+  }
+)
 
 module.exports = submissionApp
