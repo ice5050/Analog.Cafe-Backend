@@ -2,13 +2,15 @@ const express = require('express')
 const passport = require('passport')
 const count = require('word-count')
 const slugify = require('slugify')
+const multipart = require('connect-multiparty')
+const cloudinary = require('cloudinary')
+const Chance = require('chance')
 const Submission = require('../../models/mongo/submission.js')
 const Image = require('../../models/mongo/image.js')
-const submissionApp = express()
-const cloudinary = require('cloudinary')
 
-const multipart = require('connect-multiparty');
-const multipartMiddleware = multipart();
+const chance = new Chance()
+const submissionApp = express()
+const multipartMiddleware = multipart()
 
 submissionApp.get('/submissions', (req, res) => {
   Submission.find().then(submissions => {
@@ -25,14 +27,14 @@ submissionApp.get('/submissions/:submissionId', (req, res) => {
 })
 
 function raw2Text (raw) {
-  var text = ''
-  for (var i = 0; i < raw.document.nodes.length; i++) {
-    var nodeI = raw.document.nodes[i]
+  let text = ''
+  for (let i = 0; i < raw.document.nodes.length; i++) {
+    let nodeI = raw.document.nodes[i]
     text = text + ' ' // new line
-    for (var j = 0; j < nodeI.nodes.length; j++) {
-      var nodeJ = nodeI.nodes[j]
-      for (var k = 0; k < nodeJ.ranges.length; k++) {
-        var ranges = nodeJ.ranges[k]
+    for (let j = 0; j < nodeI.nodes.length; j++) {
+      let nodeJ = nodeI.nodes[j]
+      for (let k = 0; k < nodeJ.ranges.length; k++) {
+        let ranges = nodeJ.ranges[k]
         text = text + ranges.text
       }
     }
@@ -41,22 +43,14 @@ function raw2Text (raw) {
 }
 
 function rawImageCount (raw) {
-  var imgCount = 0
-  for (var i = 0; i < raw.document.nodes.length; i++) {
-    if (raw.document.nodes[i].type === 'image') {
-      imgCount++
-    }
-  }
-  return imgCount
+  return raw.document.nodes.filter(node => node.type === 'image').length
 }
 
 function randomString (length) {
-  var text = ''
-  var charset = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  for (var i = 0; i < length; i++) {
-    text += charset.charAt(Math.floor(Math.random() * charset.length))
-  }
-  return text
+  return chance.string({
+    pool: 'abcdefghijklmnopqrstuvwxyz0123456789',
+    length: 4
+  })
 }
 
 function slugGenerator (str) {
@@ -64,26 +58,20 @@ function slugGenerator (str) {
 }
 
 function getPoster (raw) {
-  for (var i = 0; i < raw.document.nodes.length; i++) {
-    if (raw.document.nodes[i].type === 'image') {
-      var poster_url = raw.document.nodes[i].data.src
-      return {
-        small: poster_url,
-        medium: poster_url,
-        large: poster_url
-      }
-    }
-  }
+  return raw.document.nodes
+    .filter(node => node.type === 'image')
+    .map(imgNode => ({
+      small: imgNode.data.src,
+      medium: imgNode.data.src,
+      large: imgNode.data.src
+    }))
 }
 
 submissionApp.post(
   '/submissions',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-    var rawObj = req.body.raw
-    if(typeof req.body.raw === 'string' || req.body.raw instanceof String){
-      var rawObj = JSON.parse(req.body.raw)
-    }
+    let rawObj = req.body.raw
     var rawText = raw2Text(rawObj)
     const newSubmission = new Submission({
       slug: slugGenerator(req.body.title),
@@ -139,22 +127,21 @@ submissionApp.post(
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
       api_key: process.env.CLOUDINARY_API_KEY,
       api_secret: process.env.CLOUDINARY_API_SECRET
-    });
-    cloudinary.uploader.upload(req.files.file.path, function(result) {
-      var image = new Image({
+    })
+    cloudinary.uploader.upload(req.files.file.path, result => {
+      const image = new Image({
         id: result.public_id,
         author: {
           name: req.user.title,
           id: req.user.id
         }
       })
-      image.save().then(function(){
+      image.save().then(() =>
         res.json({
           url: result.url
         })
-      })
-
-    });
+      )
+    })
   }
 )
 
