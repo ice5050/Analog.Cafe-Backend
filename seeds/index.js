@@ -6,6 +6,8 @@ const seeds = [
   ...require('./03_images')()
 ]
 
+console.log('Begin seeding')
 Promise.all(seeds).then(() => {
+  console.log('Finish seeding')
   process.exit()
 })

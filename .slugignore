@@ -1,0 +1,2 @@
+# ignore these files on Heroku deployment
+package-lock.json
