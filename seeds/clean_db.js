@@ -1,3 +1,4 @@
+const Promise = require('bluebird')
 const collections = [
   require('../models/mongo/article'),
   require('../models/mongo/image'),
@@ -5,11 +6,20 @@ const collections = [
   require('../models/mongo/user')
 ]
 
-console.log('Start cleaning database')
-collections.map(model => {
-  console.log(`Drop collection: ${model.modelName}`)
-  model.collection.drop()
-})
-console.log('Finish cleaning database')
+const dropCollection = collection =>
+  new Promise((resolve) => {
+    collection.drop(() => {
+      resolve()
+    })
+  })
 
-process.exit()
+console.log('Start cleaning database')
+const dropColPromises = collections.map(model => {
+  console.log(`Drop collection: ${model.modelName}`)
+  return dropCollection(model.collection)
+})
+
+Promise.all(dropColPromises).then(() => {
+  console.log('Finish cleaning database')
+  process.exit()
+})
