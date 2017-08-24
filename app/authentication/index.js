@@ -15,7 +15,9 @@ setupPassport()
 authApp.get('/auth/twitter', passport.authenticate('twitter'))
 authApp.get(
   '/auth/twitter/callback',
-  passport.authenticate('twitter', { failureRedirect: process.env.ANALOG_FRONTEND_URL + '/sign-in' }),
+  passport.authenticate('twitter', {
+    failureRedirect: process.env.ANALOG_FRONTEND_URL + '/sign-in'
+  }),
   (req, res) => {
     const user = req.user
     const payload = { id: user.id }
@@ -24,9 +26,13 @@ authApp.get(
   }
 )
 
-authApp.get('/auth/user', passport.authenticate('jwt', { session: false }), (req, res) => {
-  res.json({ data: req.user })
-})
+authApp.get(
+  '/auth/user',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    res.json({ data: req.user })
+  }
+)
 
 function setupPassport () {
   passport.use(
@@ -40,12 +46,17 @@ function setupPassport () {
         const username = sanitizeUsername(profile.username)
         User.findOne({ twitterId: profile.id }).exec((err, user) => {
           if (!user) {
-            User.create({
-              twitterId: profile.id,
-              id: username,
-              title: profile.displayName,
-              image: profile.photos[0] && profile.photos[0].value
-            }, (err, user) => { cb(null, user) })
+            User.create(
+              {
+                twitterId: profile.id,
+                id: username,
+                title: profile.displayName,
+                image: profile.photos[0] && profile.photos[0].value
+              },
+              (err, user) => {
+                cb(null, user)
+              }
+            )
           } else {
             cb(null, user)
           }
@@ -54,16 +65,18 @@ function setupPassport () {
     )
   )
 
-  passport.use(new JwtStrategy(jwtOptions, function (jwtPayload, next) {
-    console.log(jwtPayload)
-    User.findOne({ id: jwtPayload.id }).then(user => {
-      if (user) {
-        next(null, user)
-      } else {
-        next(null, false)
-      }
+  passport.use(
+    new JwtStrategy(jwtOptions, function (jwtPayload, next) {
+      console.log(jwtPayload)
+      User.findOne({ id: jwtPayload.id }).then(user => {
+        if (user) {
+          next(null, user)
+        } else {
+          next(null, false)
+        }
+      })
     })
-  }))
+  )
 
   passport.serializeUser((user, done) => {
     done(null, user.id)

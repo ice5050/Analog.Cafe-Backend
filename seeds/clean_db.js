@@ -7,7 +7,7 @@ const collections = [
 ]
 
 const dropCollection = collection =>
-  new Promise((resolve) => {
+  new Promise(resolve => {
     collection.drop(() => {
       resolve()
     })

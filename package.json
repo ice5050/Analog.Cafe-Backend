@@ -34,13 +34,23 @@
   },
   "devDependencies": {
     "bluebird": "^3.5.0",
+    "husky": "^0.14.3",
+    "lint-staged": "^4.0.3",
     "nodemon": "^1.11.0",
+    "prettier-standard": "^6.0.0",
     "standard": "^10.0.2"
   },
   "scripts": {
+    "precommit": "lint-staged",
     "start": "node --harmony index.js",
     "dev": "nodemon --harmony index.js",
     "db:seed": "node --harmony seeds/index.js",
     "db:clean": "node --harmony seeds/clean_db.js"
+  },
+  "lint-staged": {
+    "{app,models,seeds}/**/*.js": [
+      "prettier-standard --write",
+      "git add"
+    ]
   }
 }
