@@ -32,7 +32,8 @@ app.get('/api', (req, res) => {
   res.json({ status: 'Analog Cafe API' })
 })
 
-app.use('/api',
+app.use(
+  '/api',
   require('./authentication'),
   require('./submission'),
   require('./article'),

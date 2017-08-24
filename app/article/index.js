@@ -22,33 +22,37 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     countQuery = countQuery.find({ repostOk: true })
   }
   if (author) {
-    const images = await Image.find({'author.id': author})
+    const images = await Image.find({ 'author.id': author })
     const imagesRegex = images.map(i => new RegExp(`.*${i.id}.*`, 'g'))
     query = query.or([
-      {'author.id': author},
-      {'content.raw.document.nodes': {
-        $elemMatch: { $and: [
-          {'type': 'image'},
-          {'data.src': {$in: imagesRegex}}
-        ]}
-      }}
+      { 'author.id': author },
+      {
+        'content.raw.document.nodes': {
+          $elemMatch: {
+            $and: [{ type: 'image' }, { 'data.src': { $in: imagesRegex } }]
+          }
+        }
+      }
     ])
     countQuery = countQuery.or([
-      {'author.id': author},
-      {'content.raw.document.nodes': {
-        $elemMatch: { $and: [
-          {'type': 'image'},
-          {'data.src': {$in: imagesRegex}}
-        ]}
-      }}
+      { 'author.id': author },
+      {
+        'content.raw.document.nodes': {
+          $elemMatch: {
+            $and: [{ type: 'image' }, { 'data.src': { $in: imagesRegex } }]
+          }
+        }
+      }
     ])
   }
 
   query
-    .select('id slug title subtitle stats author poster tag repostOk status summary updatedAt createdAt post-date')
+    .select(
+      'id slug title subtitle stats author poster tag repostOk status summary updatedAt createdAt post-date'
+    )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
-    .sort({'post-date': 'desc'})
+    .sort({ 'post-date': 'desc' })
 
   query.exec((err, articles) => {
     countQuery.count().exec((err, count) => {
@@ -90,11 +94,9 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 })
 
 articleApp.get('/articles/:articleSlug', (req, res) => {
-  Article
-    .findOne({ slug: req.params.articleSlug })
-    .then(article => {
-      res.json(article)
-    })
+  Article.findOne({ slug: req.params.articleSlug }).then(article => {
+    res.json(article)
+  })
 })
 
 // articleApp.post('/articles/:articleId', (req, res) => {
