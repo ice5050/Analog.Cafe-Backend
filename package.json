@@ -15,7 +15,7 @@
   "dependencies": {
     "body-parser": "^1.17.2",
     "chance": "^1.0.10",
-    "cloudinary": "",
+    "cloudinary": "^1.9.0",
     "connect-multiparty": "^2.0.0",
     "connect-redis": "^3.3.0",
     "cors": "^2.8.4",
@@ -28,9 +28,9 @@
     "passport": "^0.3.2",
     "passport-jwt": "^2.2.1",
     "passport-twitter": "^1.0.4",
-    "slugify": "",
-    "url-pattern": "",
-    "word-count": ""
+    "slugify": "^1.2.1",
+    "url-pattern": "^1.0.3",
+    "word-count": "^0.2.2"
   },
   "devDependencies": {
     "bluebird": "^3.5.0",
