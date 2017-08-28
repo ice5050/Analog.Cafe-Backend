@@ -11,40 +11,31 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   const page = req.query.page || 1
   const itemsPerPage = req.query['items-per-page'] || 10
 
-  let query = Article.find()
-  let countQuery = Article.find()
+  let queries = [Article.find(), Article.find()]
   if (tags && tags.length !== 0) {
-    query = query.where('tag').in(tags)
-    countQuery = countQuery.where('tag').in(tags)
+    queries.map(q => q.where('tag').in(tags))
   }
   if (repostOk) {
-    query = query.find({ repostOk: true })
-    countQuery = countQuery.find({ repostOk: true })
+    queries.map(q => q.find({ repostOk: true }))
   }
   if (author) {
     const images = await Image.find({ 'author.id': author })
     const imagesRegex = images.map(i => new RegExp(`.*${i.id}.*`, 'g'))
-    query = query.or([
-      { 'author.id': author },
-      {
-        'content.raw.document.nodes': {
-          $elemMatch: {
-            $and: [{ type: 'image' }, { 'data.src': { $in: imagesRegex } }]
+    queries.map(q =>
+      q.or([
+        { 'author.id': author },
+        {
+          'content.raw.document.nodes': {
+            $elemMatch: {
+              $and: [{ type: 'image' }, { 'data.src': { $in: imagesRegex } }]
+            }
           }
         }
-      }
-    ])
-    countQuery = countQuery.or([
-      { 'author.id': author },
-      {
-        'content.raw.document.nodes': {
-          $elemMatch: {
-            $and: [{ type: 'image' }, { 'data.src': { $in: imagesRegex } }]
-          }
-        }
-      }
-    ])
+      ])
+    )
   }
+
+  let [query, countQuery] = queries
 
   query
     .select(
