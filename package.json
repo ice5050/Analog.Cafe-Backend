@@ -49,7 +49,7 @@
   },
   "lint-staged": {
     "{app,models,seeds}/**/*.js": [
-      "prettier-standard --write",
+      "prettier-standard",
       "git add"
     ]
   }
