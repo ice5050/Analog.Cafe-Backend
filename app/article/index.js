@@ -82,10 +82,11 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   const article = await Article.findOne({ slug: req.params.articleSlug })
   if (article) {
     res.json(article)
+  } else {
+    res.status(404).json({
+      message: 'Article not found'
+    })
   }
-  res.status(404).json({
-    message: 'Article not found'
-  })
 })
 
 module.exports = articleApp
