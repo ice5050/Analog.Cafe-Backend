@@ -78,9 +78,13 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   })
 })
 
-articleApp.get('/articles/:articleSlug', (req, res) => {
-  Article.findOne({ slug: req.params.articleSlug }).then(article => {
+articleApp.get('/articles/:articleSlug', async (req, res) => {
+  const article = await Article.findOne({ slug: req.params.articleSlug })
+  if (article) {
     res.json(article)
+  }
+  res.status(404).json({
+    message: 'Article not found'
   })
 })
 
