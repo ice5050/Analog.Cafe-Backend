@@ -19,7 +19,8 @@ const users = [
         to: 'https://twitter.com/dmitrizzle',
         text: 'Follow on Twitter'
       }
-    ]
+    ],
+    suspend: false
   },
   {
     id: 'lee-clark',
@@ -38,7 +39,8 @@ const users = [
         to: 'http://leeclarkphotos.org',
         text: 'Visit Author’s Website'
       }
-    ]
+    ],
+    suspend: false
   },
   {
     id: 'lee-webb',
@@ -58,7 +60,8 @@ const users = [
         to: 'http://www.myfavouritelens.com/',
         text: 'Visit Author’s Website'
       }
-    ]
+    ],
+    suspend: false
   },
   {
     id: 'betty',
@@ -78,7 +81,8 @@ const users = [
         to: 'http://instagram.com/bettid',
         text: 'Follow on Instagram'
       }
-    ]
+    ],
+    suspend: false
   },
   {
     id: 'robert-davie',
@@ -98,7 +102,8 @@ const users = [
         to: 'http://www.rjdavie.com',
         text: 'Visit Author’s Website'
       }
-    ]
+    ],
+    suspend: false
   }
 ]
 
