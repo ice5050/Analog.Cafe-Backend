@@ -12,13 +12,19 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   const itemsPerPage = req.query['items-per-page'] || 10
 
   let queries = [Article.find(), Article.find()]
+  queries.map(q => q.find({ status: 'published' }))
   if (tags && tags.length !== 0) {
     queries.map(q => q.where('tag').in(tags))
   }
   if (repostOk) {
     queries.map(q => q.find({ repostOk: true }))
   }
+  let user
   if (author) {
+    user = await User.findOne({ id: author }).exec()
+    if (!user) {
+      res.status(404).json({ message: 'Author not found' })
+    }
     const images = await Image.find({ 'author.id': author })
     const imagesRegex = images.map(i => new RegExp(`.*${i.id}.*`, 'g'))
     queries.map(q =>
@@ -47,10 +53,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
-  let user
-  if (author) {
-    user = await User.findOne({ id: author }).exec()
-  }
+
   res.json({
     status: 'ok',
     filter: {
