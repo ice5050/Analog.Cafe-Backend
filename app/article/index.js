@@ -11,119 +11,76 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   const page = req.query.page || 1
   const itemsPerPage = req.query['items-per-page'] || 10
 
-  let query = Article.find()
-  let countQuery = Article.find()
+  let queries = [Article.find(), Article.find()]
+  queries.map(q => q.find({ status: 'published' }))
   if (tags && tags.length !== 0) {
-    query = query.where('tag').in(tags)
-    countQuery = countQuery.where('tag').in(tags)
+    queries.map(q => q.where('tag').in(tags))
   }
   if (repostOk) {
-    query = query.find({ repostOk: true })
-    countQuery = countQuery.find({ repostOk: true })
+    queries.map(q => q.find({ repostOk: true }))
   }
+  let user
   if (author) {
-    const images = await Image.find({'author.id': author})
+    user = await User.findOne({ id: author }).exec()
+    if (!user) {
+      res.status(404).json({ message: 'Author not found' })
+    }
+    const images = await Image.find({ 'author.id': author })
     const imagesRegex = images.map(i => new RegExp(`.*${i.id}.*`, 'g'))
-    query = query.or([
-      {'author.id': author},
-      {'content.raw.document.nodes': {
-        $elemMatch: { $and: [
-          {'type': 'image'},
-          {'data.src': {$in: imagesRegex}}
-        ]}
-      }}
-    ])
-    countQuery = countQuery.or([
-      {'author.id': author},
-      {'content.raw.document.nodes': {
-        $elemMatch: { $and: [
-          {'type': 'image'},
-          {'data.src': {$in: imagesRegex}}
-        ]}
-      }}
-    ])
+    queries.map(q =>
+      q.or([
+        { 'author.id': author },
+        {
+          'content.raw.document.nodes': {
+            $elemMatch: {
+              $and: [{ type: 'image' }, { 'data.src': { $in: imagesRegex } }]
+            }
+          }
+        }
+      ])
+    )
   }
+
+  let [query, countQuery] = queries
 
   query
-    .select('_id id slug title subtitle stats author poster tag repostOk status summary updatedAt createdAt post-date')
+    .select(
+      'id slug title subtitle stats author poster tag repostOk status summary updatedAt createdAt post-date'
+    )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
-    .sort({'post-date': 'desc'})
+    .sort({ 'post-date': 'desc' })
 
-  query.exec((err, articles) => {
-    countQuery.count().exec((err, count) => {
-      if (author) {
-        User.findOne({ id: author }).then(user => {
-          res.json({
-            status: 'ok',
-            filters: {
-              tags: tags,
-              author: { id: user.id, name: user.title }
-            },
-            page: {
-              current: page,
-              total: Math.ceil(count / itemsPerPage),
-              'items-total': count,
-              'items-per-page': itemsPerPage
-            },
-            items: articles
-          })
-        })
-      } else {
-        res.json({
-          status: 'ok',
-          filters: {
-            tags: tags,
-            author: {}
-          },
-          page: {
-            current: page,
-            total: Math.ceil(count / itemsPerPage),
-            'items-total': count,
-            'items-per-page': itemsPerPage
-          },
-          items: articles
-        })
-      }
-    })
+  const articles = await query.exec()
+  const count = await countQuery.count().exec()
+
+  res.json({
+    status: 'ok',
+    filter: {
+      tags: tags,
+      author: author
+        ? { id: author, name: (user && user.title) || '' }
+        : undefined
+    },
+    page: {
+      current: page,
+      total: Math.ceil(count / itemsPerPage),
+      'items-total': count,
+      'items-per-page': itemsPerPage
+    },
+    items: articles
   })
 })
 
-articleApp.get('/articles/:articleSlug', (req, res) => {
-  Article
-    .findOne({ slug: req.params.articleSlug })
-    .then(article => {
-      res.json(article)
+articleApp.get('/articles/:articleSlug', async (req, res) => {
+  const article = await Article.findOne({ slug: req.params.articleSlug })
+  if (article) {
+    res.json(article)
+  } else {
+    res.status(404).json({
+      message: 'Article not found'
     })
+  }
 })
-
-// articleApp.post('/articles/:articleId', (req, res) => {
-//   Article.findOne({ articleId: req.params.articleId }).then(article => {
-//     article = {
-//       ...article,
-//       ...{
-//         title: req.body.title,
-//         subtitle: req.body.subtitle,
-//         stats: {
-//           images: req.body.images,
-//           words: req.body.words
-//         },
-//         poster: {
-//           small: req.body.poster.small,
-//           medium: req.body.poster.medium,
-//           large: req.body.poster.large
-//         },
-//         repostOK: req.body['repost-ok'],
-//         tag: req.body.tag,
-//         status: req.body.status,
-//         summary: req.body.summary,
-//         content: req.body.content
-//       }
-//     }
-//     return article.save()
-//   }).then(article => {
-//     res.json({ data: article })
-//   })
-// })
 
 module.exports = articleApp

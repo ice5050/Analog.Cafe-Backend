@@ -17,7 +17,8 @@ const userSchema = new Schema(
         text: String,
         red: Boolean
       }
-    ]
+    ],
+    suspend: Boolean
   },
   {
     timestamps: true
