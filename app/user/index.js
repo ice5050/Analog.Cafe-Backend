@@ -19,7 +19,6 @@ userApp.put(
       title: req.body.title || user.title,
       image: req.body.image || user.image,
       text: req.body.text || user.text,
-      role: req.body.role || user.role,
       buttons: req.body.buttons || user.buttons
     }
     user = await user.save()
@@ -40,6 +39,9 @@ userApp.put(
       return res.json(401).json({ message: 'No permission to access' })
     }
     let user = await User.findOne({ id: req.params.userId })
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
     user.suspend = true
     user = await user.save()
     if (user) {
@@ -61,15 +63,13 @@ userApp.put(
       return res.json(401).json({ message: 'No permission to access' })
     }
     let user = await User.findOne({ id: req.params.userId })
-    user.suspend = true
-    user = await user.save()
-    if (user) {
-      // Remove all user's articles
-      await Article.remove({ 'author.id': user.id })
-      res.json(user)
-    } else {
-      res.status(422).json({ message: 'User can not be suspended' })
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
     }
+    user = await user.remove()
+    // Remove all user's articles
+    await Article.remove({ 'author.id': user.id })
+    res.json({ status: 'ok' })
   }
 )
 
