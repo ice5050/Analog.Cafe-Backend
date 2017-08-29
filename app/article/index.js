@@ -12,6 +12,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   const itemsPerPage = req.query['items-per-page'] || 10
 
   let queries = [Article.find(), Article.find()]
+  queries.map(q => q.find({ status: 'published' }))
   if (tags && tags.length !== 0) {
     queries.map(q => q.where('tag').in(tags))
   }
