@@ -37,7 +37,8 @@ app.use(
   require('./authentication'),
   require('./submission'),
   require('./article'),
-  require('./author')
+  require('./author'),
+  require('./image')
 )
 
 module.exports = app
