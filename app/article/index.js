@@ -6,7 +6,6 @@ const articleApp = express()
 
 articleApp.get(['/articles', '/list'], async (req, res) => {
   const tags = (req.query.tag && req.query.tag.split(':')) || []
-  const repostOk = req.query['repost-ok']
   const author = req.query.author
   const page = req.query.page || 1
   const itemsPerPage = req.query['items-per-page'] || 10
@@ -15,9 +14,6 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   queries.map(q => q.find({ status: 'published' }))
   if (tags && tags.length !== 0) {
     queries.map(q => q.where('tag').in(tags))
-  }
-  if (repostOk) {
-    queries.map(q => q.find({ repostOk: true }))
   }
   let user
   if (author) {
@@ -45,7 +41,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   query
     .select(
-      'id slug title subtitle stats author poster tag repostOk status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author poster tag status summary updatedAt createdAt post-date'
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))

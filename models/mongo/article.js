@@ -24,7 +24,6 @@ const articleSchema = new Schema(
     },
     'post-date': String,
     tag: String,
-    repostOk: Boolean,
     status: { type: String, default: 'published' },
     summary: String,
     content: Schema.Types.Mixed
