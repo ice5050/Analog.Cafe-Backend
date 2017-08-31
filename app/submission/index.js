@@ -12,6 +12,12 @@ const chance = new Chance()
 const submissionApp = express()
 const multipartMiddleware = multipart()
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+})
+
 submissionApp.get('/submissions', (req, res) => {
   Submission.find().then(submissions => {
     res.json({ data: submissions })
@@ -26,60 +32,131 @@ submissionApp.get('/submissions/:submissionId', (req, res) => {
   })
 })
 
+function raw2Text (raw) {
+  let text = ''
+  for (let i = 0; i < raw.document.nodes.length; i++) {
+    let nodeI = raw.document.nodes[i]
+    text = text + ' ' // new line
+    for (let j = 0; j < nodeI.nodes.length; j++) {
+      let nodeJ = nodeI.nodes[j]
+      for (let k = 0; k < nodeJ.ranges.length; k++) {
+        let ranges = nodeJ.ranges[k]
+        text = text + ranges.text
+      }
+    }
+  }
+  return text
+}
+
+function rawImageCount (raw) {
+  return raw.document.nodes.filter(node => node.type === 'image').length
+}
+
+function randomString (length) {
+  return chance.string({
+    pool: 'abcdefghijklmnopqrstuvwxyz0123456789',
+    length: 4
+  })
+}
+
+function slugGenerator (str) {
+  return slugify(str) + randomString(4)
+}
+
+function getImageUrl (raw) {
+  return raw.document.nodes
+    .filter(node => node.type === 'image')
+    .map(imgNode => imgNode.data.src)
+}
+
+function getImageId (imageURLs) {
+  return imageURLs.map(url =>
+    url
+      .split('\\')
+      .pop()
+      .split('/')
+      .pop()
+      .replace(/\.[^/.]+$/, '')
+  )
+}
+
+function addUrlImageToContent (key, url, content) {
+  var nodes = content.document.nodes
+  for (var i = 0; i < nodes.length; i++) {
+    if (nodes[i].data.key == key) {
+      nodes[i].data.src = url
+      nodes[i].data.key = null
+      return content
+    }
+  }
+}
+
+function uploadImgAsync (req, res, i, content, next) {
+  var imgs = req.files.images
+  var keys = Object.keys(req.files.images)
+  cloudinary.uploader.upload(imgs[keys[i]].path, result => {
+    const image = new Image({
+      id: result.public_id,
+      author: {
+        name: req.user.title,
+        id: req.user.id
+      },
+      fullConsent: req.body.isFullConsent
+    })
+    content = addUrlImageToContent(keys[i], result.url, content)
+    image.save().then(() => {
+      if (i + 1 < keys.length) {
+        uploadImgAsync(req, res, i + 1, content, next)
+      } else {
+        next(content)
+      }
+    })
+  })
+}
+
 submissionApp.post(
   '/submissions',
+  multipartMiddleware,
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-    let rawObj = req.body.raw
-    if (typeof req.body.raw === 'string' || req.body.raw instanceof String) {
-      rawObj = JSON.parse(req.body.raw)
+    var content = req.body.content
+    if (
+      typeof req.body.content === 'string' ||
+      req.body.content instanceof String
+    ) {
+      content = JSON.parse(req.body.content)
     }
-    let rawText = raw2Text(rawObj)
-    let imageURLs = getImageUrl(rawObj)
-    const newSubmission = new Submission({
-      slug: slugGenerator(req.body.title),
-      title: req.body.title,
-      subtitle: req.body.subtitle,
-      stats: {
-        images: rawImageCount(rawObj),
-        words: count(rawText)
-      },
-      poster: {
-        small: imageURLs[0],
-        medium: imageURLs[0],
-        large: imageURLs[0]
-      },
-      author: req.user.id,
-      summary: rawText.substring(0, 250),
-      content: { raw: rawObj }
-    })
-    newSubmission.save().then(submission => {
-      res.json({
-        info: {
-          image: '/images/banners/image-suggestions-action.jpg',
-          title: 'More Exposure?',
-          text:
-            'If you choose “Yes,” we may suggest other authors to feature your images within their articles. You will be credited every time.',
-          buttons: [
-            {
-              request: {
-                method: 'get',
-                params: {
-                  images: getImageId(imageURLs)
-                },
-                url: `${req.protocol}://${req.headers
-                  .host}/api/submit/confirm_full_consent`
-              },
-              to: '#1',
-              text: 'Yes',
-              red: true
-            },
-            {
-              to: '#2',
-              text: 'No'
-            }
-          ]
-        }
+
+    var header = req.body.header
+    if (
+      typeof req.body.header === 'string' ||
+      req.body.header instanceof String
+    ) {
+      header = JSON.parse(req.body.header)
+    }
+
+    uploadImgAsync(req, res, 0, content, rawObj => {
+      var rawText = raw2Text(rawObj)
+      var imageURLs = getImageUrl(rawObj)
+      var newSubmission = new Submission({
+        slug: slugGenerator(header.title),
+        title: header.title,
+        subtitle: header.subtitle,
+        stats: {
+          images: rawImageCount(rawObj),
+          words: count(rawText)
+        },
+        poster: {
+          small: imageURLs[0],
+          medium: imageURLs[0],
+          large: imageURLs[0]
+        },
+        author: req.user.id,
+        summary: rawText.substring(0, 250),
+        content: { raw: rawObj }
+      })
+      newSubmission.save().then(submission => {
+        res.sendStatus(200)
       })
     })
   }
@@ -187,7 +264,12 @@ function getImageUrl (raw) {
 
 function getImageId (imageURLs) {
   return imageURLs.map(url =>
-    url.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
+    url
+      .split('\\')
+      .pop()
+      .split('/')
+      .pop()
+      .replace(/\.[^/.]+$/, '')
   )
 }
 
