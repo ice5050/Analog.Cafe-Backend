@@ -26,49 +26,6 @@ submissionApp.get('/submissions/:submissionId', (req, res) => {
   })
 })
 
-function raw2Text (raw) {
-  let text = ''
-  for (let i = 0; i < raw.document.nodes.length; i++) {
-    let nodeI = raw.document.nodes[i]
-    text = text + ' ' // new line
-    for (let j = 0; j < nodeI.nodes.length; j++) {
-      let nodeJ = nodeI.nodes[j]
-      for (let k = 0; k < nodeJ.ranges.length; k++) {
-        let ranges = nodeJ.ranges[k]
-        text = text + ranges.text
-      }
-    }
-  }
-  return text
-}
-
-function rawImageCount (raw) {
-  return raw.document.nodes.filter(node => node.type === 'image').length
-}
-
-function randomString (length) {
-  return chance.string({
-    pool: 'abcdefghijklmnopqrstuvwxyz0123456789',
-    length: 4
-  })
-}
-
-function slugGenerator (str) {
-  return slugify(str) + randomString(4)
-}
-
-function getImageUrl (raw) {
-  return raw.document.nodes
-    .filter(node => node.type === 'image')
-    .map(imgNode => imgNode.data.src)
-}
-
-function getImageId (imageURLs) {
-  return imageURLs.map(url =>
-    url.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
-  )
-}
-
 submissionApp.post(
   '/submissions',
   passport.authenticate('jwt', { session: false }),
@@ -190,5 +147,48 @@ submissionApp.get('/submit/confirm_full_consent', (req, res) => {
     res.sendStatus(200)
   })
 })
+
+function raw2Text (raw) {
+  let text = ''
+  for (let i = 0; i < raw.document.nodes.length; i++) {
+    let nodeI = raw.document.nodes[i]
+    text = text + ' ' // new line
+    for (let j = 0; j < nodeI.nodes.length; j++) {
+      let nodeJ = nodeI.nodes[j]
+      for (let k = 0; k < nodeJ.ranges.length; k++) {
+        let ranges = nodeJ.ranges[k]
+        text = text + ranges.text
+      }
+    }
+  }
+  return text
+}
+
+function rawImageCount (raw) {
+  return raw.document.nodes.filter(node => node.type === 'image').length
+}
+
+function randomString (length) {
+  return chance.string({
+    pool: 'abcdefghijklmnopqrstuvwxyz0123456789',
+    length: 4
+  })
+}
+
+function slugGenerator (str) {
+  return slugify(str) + randomString(4)
+}
+
+function getImageUrl (raw) {
+  return raw.document.nodes
+    .filter(node => node.type === 'image')
+    .map(imgNode => imgNode.data.src)
+}
+
+function getImageId (imageURLs) {
+  return imageURLs.map(url =>
+    url.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
+  )
+}
 
 module.exports = submissionApp

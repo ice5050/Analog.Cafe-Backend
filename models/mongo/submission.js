@@ -21,7 +21,6 @@ const submissionSchema = new Schema(
       large: String
     },
     tag: String,
-    repostOk: Boolean,
     status: { type: String, default: 'pending' },
     summary: String,
     content: Schema.Types.Mixed
