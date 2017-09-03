@@ -7,10 +7,17 @@ const cloudinary = require('cloudinary')
 const Chance = require('chance')
 const Submission = require('../../models/mongo/submission.js')
 const Image = require('../../models/mongo/image.js')
+const WebSocket = require('ws')
 
 const chance = new Chance()
 const submissionApp = express()
 const multipartMiddleware = multipart()
+
+const wss = new WebSocket.Server({ port: 4001 })
+var ws = null
+wss.on('connection', function connection (_ws) {
+  ws = _ws
+})
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -93,25 +100,30 @@ function addUrlImageToContent (key, url, content) {
 
 function uploadImgAsync (req, res, i, content, next) {
   var imgs = req.files.images
-  var keys = Object.keys(req.files.images)
-  cloudinary.uploader.upload(imgs[keys[i]].path, result => {
-    const image = new Image({
-      id: result.public_id,
-      author: {
-        name: req.user.title,
-        id: req.user.id
-      },
-      fullConsent: req.body.isFullConsent
+  if (req.files.images) {
+    var keys = Object.keys(imgs)
+    cloudinary.uploader.upload(imgs[keys[i]].path, result => {
+      ws.send((i + 1) / keys.length * 100)
+      const image = new Image({
+        id: result.public_id,
+        author: {
+          name: req.user.title,
+          id: req.user.id
+        },
+        fullConsent: req.body.isFullConsent
+      })
+      content = addUrlImageToContent(keys[i], result.url, content)
+      image.save().then(() => {
+        if (i + 1 < keys.length) {
+          uploadImgAsync(req, res, i + 1, content, next)
+        } else {
+          next(content)
+        }
+      })
     })
-    content = addUrlImageToContent(keys[i], result.url, content)
-    image.save().then(() => {
-      if (i + 1 < keys.length) {
-        uploadImgAsync(req, res, i + 1, content, next)
-      } else {
-        next(content)
-      }
-    })
-  })
+  } else {
+    next(content)
+  }
 }
 
 submissionApp.post(
