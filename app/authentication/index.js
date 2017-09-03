@@ -7,22 +7,29 @@ const JwtStrategy = passportJWT.Strategy
 const TwitterStrategy = require('passport-twitter').Strategy
 const User = require('../../models/mongo/user.js')
 const authApp = express()
+const WebSocket = require('ws')
 const jwtOptions = {}
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
+
+const wss = new WebSocket.Server({ port: 4000 })
+var ws = null
+wss.on('connection', function connection (_ws) {
+  ws = _ws
+})
 
 setupPassport()
 authApp.get('/auth/twitter', passport.authenticate('twitter'))
 authApp.get(
   '/auth/twitter/callback',
-  passport.authenticate('twitter', {
-    failureRedirect: process.env.ANALOG_FRONTEND_URL + '/sign-in'
-  }),
+  passport.authenticate('twitter'),
   (req, res) => {
     const user = req.user
     const payload = { id: user.id }
     const token = jwt.sign(payload, jwtOptions.secretOrKey)
-    res.redirect(process.env.ANALOG_FRONTEND_URL + '?token=' + token)
+    ws.send(token)
+    res.set('Content-Type', 'text/html')
+    res.send(new Buffer('<script>window.close();</script>'))
   }
 )
 
@@ -91,7 +98,10 @@ function setupPassport () {
 
 function sanitizeUsername (username) {
   if (!username) return null
-  return username.split('@')[0].toLowerCase().replace(/\W/g, '.')
+  return username
+    .split('@')[0]
+    .toLowerCase()
+    .replace(/\W/g, '.')
 }
 
 module.exports = authApp

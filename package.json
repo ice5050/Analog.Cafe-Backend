@@ -13,8 +13,8 @@
     "url": "https://github.com/dmitrizzle/Analog.Cafe"
   },
   "dependencies": {
-    "body-parser": "^1.17.2",
     "bluebird": "^3.5.0",
+    "body-parser": "^1.17.2",
     "chance": "^1.0.10",
     "cloudinary": "^1.9.0",
     "connect-multiparty": "^2.0.0",
@@ -32,7 +32,7 @@
     "slugify": "^1.2.1",
     "url-pattern": "^1.0.3",
     "word-count": "^0.2.2",
-    "bluebird": "^3.5.0"
+    "ws": "^3.1.0"
   },
   "devDependencies": {
     "husky": "^0.14.3",
