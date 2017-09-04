@@ -12,7 +12,9 @@ const jwtOptions = {}
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
 
-const wss = new WebSocket.Server({ port: 4000 })
+const wss = new WebSocket.Server({
+  port: process.env.WEBSOCKET_PORT_AUTHEN_TOKEN
+})
 var ws = null
 wss.on('connection', function connection (_ws) {
   ws = _ws
