@@ -149,6 +149,29 @@ submissionApp.get('/submit/confirm_full_consent', (req, res) => {
   })
 })
 
+submissionApp.post(
+  '/submissions/:submissionId/approve',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    if (req.user.role !== 'admin') {
+      return res.json(401).json({ message: 'No permission to access' })
+    }
+    let submission = Submission.findOne({ id: req.params.submissionId })
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    const tag = req.body.tag
+    submission.status = 'scheduled'
+    submission.tag = tag
+    submission = await submission.save()
+    if (submission) {
+      res.json(submission)
+    } else {
+      res.status(422).json({ message: 'Submission can not be approved' })
+    }
+  }
+)
+
 function raw2Text (raw) {
   let text = ''
   for (let i = 0; i < raw.document.nodes.length; i++) {

@@ -24,6 +24,7 @@
     "express": "^4.15.3",
     "express-session": "^1.15.3",
     "jsonwebtoken": "^7.4.1",
+    "moment": "^2.18.1",
     "mongoose": "^4.11.1",
     "mongoose-auto-increment": "^5.0.1",
     "passport": "^0.3.2",
