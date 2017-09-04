@@ -7,10 +7,25 @@ const cloudinary = require('cloudinary')
 const Chance = require('chance')
 const Submission = require('../../models/mongo/submission.js')
 const Image = require('../../models/mongo/image.js')
+const WebSocket = require('ws')
 
 const chance = new Chance()
 const submissionApp = express()
 const multipartMiddleware = multipart()
+
+const wss = new WebSocket.Server({
+  port: process.env.WEBSOCKET_PORT_UPLOAD_PROGRESS
+})
+var ws = null
+wss.on('connection', function connection (_ws) {
+  ws = _ws
+})
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+})
 
 submissionApp.get('/submissions', (req, res) => {
   Submission.find().then(submissions => {
@@ -28,20 +43,33 @@ submissionApp.get('/submissions/:submissionId', (req, res) => {
 
 submissionApp.post(
   '/submissions',
+  multipartMiddleware,
   passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    let rawObj = req.body.raw
-    if (typeof req.body.raw === 'string' || req.body.raw instanceof String) {
-      rawObj = JSON.parse(req.body.raw)
+  async (req, res) => {
+    var content = req.body.content
+    if (
+      typeof req.body.content === 'string' ||
+      req.body.content instanceof String
+    ) {
+      content = JSON.parse(req.body.content)
     }
-    let rawText = raw2Text(rawObj)
-    let imageURLs = getImageUrl(rawObj)
-    const newSubmission = new Submission({
-      slug: slugGenerator(req.body.title),
-      title: req.body.title,
-      subtitle: req.body.subtitle,
+
+    var header = req.body.header
+    if (
+      typeof req.body.header === 'string' ||
+      req.body.header instanceof String
+    ) {
+      header = JSON.parse(req.body.header)
+    }
+    await uploadImgAsync(req, res, content)
+    var rawText = raw2Text(content)
+    var imageURLs = getImageUrl(content)
+    var newSubmission = new Submission({
+      slug: slugGenerator(header.title),
+      title: header.title,
+      subtitle: header.subtitle,
       stats: {
-        images: rawImageCount(rawObj),
+        images: rawImageCount(content),
         words: count(rawText)
       },
       poster: {
@@ -51,37 +79,10 @@ submissionApp.post(
       },
       author: req.user.id,
       summary: rawText.substring(0, 250),
-      content: { raw: rawObj }
+      content: { raw: content }
     })
-    newSubmission.save().then(submission => {
-      res.json({
-        info: {
-          image: '/images/banners/image-suggestions-action.jpg',
-          title: 'More Exposure?',
-          text:
-            'If you choose “Yes,” we may suggest other authors to feature your images within their articles. You will be credited every time.',
-          buttons: [
-            {
-              request: {
-                method: 'get',
-                params: {
-                  images: getImageId(imageURLs)
-                },
-                url: `${req.protocol}://${req.headers
-                  .host}/api/submit/confirm_full_consent`
-              },
-              to: '#1',
-              text: 'Yes',
-              red: true
-            },
-            {
-              to: '#2',
-              text: 'No'
-            }
-          ]
-        }
-      })
-    })
+    await newSubmission.save()
+    res.sendStatus(200)
   }
 )
 
@@ -187,8 +188,46 @@ function getImageUrl (raw) {
 
 function getImageId (imageURLs) {
   return imageURLs.map(url =>
-    url.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
+    url
+      .split('\\')
+      .pop()
+      .split('/')
+      .pop()
+      .replace(/\.[^/.]+$/, '')
   )
+}
+
+function addUrlImageToContent (key, url, content) {
+  var nodes = content.document.nodes
+  for (var i = 0; i < nodes.length; i++) {
+    if (nodes[i].data.key == key) {
+      nodes[i].data.src = url
+      nodes[i].data.key = null
+      return content
+    }
+  }
+}
+
+async function uploadImgAsync (req, res, content) {
+  var imgs = req.files.images
+  if (imgs) {
+    var keys = Object.keys(imgs)
+    for (var i = 0; i < keys.length; i++) {
+      await cloudinary.uploader.upload(imgs[keys[i]].path, async result => {
+        ws.send((i + 1) / keys.length * 100)
+        const image = new Image({
+          id: result.public_id,
+          author: {
+            name: req.user.title,
+            id: req.user.id
+          },
+          fullConsent: req.body.isFullConsent
+        })
+        content = addUrlImageToContent(keys[i], result.url, content)
+        await image.save()
+      })
+    }
+  }
 }
 
 module.exports = submissionApp
