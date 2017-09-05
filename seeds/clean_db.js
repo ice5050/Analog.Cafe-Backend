@@ -3,7 +3,8 @@ const collections = [
   require('../models/mongo/article'),
   require('../models/mongo/image'),
   require('../models/mongo/submission'),
-  require('../models/mongo/user')
+  require('../models/mongo/user'),
+  require('../models/mongo/setting')
 ]
 
 const dropCollection = collection =>

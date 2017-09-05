@@ -13,14 +13,18 @@ const submissionSchema = new Schema(
       images: Number,
       words: Number
     },
-    author: String,
+    author: {
+      id: String,
+      name: String
+    },
     articleId: String,
     poster: {
       small: String,
       medium: String,
       large: String
     },
-    tag: String,
+    tag: String, // set after scheduling
+    // Status: pending, scheduled, published
     status: { type: String, default: 'pending' },
     summary: String,
     content: Schema.Types.Mixed

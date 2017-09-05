@@ -16,8 +16,8 @@ const multipartMiddleware = multipart()
 const wss = new WebSocket.Server({
   port: process.env.WEBSOCKET_PORT_UPLOAD_PROGRESS
 })
-var ws = null
-wss.on('connection', function connection (_ws) {
+let ws
+wss.on('connection', _ws => {
   ws = _ws
 })
 
@@ -46,7 +46,7 @@ submissionApp.post(
   multipartMiddleware,
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    var content = req.body.content
+    let content = req.body.content
     if (
       typeof req.body.content === 'string' ||
       req.body.content instanceof String
@@ -54,7 +54,7 @@ submissionApp.post(
       content = JSON.parse(req.body.content)
     }
 
-    var header = req.body.header
+    let header = req.body.header
     if (
       typeof req.body.header === 'string' ||
       req.body.header instanceof String
@@ -62,10 +62,12 @@ submissionApp.post(
       header = JSON.parse(req.body.header)
     }
     await uploadImgAsync(req, res, content)
-    var rawText = raw2Text(content)
-    var imageURLs = getImageUrl(content)
-    var newSubmission = new Submission({
-      slug: slugGenerator(header.title),
+    const rawText = raw2Text(content)
+    const imageURLs = getImageUrl(content)
+    const id = randomString()
+    const newSubmission = new Submission({
+      id,
+      slug: slugGenerator(header.title, id),
       title: header.title,
       subtitle: header.subtitle,
       stats: {
@@ -149,6 +151,29 @@ submissionApp.get('/submit/confirm_full_consent', (req, res) => {
   })
 })
 
+submissionApp.post(
+  '/submissions/:submissionId/approve',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    if (req.user.role !== 'admin') {
+      return res.json(401).json({ message: 'No permission to access' })
+    }
+    let submission = Submission.findOne({ id: req.params.submissionId })
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    const tag = req.body.tag
+    submission.status = 'scheduled'
+    submission.tag = tag
+    submission = await submission.save()
+    if (submission) {
+      res.json(submission)
+    } else {
+      res.status(422).json({ message: 'Submission can not be approved' })
+    }
+  }
+)
+
 function raw2Text (raw) {
   let text = ''
   for (let i = 0; i < raw.document.nodes.length; i++) {
@@ -176,8 +201,8 @@ function randomString (length) {
   })
 }
 
-function slugGenerator (str) {
-  return slugify(str) + randomString(4)
+function slugGenerator (str, id) {
+  return slugify(str) + (id || randomString(4))
 }
 
 function getImageUrl (raw) {
@@ -186,33 +211,29 @@ function getImageUrl (raw) {
     .map(imgNode => imgNode.data.src)
 }
 
-function getImageId (imageURLs) {
-  return imageURLs.map(url =>
-    url
-      .split('\\')
-      .pop()
-      .split('/')
-      .pop()
-      .replace(/\.[^/.]+$/, '')
-  )
-}
+// function getImageId (imageURLs) {
+//   return imageURLs.map(url =>
+//     url
+//       .split('\\')
+//       .pop()
+//       .split('/')
+//       .pop()
+//       .replace(/\.[^/.]+$/, '')
+//   )
+// }
 
 function addUrlImageToContent (key, url, content) {
-  var nodes = content.document.nodes
-  for (var i = 0; i < nodes.length; i++) {
-    if (nodes[i].data.key == key) {
-      nodes[i].data.src = url
-      nodes[i].data.key = null
-      return content
-    }
-  }
+  content.document.nodes.filter(node => node.data.key === key).forEach(node => {
+    node.data.src = url
+    node.data.key = null
+  })
 }
 
 async function uploadImgAsync (req, res, content) {
-  var imgs = req.files.images
+  const imgs = req.files.images
   if (imgs) {
-    var keys = Object.keys(imgs)
-    for (var i = 0; i < keys.length; i++) {
+    const keys = Object.keys(imgs)
+    for (let i = 0; i < keys.length; i++) {
       await cloudinary.uploader.upload(imgs[keys[i]].path, async result => {
         ws.send((i + 1) / keys.length * 100)
         const image = new Image({
