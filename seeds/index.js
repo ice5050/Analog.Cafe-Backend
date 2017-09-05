@@ -4,7 +4,8 @@ const seeds = [
   ...require('./01_users')(),
   ...require('./02_articles')(),
   ...require('./03_images')(),
-  ...require('./04_settings')()
+  ...require('./04_settings')(),
+  ...require('./05_submissions')()
 ]
 
 console.log('Begin seeding')

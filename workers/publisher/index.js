@@ -34,4 +34,9 @@ async function run () {
   })
 }
 
-export default run
+async function app () {
+  await run()
+  process.exit()
+}
+
+app()

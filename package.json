@@ -47,7 +47,8 @@
     "start": "node --harmony index.js",
     "dev": "nodemon --harmony index.js",
     "db:seed": "node --harmony seeds/index.js",
-    "db:clean": "node --harmony seeds/clean_db.js"
+    "db:clean": "node --harmony seeds/clean_db.js",
+    "scheduler:publish": "node --harmony workers/publisher/index.js"
   },
   "lint-staged": {
     "{app,models,seeds}/**/*.js": [
