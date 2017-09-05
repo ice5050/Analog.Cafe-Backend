@@ -10,7 +10,7 @@ userApp.put(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     if (req.user.id !== req.body.id) {
-      return res.json(401).json({ message: 'No permission to access' })
+      return res.status(401).json({ message: 'No permission to access' })
     }
     let user = await User.findOne(req.user.id)
     user = {
@@ -36,7 +36,7 @@ userApp.put(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     if (req.user.role !== 'admin') {
-      return res.json(401).json({ message: 'No permission to access' })
+      return res.status(401).json({ message: 'No permission to access' })
     }
     let user = await User.findOne({ id: req.params.userId })
     if (!user) {
@@ -60,7 +60,7 @@ userApp.put(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     if (req.user.role !== 'admin') {
-      return res.json(401).json({ message: 'No permission to access' })
+      return res.status(401).json({ message: 'No permission to access' })
     }
     let user = await User.findOne({ id: req.params.userId })
     if (!user) {

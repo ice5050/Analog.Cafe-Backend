@@ -156,15 +156,14 @@ submissionApp.post(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     if (req.user.role !== 'admin') {
-      return res.json(401).json({ message: 'No permission to access' })
+      return res.status(401).json({ message: 'No permission to access' })
     }
-    let submission = Submission.findOne({ id: req.params.submissionId })
+    let submission = await Submission.findOne({ id: req.params.submissionId })
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
     }
-    const tag = req.body.tag
     submission.status = 'scheduled'
-    submission.tag = tag
+    submission.tag = req.body.tag
     submission = await submission.save()
     if (submission) {
       res.json(submission)

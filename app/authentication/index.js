@@ -15,8 +15,8 @@ jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
 const wss = new WebSocket.Server({
   port: process.env.WEBSOCKET_PORT_AUTHEN_TOKEN
 })
-var ws = null
-wss.on('connection', function connection (_ws) {
+let ws = null
+wss.on('connection', _ws => {
   ws = _ws
 })
 
@@ -29,9 +29,11 @@ authApp.get(
     const user = req.user
     const payload = { id: user.id }
     const token = jwt.sign(payload, jwtOptions.secretOrKey)
-    ws.send(token)
+    if (ws) {
+      ws.send(token)
+    }
     res.set('Content-Type', 'text/html')
-    res.send(new Buffer('<script>window.close();</script>'))
+    res.send(Buffer.from('<script>window.close();</script>'))
   }
 )
 
@@ -53,7 +55,7 @@ function setupPassport () {
       },
       (token, tokenSecret, profile, cb) => {
         const username = sanitizeUsername(profile.username)
-        User.findOne({ twitterId: profile.id }).exec((err, user) => {
+        User.findOne({ twitterId: profile.id }).exec((_, user) => {
           if (!user) {
             User.create(
               {
@@ -62,7 +64,7 @@ function setupPassport () {
                 title: profile.displayName,
                 image: profile.photos[0] && profile.photos[0].value
               },
-              (err, user) => {
+              (_, user) => {
                 cb(null, user)
               }
             )
@@ -100,10 +102,7 @@ function setupPassport () {
 
 function sanitizeUsername (username) {
   if (!username) return null
-  return username
-    .split('@')[0]
-    .toLowerCase()
-    .replace(/\W/g, '.')
+  return username.split('@')[0].toLowerCase().replace(/\W/g, '.')
 }
 
 module.exports = authApp
