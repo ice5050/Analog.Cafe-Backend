@@ -70,19 +70,18 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
 articleApp.get('/articles/:articleSlug', async (req, res) => {
   const article = await Article.findOne({ slug: req.params.articleSlug })
-  const nextArticle = await Article.findOne({
-    'post-date': { $gt: article['post-date'] }
-  })
-  if (article) {
-    res.json({
-      ...article.toObject(),
-      nextArticle: nextArticle.slug
-    })
-  } else {
-    res.status(404).json({
+  if (!article) {
+    return res.status(404).json({
       message: 'Article not found'
     })
   }
+  const nextArticle = await Article.findOne({
+    'post-date': { $gt: article['post-date'] }
+  })
+  res.json({
+    ...article.toObject(),
+    nextArticle: (nextArticle && nextArticle.slug) || undefined
+  })
 })
 
 module.exports = articleApp
