@@ -122,31 +122,58 @@ submissionApp.post(
   }
 )
 
-submissionApp.put('/submissions/:submissionId', (req, res) => {
-  Submission.findOne({ submissionId: req.params.submissionId })
-    .then(submission => {
-      submission = Object.assign(submission, {
-        title: req.body.title,
-        subtitle: req.body.subtitle,
-        stats: {
-          images: req.body.images,
-          words: req.body.words
-        },
-        poster: {
-          small: req.body.poster.small,
-          medium: req.body.poster.medium,
-          large: req.body.poster.large
-        },
-        status: req.body.status,
-        summary: req.body.summary,
-        content: req.body.content
-      })
-      return submission.save()
+submissionApp.put(
+  '/submissions/:submissionId',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let submission = Submission.findOne({
+      id: req.params.submissionId
     })
-    .then(submission => {
-      res.json({ data: submission })
-    })
-})
+    if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+
+    let content = req.body.content
+    if (
+      typeof req.body.content === 'string' ||
+      req.body.content instanceof String
+    ) {
+      content = JSON.parse(req.body.content)
+    }
+    const rawText = content ? raw2Text(content) : undefined
+    const imageURLs = content ? getImageUrl(content) : undefined
+
+    submission = {
+      ...submission,
+      title: req.body.title,
+      subtitle: req.body.subtitle,
+      stats: {
+        images: rawImageCount(content),
+        words: count(rawText)
+      },
+      poster: imageURLs
+        ? {
+          small: imageURLs[0],
+          medium: imageURLs[0],
+          large: imageURLs[0]
+        }
+        : undefined,
+      summary: rawText ? rawText.substring(0, 250) : undefined,
+      content: req.body.content,
+      status: req.user.role === 'admin' ? req.body.status : 'pending',
+      tag: req.user.role === 'admin' ? req.body.tag : undefined
+    }
+
+    submission = await submission.save()
+    if (!submission) {
+      return res.status(422).json({ message: 'Submission can not be edited' })
+    }
+    res.json(submission.toObject())
+  }
+)
 
 submissionApp.post(
   '/submissions/upload',
