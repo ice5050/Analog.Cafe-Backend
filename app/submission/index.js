@@ -27,11 +27,42 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 })
 
-submissionApp.get('/submissions', (req, res) => {
-  Submission.find().then(submissions => {
-    res.json({ data: submissions })
-  })
-})
+submissionApp.get(
+  '/submissions',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const page = req.query.page || 1
+    const itemsPerPage = req.query['items-per-page'] || 10
+
+    let queries = [Submission.find(), Submission.find()]
+    if (!['admin', 'editor'].includes(req.user.role)) {
+      queries = queries.map(q => q.find({ 'author.id': req.user.id }))
+    }
+    let [query, countQuery] = queries
+
+    query
+      .select(
+        'id slug title subtitle stats author poster articleId tag status summary updatedAt createdAt'
+      )
+      .limit(itemsPerPage)
+      .skip(itemsPerPage * (page - 1))
+      .sort({ updatedAt: 'desc' })
+
+    const submissions = await query.exec()
+    const count = await countQuery.count().exec()
+
+    res.json({
+      status: 'ok',
+      page: {
+        current: page,
+        total: Math.ceil(count / itemsPerPage),
+        'items-total': count,
+        'items-per-page': itemsPerPage
+      },
+      items: submissions
+    })
+  }
+)
 
 submissionApp.get('/submissions/:submissionId', (req, res) => {
   Submission.findOne({
