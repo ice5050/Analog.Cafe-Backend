@@ -29,6 +29,7 @@
     "mongoose": "^4.11.1",
     "mongoose-auto-increment": "^5.0.1",
     "passport": "^0.3.2",
+    "passport-facebook": "^2.1.1",
     "passport-jwt": "^2.2.1",
     "passport-twitter": "^1.0.4",
     "rss": "^1.2.2",
