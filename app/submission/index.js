@@ -79,7 +79,10 @@ submissionApp.post(
         medium: imageURLs[0],
         large: imageURLs[0]
       },
-      author: req.user.id,
+      author: {
+        id: req.user.id,
+        name: req.user.title
+      },
       summary: rawText.substring(0, 250),
       content: { raw: content }
     })

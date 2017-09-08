@@ -10,6 +10,8 @@ const userSchema = new Schema(
     image: String,
     text: String,
     twitterId: String,
+    facebookId: String,
+    email: String,
     role: { type: String, default: 'member' },
     buttons: [
       {
