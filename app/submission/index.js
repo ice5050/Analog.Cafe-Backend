@@ -197,4 +197,25 @@ submissionApp.post(
   }
 )
 
+submissionApp.post(
+  '/submissions/:submissionId/reject',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    let submission = await Submission.findOne({ id: req.params.submissionId })
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    submission.status = 'rejected'
+    submission = await submission.save()
+    if (submission) {
+      res.json(submission)
+    } else {
+      res.status(422).json({ message: 'Submission can not be rejected' })
+    }
+  }
+)
+
 module.exports = submissionApp
