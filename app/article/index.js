@@ -1,8 +1,18 @@
 const express = require('express')
-const Article = require('../../models/mongo/article.js')
+const count = require('word-count')
+const Article = require('../../models/mongo/article')
 const Image = require('../../models/mongo/image')
 const User = require('../../models/mongo/user.js')
 const articleFeed = require('./article-feed')
+const Submission = require('../../models/mongo/submission')
+const passport = require('passport')
+const {
+  parseContent,
+  parseHeader,
+  raw2Text,
+  rawImageCount,
+  getImageUrl
+} = require('../../helpers/submission')
 const articleApp = express()
 
 articleApp.get(['/articles', '/list'], async (req, res) => {
@@ -105,5 +115,53 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     nextArticle: (nextArticle && nextArticle.slug) || undefined
   })
 })
+
+articleApp.put(
+  '/articles/:articleId',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let article = Article.findOne({
+      id: req.params.articleId
+    })
+    if (req.user.role !== 'admin' && req.user.id !== article.author.id) {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!article) {
+      return res.status(404).json({ message: 'Article not found' })
+    }
+
+    const content = parseContent(req.body.content)
+    const header = parseHeader(req.body.content)
+    const rawText = content ? raw2Text(content) : undefined
+    const imageURLs = content ? getImageUrl(content) : undefined
+
+    let submission = new Submission({
+      ...article,
+      title: header.title,
+      subtitle: header.subtitle,
+      stats: {
+        images: rawImageCount(content),
+        words: count(rawText)
+      },
+      poster: imageURLs
+        ? {
+          small: imageURLs[0],
+          medium: imageURLs[0],
+          large: imageURLs[0]
+        }
+        : undefined,
+      summary: rawText ? rawText.substring(0, 250) : undefined,
+      content: req.body.content,
+      status: req.user.role === 'admin' ? req.body.status : 'pending',
+      tag: req.user.role === 'admin' ? req.body.tag : undefined
+    })
+
+    submission = await submission.save()
+    if (!submission) {
+      return res.status(422).json({ message: 'Article can not be edited' })
+    }
+    res.json(submission.toObject())
+  }
+)
 
 module.exports = articleApp
