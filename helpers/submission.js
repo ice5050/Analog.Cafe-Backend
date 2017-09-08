@@ -11,21 +11,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 })
 
-export function parseContent (content) {
+function parseContent (content) {
   if (typeof content === 'string' || content instanceof String) {
     return JSON.parse(content)
   }
   return content
 }
 
-export function parseHeader (header) {
+function parseHeader (header) {
   if (typeof header === 'string' || header instanceof String) {
     return JSON.parse(header)
   }
   return header
 }
 
-export function raw2Text (raw) {
+function raw2Text (raw) {
   let text = ''
   for (let i = 0; i < raw.document.nodes.length; i++) {
     let nodeI = raw.document.nodes[i]
@@ -41,41 +41,41 @@ export function raw2Text (raw) {
   return text
 }
 
-export function rawImageCount (raw) {
+function rawImageCount (raw) {
   return raw.document.nodes.filter(node => node.type === 'image').length
 }
 
-export function randomString (length) {
+function randomString (length) {
   return chance.string({
     pool: 'abcdefghijklmnopqrstuvwxyz0123456789',
     length: 4
   })
 }
 
-export function slugGenerator (str, id) {
+function slugGenerator (str, id) {
   return slugify(str) + (id || randomString(4))
 }
 
-export function getImageUrl (raw) {
+function getImageUrl (raw) {
   return raw.document.nodes
     .filter(node => node.type === 'image')
     .map(imgNode => imgNode.data.src)
 }
 
-export function getImageId (imageURLs) {
+function getImageId (imageURLs) {
   return imageURLs.map(url =>
     url.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
   )
 }
 
-export function addUrlImageToContent (key, url, content) {
+function addUrlImageToContent (key, url, content) {
   content.document.nodes.filter(node => node.data.key === key).forEach(node => {
     node.data.src = url
     node.data.key = null
   })
 }
 
-export async function uploadImgAsync (req, res, content, ws) {
+async function uploadImgAsync (req, res, content, ws) {
   const imgs = req.files.images
   if (imgs) {
     const keys = Object.keys(imgs)
