@@ -2,6 +2,7 @@ const express = require('express')
 const Article = require('../../models/mongo/article.js')
 const Image = require('../../models/mongo/image')
 const User = require('../../models/mongo/user.js')
+const articleFeed = require('./article-feed')
 const articleApp = express()
 
 articleApp.get(['/articles', '/list'], async (req, res) => {
@@ -66,6 +67,27 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     },
     items: articles
   })
+})
+
+articleApp.get('/rss', async (req, res) => {
+  const query = Article.find()
+    .select(
+      'id slug title subtitle stats author poster tag status summary updatedAt createdAt post-date'
+    )
+    .limit(30)
+    .sort({ 'post-date': 'desc' })
+  const articles = await query.exec()
+  articles.forEach(a => {
+    articleFeed.item({
+      title: a.title,
+      description: a.summary,
+      author: a.author.id,
+      date: a.createdAt,
+      url: `https://www.analog.cafe/zine/${a.slug}`
+    })
+  })
+  res.type('rss')
+  res.send(articleFeed.xml())
 })
 
 articleApp.get('/articles/:articleSlug', async (req, res) => {
