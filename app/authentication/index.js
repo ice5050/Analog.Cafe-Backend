@@ -53,32 +53,24 @@ function setupPassport () {
         consumerSecret: process.env.TWITTER_APP_SECRET,
         callbackURL: process.env.TWITTER_CALLBACK_URL
       },
-      (token, tokenSecret, profile, cb) => {
+      async (token, tokenSecret, profile, cb) => {
         const username = sanitizeUsername(profile.username)
-        User.findOne({ twitterId: profile.id }).exec((_, user) => {
-          if (!user) {
-            User.create(
-              {
-                twitterId: profile.id,
-                id: username,
-                title: profile.displayName,
-                image: profile.photos[0] && profile.photos[0].value
-              },
-              (_, user) => {
-                cb(null, user)
-              }
-            )
-          } else {
-            cb(null, user)
-          }
-        })
+        let user = await User.findOne({ twitterId: profile.id })
+        if (!user) {
+          user = await User.create({
+            twitterId: profile.id,
+            id: username,
+            title: profile.displayName,
+            image: profile.photos[0] && profile.photos[0].value
+          })
+        }
+        cb(null, user)
       }
     )
   )
 
   passport.use(
     new JwtStrategy(jwtOptions, function (jwtPayload, next) {
-      console.log(jwtPayload)
       User.findOne({ id: jwtPayload.id }).then(user => {
         if (user) {
           next(null, user)
