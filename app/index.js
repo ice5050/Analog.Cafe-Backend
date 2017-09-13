@@ -28,7 +28,7 @@ app.use((err, req, res, next) => {
 })
 app.use(cors(corsOptions))
 
-app.get('/api', (req, res) => {
+app.get('/', (req, res) => {
   res.json({ status: 'Analog Cafe API' })
 })
 
