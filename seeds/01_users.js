@@ -7,6 +7,7 @@ const users = [
     twitterId: 'dmitrizzle',
     title: 'dmitrizzle',
     image: '/images/avatars/dmitrizzle.jpg',
+    email: 'mail@example.com',
     text:
       'Film photographer, writer, developer, designer, founder of Analog.Cafe.',
     buttons: [
