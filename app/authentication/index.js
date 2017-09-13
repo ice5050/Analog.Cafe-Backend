@@ -2,13 +2,14 @@ const express = require('express')
 const passport = require('passport')
 const jwt = require('jsonwebtoken')
 const passportJWT = require('passport-jwt')
-const ExtractJwt = passportJWT.ExtractJwt
-const JwtStrategy = passportJWT.Strategy
 const TwitterStrategy = require('passport-twitter').Strategy
 const FacebookStrategy = require('passport-facebook').Strategy
-const User = require('../../models/mongo/user.js')
-const authApp = express()
 const WebSocket = require('ws')
+const User = require('../../models/mongo/user.js')
+const sendMail = require('../../helpers/mailer')
+const ExtractJwt = passportJWT.ExtractJwt
+const JwtStrategy = passportJWT.Strategy
+const authApp = express()
 const jwtOptions = {}
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
@@ -106,29 +107,28 @@ function setupPassport () {
       {
         clientID: process.env.FACEBOOK_APP_ID,
         clientSecret: process.env.FACEBOOK_APP_SECRET,
-        callbackURL: 'http://localhost:8080/api/auth/facebook/callback',
+        callbackURL: process.env.FACEBOOK_CALLBACK_URL,
         profileFields: ['id', 'displayName', 'photos', 'email']
       },
-      function (accessToken, refreshToken, profile, cb) {
-        User.findOne({ facebookId: profile.id }).exec((_, user) => {
-          if (!user) {
-            const username = sanitizeUsername(profile.displayName)
-            User.create(
-              {
-                facebookId: profile.id,
-                id: username,
-                title: profile.displayName,
-                email: profile.emails[0] && profile.emails[0].value,
-                image: profile.photos[0] && profile.photos[0].value
-              },
-              (_, user) => {
-                cb(null, user)
-              }
-            )
-          } else {
-            cb(null, user)
-          }
-        })
+      async (accessToken, refreshToken, profile, cb) => {
+        let user = await User.findOne({ facebookId: profile.id })
+        if (!user) {
+          user = await User.create({
+            facebookId: profile.id,
+            id: sanitizeUsername(profile.displayName),
+            title: profile.displayName,
+            email: profile.emails[0] && profile.emails[0].value,
+            image: profile.photos[0] && profile.photos[0].value
+          })
+          sendMail({
+            to: user.email,
+            from: 'info@analog.cafe',
+            subject: 'Welcome to Analog.Cafe',
+            text: '',
+            html: 'Welcome to Analog.Cafe'
+          })
+        }
+        cb(null, user)
       }
     )
   )
@@ -146,10 +146,7 @@ function setupPassport () {
 
 function sanitizeUsername (username) {
   if (!username) return null
-  return username
-    .split('@')[0]
-    .toLowerCase()
-    .replace(/\W/g, '.')
+  return username.split('@')[0].toLowerCase().replace(/\W/g, '.')
 }
 
 module.exports = authApp
