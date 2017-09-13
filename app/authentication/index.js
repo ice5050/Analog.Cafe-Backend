@@ -6,11 +6,13 @@ const TwitterStrategy = require('passport-twitter').Strategy
 const FacebookStrategy = require('passport-facebook').Strategy
 const WebSocket = require('ws')
 const User = require('../../models/mongo/user.js')
-const sendMail = require('../../helpers/mailer')
 const ExtractJwt = passportJWT.ExtractJwt
 const JwtStrategy = passportJWT.Strategy
 const authApp = express()
 const jwtOptions = {}
+const { sendMail, sendVerifyEmail } = require('../../helpers/mailer')
+const { sanitizeUsername, rand5digit } = require('../../helpers/authenticate')
+
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
 
@@ -144,9 +146,79 @@ function setupPassport () {
   })
 }
 
-function sanitizeUsername (username) {
-  if (!username) return null
-  return username.split('@')[0].toLowerCase().replace(/\W/g, '.')
-}
+authApp.post('/auth/email', (req, res) => {
+  let email = req.body.email
+  let expired = new Date()
+  expired.setMinutes(expired.getMinutes() + 10)
+
+  User.findOne({ id: email }).exec((_, user) => {
+    let verifyCode = rand5digit()
+    let verifyLink =
+      req.protocol +
+      '://' +
+      req.get('host') +
+      '/auth/email/verify?code=' +
+      verifyCode
+    if (!user) {
+      User.create(
+        {
+          id: email,
+          email: email,
+          verifyCode: verifyCode,
+          expired: expired
+        },
+        (_, user) => {
+          // send email
+          sendVerifyEmail(user.email, verifyCode, verifyLink)
+          res.sendStatus(200)
+        }
+      )
+    } else {
+      User.update(
+        { id: user.id },
+        {
+          verifyCode: verifyCode,
+          expired: expired
+        }
+      ).then(images => {
+        // send email
+        sendVerifyEmail(user.email, verifyCode, verifyLink)
+        res.sendStatus(200)
+      })
+    }
+  })
+})
+
+authApp.get('/auth/email/verify', (req, res) => {
+  let code = req.query.code
+  // check verify email code
+  var verifyTime = new Date()
+  User.findOne({
+    verifyCode: code,
+    expired: { $gt: verifyTime }
+  }).exec((_, user) => {
+    // sign in user and generate token
+    if (user) {
+      const payload = { id: user.id }
+      const token = jwt.sign(payload, jwtOptions.secretOrKey)
+
+      User.update(
+        { id: user.id },
+        {
+          verifyCode: undefined,
+          expired: undefined
+        }
+      ).then(images => {
+        // send token to frontend
+        res.redirect(process.env.ANALOG_FRONTEND_URL + '?token=' + token)
+      })
+    } else {
+      // EXPIRED OR INVALIDCODE
+      res.redirect(
+        process.env.ANALOG_FRONTEND_URL + '?error=INVALID_OR_EXPIRED'
+      )
+    }
+  })
+})
 
 module.exports = authApp
