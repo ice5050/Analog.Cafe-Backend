@@ -78,7 +78,7 @@ submissionApp.post(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const content = parseContent(req.body.content)
-    const header = parseHeader(req.body.content)
+    const header = parseHeader(req.body.header)
     const rawText = raw2Text(content)
     const imageURLs = getImageUrl(content)
     const id = randomString()
