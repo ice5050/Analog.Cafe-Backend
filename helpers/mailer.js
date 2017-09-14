@@ -1,13 +1,22 @@
-const sgMail = require('@sendgrid/mail')
-sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+let SibApiV3Sdk = require('sib-api-v3-sdk')
+let defaultClient = SibApiV3Sdk.ApiClient.instance
 
-// to: 'test@example.com',
-// from: 'test@example.com',
-// subject: 'Sending with SendGrid is Fun',
-// text: 'and easy to do anywhere, even with Node.js',
-// html: '<strong>and easy to do anywhere, even with Node.js</strong>'
-function sendMail (msg) {
-  sgMail.send(msg)
+let apiKey = defaultClient.authentications['api-key']
+apiKey.apiKey = process.env.SENDINBLUE_API_KEY
+
+let apiInstance = new SibApiV3Sdk.SMTPApi()
+
+function sendMail (data) {
+  let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail({
+    sender: { name: data.from, email: data.from },
+    to: [data.to],
+    replyTo: { email: data.from },
+    subject: data.subject,
+    htmlContent: data.html
+  })
+  apiInstance
+    .sendTransacEmail(sendSmtpEmail)
+    .then(data => console.log(data), error => console.error(error))
 }
 
 function sendVerifyEmail (to, verifyCode, verifyLink) {

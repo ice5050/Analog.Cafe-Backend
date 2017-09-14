@@ -69,6 +69,7 @@ authApp.get(
 )
 
 function setupPassport () {
+  // Setup Twitter Strategy
   passport.use(
     new TwitterStrategy(
       {
@@ -92,18 +93,7 @@ function setupPassport () {
     )
   )
 
-  passport.use(
-    new JwtStrategy(jwtOptions, function (jwtPayload, next) {
-      User.findOne({ id: jwtPayload.id }).then(user => {
-        if (user) {
-          next(null, user)
-        } else {
-          next(null, false)
-        }
-      })
-    })
-  )
-
+  // Setup Facebook Strategy
   passport.use(
     new FacebookStrategy(
       {
@@ -122,17 +112,28 @@ function setupPassport () {
             email: profile.emails[0] && profile.emails[0].value,
             image: profile.photos[0] && profile.photos[0].value
           })
-          sendMail({
-            to: user.email,
-            from: 'info@analog.cafe',
-            subject: 'Welcome to Analog.Cafe',
-            text: '',
-            html: 'Welcome to Analog.Cafe'
-          })
+          // sendMail({
+          //   to: { email: user.email, name: user.title },
+          //   from: 'info@analog.cafe',
+          //   subject: 'Welcome to Analog.Cafe',
+          //   html: 'Welcome to Analog.Cafe'
+          // })
         }
         cb(null, user)
       }
     )
+  )
+
+  passport.use(
+    new JwtStrategy(jwtOptions, function (jwtPayload, next) {
+      User.findOne({ id: jwtPayload.id }).then(user => {
+        if (user) {
+          next(null, user)
+        } else {
+          next(null, false)
+        }
+      })
+    })
   )
 
   passport.serializeUser((user, done) => {
