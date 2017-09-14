@@ -112,12 +112,12 @@ function setupPassport () {
             email: profile.emails[0] && profile.emails[0].value,
             image: profile.photos[0] && profile.photos[0].value
           })
-          // sendMail({
-          //   to: { email: user.email, name: user.title },
-          //   from: 'info@analog.cafe',
-          //   subject: 'Welcome to Analog.Cafe',
-          //   html: 'Welcome to Analog.Cafe'
-          // })
+          sendMail({
+            to: user.email,
+            from: 'info@analog.cafe',
+            subject: 'Welcome to Analog.Cafe',
+            html: 'Welcome to Analog.Cafe'
+          })
         }
         cb(null, user)
       }
