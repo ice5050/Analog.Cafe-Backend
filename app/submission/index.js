@@ -77,13 +77,13 @@ submissionApp.post(
   multipartMiddleware,
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const content = parseContent(req.body.content)
-    const header = parseHeader(req.body.header)
-    const rawText = raw2Text(content)
-    const imageURLs = getImageUrl(content)
-    const id = randomString()
-    await uploadImgAsync(req, res, content, ws)
-    const newSubmission = new Submission({
+    let content = parseContent(req.body.content)
+    let header = parseHeader(req.body.header)
+    let rawText = raw2Text(content)
+    let id = randomString()
+    await uploadImgAsync(req, res, content, ws) // and add image url to content
+    let imageURLs = getImageUrl(content) // Do after add image url to content
+    let newSubmission = new Submission({
       id,
       slug: slugGenerator(header.title, id),
       title: header.title,

@@ -76,13 +76,13 @@ function addUrlImageToContent (key, url, content) {
 }
 
 async function uploadImgAsync (req, res, content, ws) {
-  const imgs = req.files.images
+  let imgs = req.files.images
   if (imgs) {
-    const keys = Object.keys(imgs)
+    let keys = Object.keys(imgs)
     for (let i = 0; i < keys.length; i++) {
       await cloudinary.uploader.upload(imgs[keys[i]].path, async result => {
         ws.send((i + 1) / keys.length * 100)
-        const image = new Image({
+        let image = new Image({
           id: result.public_id,
           author: {
             name: req.user.title,
@@ -90,7 +90,7 @@ async function uploadImgAsync (req, res, content, ws) {
           },
           fullConsent: req.body.isFullConsent
         })
-        content = addUrlImageToContent(keys[i], result.url, content)
+        addUrlImageToContent(keys[i], result.url, content)
         await image.save()
       })
     }
