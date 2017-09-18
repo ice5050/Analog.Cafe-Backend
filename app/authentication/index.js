@@ -11,7 +11,11 @@ const JwtStrategy = passportJWT.Strategy
 const authApp = express()
 const jwtOptions = {}
 const { sendMail, sendVerifyEmail } = require('../../helpers/mailer')
-const { sanitizeUsername, rand5digit } = require('../../helpers/authenticate')
+const {
+  sanitizeUsername,
+  rand5digit,
+  getProfileImageURL
+} = require('../../helpers/authenticate')
 
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
@@ -78,14 +82,19 @@ function setupPassport () {
         callbackURL: process.env.TWITTER_CALLBACK_URL
       },
       async (token, tokenSecret, profile, cb) => {
+        console.log(profile._json.profile_image_url)
         const username = sanitizeUsername(profile.username)
+        const profileImageURL =
+          profile._json &&
+          profile._json.profile_image_url &&
+          getProfileImageURL(profile._json.profile_image_url)
         let user = await User.findOne({ twitterId: profile.id })
         if (!user) {
           user = await User.create({
             twitterId: profile.id,
             id: username,
             title: profile.displayName,
-            image: profile.photos[0] && profile.photos[0].value
+            image: profileImageURL
           })
         }
         cb(null, user)
