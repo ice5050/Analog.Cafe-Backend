@@ -10,6 +10,8 @@ const userSchema = new Schema(
     image: String,
     text: String,
     twitterId: String,
+    facebookId: String,
+    email: String,
     role: { type: String, default: 'member' },
     buttons: [
       {
@@ -18,7 +20,10 @@ const userSchema = new Schema(
         red: Boolean
       }
     ],
-    suspend: Boolean
+    suspend: Boolean,
+    email: String,
+    verifyCode: String,
+    expired: Date
   },
   {
     timestamps: true

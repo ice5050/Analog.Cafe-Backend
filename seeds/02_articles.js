@@ -21,6 +21,7 @@ const articles = [
       medium: '/images/pictures/an-introduction-cat-tax.jpg',
       large: '/images/pictures/an-introduction-cat-tax.jpg'
     },
+    status: 'published',
     summary:
       "This is officially the first post. I am nervous and tipsy, also grateful and excited. It feels pretty nice to be able to start something that's meant to inspire thousands and be the creative outlet for skilled film photographers, writers, and artists.",
     content: {
@@ -210,6 +211,7 @@ const articles = [
       medium: '/images/pictures/brighton-beach-015.jpg',
       large: '/images/pictures/brighton-beach-015.jpg'
     },
+    status: 'published',
     summary:
       'Brighton Beach is a Russian community neighbourhood in New York. When I was growing up in Moscow as a kid I’ve heard a lot about it on TV: the magical place where one can become and live like an American. During the early 90s, there was an obsession with everything USA; it suddenly became “amazing and wonderful”, instead of “the villain” — a narrative it was given for over fifty years prior. Perestroika flipped the entire culture onto its head.',
     content: {
@@ -487,6 +489,7 @@ const articles = [
       medium: '/images/pictures/lee-shanghai-1.jpg',
       large: '/images/pictures/lee-shanghai-1.jpg'
     },
+    status: 'published',
     summary:
       'The Olympus Supertrip is the second of two film cameras I picked up from a charity shop in Nottingham. The other was a Canon Sure Shot AF-7. If you’ve not read it yet, I’d recommend the article I wrote about them both here. While the test run of the Canon Sure Shot AF-7 was mainly done in Chongqing, I tested the Olympus Supertrip once I’d got back to Shanghai.',
     content: {
@@ -1096,6 +1099,7 @@ const articles = [
       medium: '/images/pictures/taiwan-bangkok.jpg',
       large: '/images/pictures/taiwan-bangkok.jpg'
     },
+    status: 'published',
     summary:
       'In Thailand, school is out for at least two months around March-April. Unfortunately, that’s also when the burning season begins. An excellent time to make a run for it if you ask me. Especially when living in Chiang Mai. A small city of 300,000 surrounded by farming fields which get very smoky during those sizzling months. My wife, Betty, and I heard good things about Taiwan. That’s typically enough for us to buy tickets and fly to a place that’s on the same continent. Which we did.',
     content: {
@@ -2094,6 +2098,7 @@ const articles = [
       medium: '/images/pictures/forgotten-photo.jpg',
       large: '/images/pictures/forgotten-photo.jpg'
     },
+    status: 'published',
     summary:
       'The photo above was taken over four years ago. Right around that time my career as a “Web Producer” has ended abruptly and thankfully. I was in Toronto selling and tossing all of our numerous and useless belongings, while Betty was setting up camp in China and reconnecting with her family. This is when she took this photo.',
     content: {
@@ -2251,6 +2256,7 @@ const articles = [
       medium: '/images/pictures/robert-angles.jpg',
       large: '/images/pictures/robert-angles.jpg'
     },
+    status: 'published',
     summary:
       'Below are Robert’s three selected photographs from Yorkshire Museum of Farming. They are all shot on black-and-white, medium-format film. Rob’s motivation while approaching his subject is philosophical. His prime interest is the emotions that arise in the photographer’s and the viewers’ minds.',
     content: {

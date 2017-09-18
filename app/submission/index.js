@@ -1,22 +1,70 @@
 const express = require('express')
 const passport = require('passport')
 const count = require('word-count')
-const slugify = require('slugify')
 const multipart = require('connect-multiparty')
-const cloudinary = require('cloudinary')
-const Chance = require('chance')
-const Submission = require('../../models/mongo/submission.js')
-const Image = require('../../models/mongo/image.js')
+const Submission = require('../../models/mongo/submission')
+const User = require('../../models/mongo/user')
+const Image = require('../../models/mongo/image')
+const WebSocket = require('ws')
+const { sendMail } = require('../../helpers/mailer')
+const {
+  parseContent,
+  parseHeader,
+  raw2Text,
+  rawImageCount,
+  randomString,
+  slugGenerator,
+  getImageUrl,
+  uploadImgAsync
+} = require('../../helpers/submission')
 
-const chance = new Chance()
 const submissionApp = express()
 const multipartMiddleware = multipart()
 
-submissionApp.get('/submissions', (req, res) => {
-  Submission.find().then(submissions => {
-    res.json({ data: submissions })
-  })
+const wss = new WebSocket.Server({
+  port: process.env.WEBSOCKET_PORT_UPLOAD_PROGRESS
 })
+let ws
+wss.on('connection', _ws => {
+  ws = _ws
+})
+
+submissionApp.get(
+  '/submissions',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const page = req.query.page || 1
+    const itemsPerPage = req.query['items-per-page'] || 10
+
+    let queries = [Submission.find(), Submission.find()]
+    if (!['admin', 'editor'].includes(req.user.role)) {
+      queries = queries.map(q => q.find({ 'author.id': req.user.id }))
+    }
+    let [query, countQuery] = queries
+
+    query
+      .select(
+        'id slug title subtitle stats author poster articleId tag status summary updatedAt createdAt'
+      )
+      .limit(itemsPerPage)
+      .skip(itemsPerPage * (page - 1))
+      .sort({ updatedAt: 'desc' })
+
+    const submissions = await query.exec()
+    const count = await countQuery.count().exec()
+
+    res.json({
+      status: 'ok',
+      page: {
+        current: page,
+        total: Math.ceil(count / itemsPerPage),
+        'items-total': count,
+        'items-per-page': itemsPerPage
+      },
+      items: submissions
+    })
+  }
+)
 
 submissionApp.get('/submissions/:submissionId', (req, res) => {
   Submission.findOne({
@@ -26,65 +74,24 @@ submissionApp.get('/submissions/:submissionId', (req, res) => {
   })
 })
 
-function raw2Text (raw) {
-  let text = ''
-  for (let i = 0; i < raw.document.nodes.length; i++) {
-    let nodeI = raw.document.nodes[i]
-    text = text + ' ' // new line
-    for (let j = 0; j < nodeI.nodes.length; j++) {
-      let nodeJ = nodeI.nodes[j]
-      for (let k = 0; k < nodeJ.ranges.length; k++) {
-        let ranges = nodeJ.ranges[k]
-        text = text + ranges.text
-      }
-    }
-  }
-  return text
-}
-
-function rawImageCount (raw) {
-  return raw.document.nodes.filter(node => node.type === 'image').length
-}
-
-function randomString (length) {
-  return chance.string({
-    pool: 'abcdefghijklmnopqrstuvwxyz0123456789',
-    length: 4
-  })
-}
-
-function slugGenerator (str) {
-  return slugify(str) + randomString(4)
-}
-
-function getImageUrl (raw) {
-  return raw.document.nodes
-    .filter(node => node.type === 'image')
-    .map(imgNode => imgNode.data.src)
-}
-
-function getImageId (imageURLs) {
-  return imageURLs.map(url =>
-    url.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
-  )
-}
-
 submissionApp.post(
   '/submissions',
+  multipartMiddleware,
   passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    let rawObj = req.body.raw
-    if (typeof req.body.raw === 'string' || req.body.raw instanceof String) {
-      rawObj = JSON.parse(req.body.raw)
-    }
-    let rawText = raw2Text(rawObj)
-    let imageURLs = getImageUrl(rawObj)
-    const newSubmission = new Submission({
-      slug: slugGenerator(req.body.title),
-      title: req.body.title,
-      subtitle: req.body.subtitle,
+  async (req, res) => {
+    let content = parseContent(req.body.content)
+    let header = parseHeader(req.body.header)
+    let rawText = raw2Text(content)
+    let id = randomString()
+    await uploadImgAsync(req, res, content, ws) // and add image url to content
+    let imageURLs = getImageUrl(content) // Do after add image url to content
+    let newSubmission = new Submission({
+      id,
+      slug: slugGenerator(header.title, id),
+      title: header.title,
+      subtitle: header.subtitle,
       stats: {
-        images: rawImageCount(rawObj),
+        images: rawImageCount(content),
         words: count(rawText)
       },
       poster: {
@@ -92,92 +99,83 @@ submissionApp.post(
         medium: imageURLs[0],
         large: imageURLs[0]
       },
-      author: req.user.id,
+      author: {
+        id: req.user.id,
+        name: req.user.title
+      },
       summary: rawText.substring(0, 250),
-      content: { raw: rawObj }
+      content: { raw: content }
     })
-    newSubmission.save().then(submission => {
-      res.json({
-        info: {
-          image: '/images/banners/image-suggestions-action.jpg',
-          title: 'More Exposure?',
-          text:
-            'If you choose “Yes,” we may suggest other authors to feature your images within their articles. You will be credited every time.',
-          buttons: [
-            {
-              request: {
-                method: 'get',
-                params: {
-                  images: getImageId(imageURLs)
-                },
-                url: `${req.protocol}://${req.headers
-                  .host}/api/submit/confirm_full_consent`
-              },
-              to: '#1',
-              text: 'Yes',
-              red: true
-            },
-            {
-              to: '#2',
-              text: 'No'
-            }
-          ]
-        }
-      })
-    })
+    await newSubmission.save()
+    res.sendStatus(200)
   }
 )
 
-submissionApp.put('/submissions/:submissionId', (req, res) => {
-  Submission.findOne({ submissionId: req.params.submissionId })
-    .then(submission => {
-      submission = Object.assign(submission, {
-        title: req.body.title,
-        subtitle: req.body.subtitle,
-        stats: {
-          images: req.body.images,
-          words: req.body.words
-        },
-        poster: {
-          small: req.body.poster.small,
-          medium: req.body.poster.medium,
-          large: req.body.poster.large
-        },
-        status: req.body.status,
-        summary: req.body.summary,
-        content: req.body.content
-      })
-      return submission.save()
-    })
-    .then(submission => {
-      res.json({ data: submission })
-    })
-})
-
-submissionApp.post(
-  '/submissions/upload',
-  multipartMiddleware,
+submissionApp.put(
+  '/submissions/:submissionId',
   passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET
+  async (req, res) => {
+    let submission = Submission.findOne({
+      id: req.params.submissionId
     })
-    cloudinary.uploader.upload(req.files.file.path, result => {
-      const image = new Image({
-        id: result.public_id,
-        author: {
-          name: req.user.title,
-          id: req.user.id
+    if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    if (
+      req.user.id === submission.author.id &&
+      submission.status === 'pending'
+    ) {
+      return res
+        .status(401)
+        .json({ message: 'No permission to edit pending submission' })
+    }
+
+    const author = await User.findOne({ id: submission.author.id })
+    const content = parseContent(req.body.content)
+    const header = parseHeader(req.body.content)
+    const rawText = content ? raw2Text(content) : undefined
+    const imageURLs = content ? getImageUrl(content) : undefined
+
+    submission = {
+      ...submission,
+      title: header.title,
+      subtitle: header.subtitle,
+      stats: {
+        images: rawImageCount(content),
+        words: count(rawText)
+      },
+      poster: imageURLs
+        ? {
+          small: imageURLs[0],
+          medium: imageURLs[0],
+          large: imageURLs[0]
         }
-      })
-      image.save().then(() =>
-        res.json({
-          url: result.url
+        : undefined,
+      summary: rawText ? rawText.substring(0, 250) : undefined,
+      content: req.body.content,
+      status: req.user.role === 'admin' ? req.body.status : 'pending',
+      tag: req.user.role === 'admin' ? req.body.tag : undefined
+    }
+
+    const isSubmissionModified = submission.isModified('status')
+
+    submission = await submission.save()
+    if (!submission) {
+      if (isSubmissionModified && author.email) {
+        sendMail({
+          to: author.email,
+          from: 'info@analog.cafe',
+          subject: 'Submission status updated',
+          text: `Submission #${submission.id}'s has been updated to be ${submission.status}`,
+          html: `Submission #${submission.id}'s has been updated to be ${submission.status}`
         })
-      )
-    })
+      }
+      return res.status(422).json({ message: 'Submission can not be edited' })
+    }
+    res.json(submission.toObject())
   }
 )
 
@@ -190,5 +188,48 @@ submissionApp.get('/submit/confirm_full_consent', (req, res) => {
     res.sendStatus(200)
   })
 })
+
+submissionApp.post(
+  '/submissions/:submissionId/approve',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    let submission = await Submission.findOne({ id: req.params.submissionId })
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    submission.status = 'scheduled'
+    submission.tag = req.body.tag
+    submission = await submission.save()
+    if (submission) {
+      res.json(submission)
+    } else {
+      res.status(422).json({ message: 'Submission can not be approved' })
+    }
+  }
+)
+
+submissionApp.post(
+  '/submissions/:submissionId/reject',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    let submission = await Submission.findOne({ id: req.params.submissionId })
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    submission.status = 'rejected'
+    submission = await submission.save()
+    if (submission) {
+      res.json(submission)
+    } else {
+      res.status(422).json({ message: 'Submission can not be rejected' })
+    }
+  }
+)
 
 module.exports = submissionApp

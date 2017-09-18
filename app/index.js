@@ -11,6 +11,7 @@ const corsOptions = {
 
 const app = express()
 app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
 app.use(
   session({
     store: new RedisStore({
@@ -28,16 +29,16 @@ app.use((err, req, res, next) => {
 })
 app.use(cors(corsOptions))
 
-app.get('/api', (req, res) => {
+app.get('/', (req, res) => {
   res.json({ status: 'Analog Cafe API' })
 })
 
 app.use(
-  '/api',
   require('./authentication'),
   require('./submission'),
   require('./article'),
-  require('./author')
+  require('./author'),
+  require('./image')
 )
 
 module.exports = app
