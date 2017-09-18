@@ -2,9 +2,11 @@ const express = require('express')
 const passport = require('passport')
 const count = require('word-count')
 const multipart = require('connect-multiparty')
-const Submission = require('../../models/mongo/submission.js')
-const Image = require('../../models/mongo/image.js')
+const Submission = require('../../models/mongo/submission')
+const User = require('../../models/mongo/user')
+const Image = require('../../models/mongo/image')
 const WebSocket = require('ws')
+const { sendMail } = require('../../helpers/mailer')
 const {
   parseContent,
   parseHeader,
@@ -131,6 +133,7 @@ submissionApp.put(
         .json({ message: 'No permission to edit pending submission' })
     }
 
+    const author = await User.findOne({ id: submission.author.id })
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.content)
     const rawText = content ? raw2Text(content) : undefined
@@ -157,8 +160,19 @@ submissionApp.put(
       tag: req.user.role === 'admin' ? req.body.tag : undefined
     }
 
+    const isSubmissionModified = submission.isModified('status')
+
     submission = await submission.save()
     if (!submission) {
+      if (isSubmissionModified && author.email) {
+        sendMail({
+          to: author.email,
+          from: 'info@analog.cafe',
+          subject: 'Submission status updated',
+          text: `Submission #${submission.id}'s has been updated to be ${submission.status}`,
+          html: `Submission #${submission.id}'s has been updated to be ${submission.status}`
+        })
+      }
       return res.status(422).json({ message: 'Submission can not be edited' })
     }
     res.json(submission.toObject())

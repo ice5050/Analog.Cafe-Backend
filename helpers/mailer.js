@@ -13,7 +13,7 @@ function sendMail (data) {
 }
 
 function sendVerifyEmail (to, verifyCode, verifyLink) {
-  let html = "<a href='" + verifyLink + "'>" + verifyLink + "</a>"
+  let html = "<a href='" + verifyLink + "'>" + verifyLink + '</a>'
   let text = 'Verify link: ' + verifyLink
   sendMail({
     to: to,
