@@ -34,6 +34,7 @@
     "passport-twitter": "^1.0.4",
     "rss": "^1.2.2",
     "sib-api-v3-sdk": "^3.0.2",
+    "sitemap": "^1.13.0",
     "slugify": "^1.2.1",
     "url-pattern": "^1.0.3",
     "word-count": "^0.2.2",
