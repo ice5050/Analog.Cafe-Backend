@@ -41,7 +41,7 @@ function randomString (length) {
 }
 
 function slugGenerator (str, id) {
-  return slugify(str) + '-' + (id || randomString(4))
+  return slugify(str).toLowerCase() + '-' + (id || randomString(4))
 }
 
 function getImageURLs (raw) {
