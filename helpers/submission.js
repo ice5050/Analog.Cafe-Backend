@@ -29,22 +29,6 @@ function parseHeader (header) {
   return header
 }
 
-function raw2Text (raw) {
-  let text = ''
-  for (let i = 0; i < raw.document.nodes.length; i++) {
-    let nodeI = raw.document.nodes[i]
-    text = text + ' ' // new line
-    for (let j = 0; j < nodeI.nodes.length; j++) {
-      let nodeJ = nodeI.nodes[j]
-      for (let k = 0; k < nodeJ.ranges.length; k++) {
-        let ranges = nodeJ.ranges[k]
-        text = text + ranges.text
-      }
-    }
-  }
-  return text
-}
-
 function rawImageCount (raw) {
   return raw.document.nodes.filter(node => node.type === 'image').length
 }
@@ -137,7 +121,6 @@ function rand5digit () {
 module.exports = {
   parseContent,
   parseHeader,
-  raw2Text,
   rawImageCount,
   randomString,
   slugGenerator,

@@ -9,7 +9,6 @@ const passport = require('passport')
 const {
   parseContent,
   parseHeader,
-  raw2Text,
   rawImageCount,
   getImageURLs
 } = require('../../helpers/submission')
@@ -134,7 +133,7 @@ articleApp.put(
 
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.content)
-    const rawText = content ? raw2Text(content) : undefined
+    const rawText = req.body['composer-content-text'] || undefined
     const imageURLs = content ? getImageURLs(content) : undefined
 
     let submission = new Submission({
