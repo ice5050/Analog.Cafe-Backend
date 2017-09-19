@@ -15,6 +15,7 @@ const {
   randomString,
   slugGenerator,
   getImageUrl,
+  getImageId,
   uploadImgAsync
 } = require('../../helpers/submission')
 
@@ -204,6 +205,28 @@ submissionApp.post(
     submission.tag = req.body.tag
     submission = await submission.save()
     if (submission) {
+      const imageURLs = submission.content.raw.document.nodes
+        .filters(node => node.type === 'image')
+        .map(node => node.data.src)
+      const imageIds = getImageId(imageURLs)
+      imageIds.map(async id => {
+        const image = await Image.findOne({ id })
+        const imageAuthor =
+          image && (await User.findOne({ id: image.author.id }))
+        if (
+          image &&
+          imageAuthor &&
+          imageAuthor.email &&
+          image.author.id !== submission.author.id
+        ) {
+          sendMail({
+            to: imageAuthor.email,
+            from: 'info@analog.cafe',
+            subject: 'Your image has been used',
+            body: `Your image has been used in Submission ${submission.id}`
+          })
+        }
+      })
       res.json(submission)
     } else {
       res.status(422).json({ message: 'Submission can not be approved' })
