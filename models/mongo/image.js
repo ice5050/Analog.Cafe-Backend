@@ -9,7 +9,8 @@ const imageSchema = new Schema({
     id: String,
     name: String
   },
-  fullConsent: Boolean
+  fullConsent: Boolean,
+  featured: { type: Boolean, default: false }
 })
 
 const Image = connection.model('Image', imageSchema)
