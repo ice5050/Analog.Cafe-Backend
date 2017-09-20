@@ -16,6 +16,26 @@ imageApp.get('/images/:imageId', async (req, res) => {
 })
 
 imageApp.put(
+  '/images/:imageId',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    let image = await Image.findOne({ id: req.params.imageId })
+    if (!image) {
+      return res.status(404).json({ message: 'Image not found' })
+    }
+    image = {
+      ...image,
+      fullConsent: req.body.fullConsent
+    }
+    await image.save()
+    res.json({ status: 'ok' })
+  }
+)
+
+imageApp.put(
   '/images/:imageId/feature',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
