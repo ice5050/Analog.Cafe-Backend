@@ -8,12 +8,54 @@ imageApp.get('/images/:imageId', async (req, res) => {
   if (!image) {
     return res.status(404).json({ message: 'Image not found' })
   }
-  return res.json({
+  res.json({
     status: 'ok',
     info: image,
     id: image.id
   })
 })
+
+imageApp.put(
+  '/images/:imageId/feature',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    const image = await Image.findOne({ id: req.params.imageId })
+    const numberOfFeaturedImages = await Image.find({ featured: true })
+      .count()
+      .exec()
+    if (!image) {
+      return res.status(404).json({ message: 'Image not found' })
+    }
+    if (numberOfFeaturedImages >= 8) {
+      return res
+        .status(422)
+        .json({ message: 'Featured images can not be more than 8' })
+    }
+    image.featured = true
+    await image.save()
+    res.json({ status: 'ok' })
+  }
+)
+
+imageApp.put(
+  '/images/:imageId/unfeature',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    const image = await Image.findOne({ id: req.params.imageId })
+    if (!image) {
+      return res.status(404).json({ message: 'Image not found' })
+    }
+    image.featured = false
+    await image.save()
+    res.json({ status: 'ok' })
+  }
+)
 
 imageApp.get(
   '/images',
