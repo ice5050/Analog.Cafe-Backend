@@ -8,6 +8,7 @@ async function run () {
   const setting = await Setting.findOne({})
   if (!setting.publishDays.includes(now.getDay())) return
   const scheduledSubmissions = await Submission.find({ status: 'scheduled' })
+    .sort({ scheduledOrder: 'asc' })
     .limit(setting.numberOfPublish)
     .exec()
 
