@@ -68,7 +68,7 @@ authApp.get(
   '/auth/user',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-    res.json({ data: req.user })
+    res.json({ status: 'ok', info: req.user.toObject() })
   }
 )
 
