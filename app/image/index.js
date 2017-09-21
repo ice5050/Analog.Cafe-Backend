@@ -1,6 +1,8 @@
 const express = require('express')
 const passport = require('passport')
+const User = require('../../models/mongo/user')
 const Image = require('../../models/mongo/image')
+const { sendMail } = require('../../helpers/mailer')
 const imageApp = express()
 
 imageApp.get('/images/:imageId', async (req, res) => {
@@ -43,6 +45,10 @@ imageApp.put(
       return res.status(401).json({ message: 'No permission to access' })
     }
     const image = await Image.findOne({ id: req.params.imageId })
+    if (!image) {
+      return res.status(404).json({ message: 'Image not found' })
+    }
+    const imageAuthor = await User.findOne({ id: image.author.id })
     const numberOfFeaturedImages = await Image.find({ featured: true })
       .count()
       .exec()
@@ -56,6 +62,15 @@ imageApp.put(
     }
     image.featured = true
     await image.save()
+    if (imageAuthor.email) {
+      sendMail({
+        to: imageAuthor.email,
+        from: 'info@analog.cafe',
+        subject: 'Your image has been featured',
+        text: 'Your image has been featured',
+        html: 'Your image has been featured'
+      })
+    }
     res.json({ status: 'ok' })
   }
 )
