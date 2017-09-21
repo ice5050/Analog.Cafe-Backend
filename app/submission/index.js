@@ -45,7 +45,7 @@ submissionApp.get(
 
     query
       .select(
-        'id slug title subtitle stats author poster articleId tag status summary updatedAt createdAt'
+        'id slug title subtitle stats author poster articleId tag status scheduledOrder summary updatedAt createdAt'
       )
       .limit(itemsPerPage)
       .skip(itemsPerPage * (page - 1))
@@ -202,6 +202,7 @@ submissionApp.post(
       return res.status(404).json({ message: 'Submission not found' })
     }
     submission.status = 'scheduled'
+    submission.scheduledOrder = req.body.scheduledOrder
     submission.tag = req.body.tag
     submission = await submission.save()
     if (submission) {

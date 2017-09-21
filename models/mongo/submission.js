@@ -26,6 +26,7 @@ const submissionSchema = new Schema(
     tag: String, // set after scheduling
     // Status: pending, scheduled, rejected, published
     status: { type: String, default: 'pending' },
+    scheduledOrder: Number,
     summary: String,
     content: Schema.Types.Mixed
   },
