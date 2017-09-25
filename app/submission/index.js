@@ -6,6 +6,7 @@ const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user')
 const Image = require('../../models/mongo/image')
 const WebSocket = require('ws')
+const submissionStatusUpdatedEmail = require('../../helpers/mailers/submission_updated')
 const { sendMail } = require('../../helpers/mailer')
 const {
   parseContent,
@@ -162,17 +163,22 @@ submissionApp.put(
     }
 
     const isSubmissionModified = submission.isModified('status')
+    const isSubmissionApprovedOrRejected = ['scheduled', 'rejected'].includes(
+      submission.status
+    )
 
     submission = await submission.save()
     if (!submission) {
-      if (isSubmissionModified && author.email) {
-        sendMail({
-          to: author.email,
-          from: 'info@analog.cafe',
-          subject: 'Submission status updated',
-          text: `Submission #${submission.id}'s has been updated to be ${submission.status}`,
-          html: `Submission #${submission.id}'s has been updated to be ${submission.status}`
-        })
+      if (
+        isSubmissionModified &&
+        isSubmissionApprovedOrRejected &&
+        author.email
+      ) {
+        submissionStatusUpdatedEmail(
+          author.email,
+          author.title,
+          submission.status
+        )
       }
       return res.status(422).json({ message: 'Submission can not be edited' })
     }

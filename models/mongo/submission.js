@@ -25,6 +25,7 @@ const submissionSchema = new Schema(
     },
     tag: String, // set after scheduling
     // Status: pending, scheduled, rejected, published
+    // scheduled also means the submission has been approved
     status: { type: String, default: 'pending' },
     scheduledOrder: Number,
     summary: String,
