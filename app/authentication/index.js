@@ -10,7 +10,8 @@ const ExtractJwt = passportJWT.ExtractJwt
 const JwtStrategy = passportJWT.Strategy
 const authApp = express()
 const jwtOptions = {}
-const { sendMail, sendVerifyEmail } = require('../../helpers/mailer')
+const { sendVerifyEmail } = require('../../helpers/mailer')
+const welcomeEmail = require('../../helpers/mailers/welcome')
 const {
   sanitizeUsername,
   rand5digit,
@@ -121,15 +122,7 @@ function setupPassport () {
             email: profile.emails[0] && profile.emails[0].value,
             image: profile.photos[0] && profile.photos[0].value
           })
-          sendMail({
-            to: user.email,
-            from: { email: 'info@analog.cafe', name: 'Analog.Cafe' },
-            subject: 'Welcome to Analog.Cafe',
-            templateId: '43cf07a0-669d-4a25-88fa-4b5e2d0f0cfe',
-            substitutions: {
-              'first_name | there': user.title
-            }
-          })
+          welcomeEmail(user.email, user.title)
         }
         cb(null, user)
       }
