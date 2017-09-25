@@ -123,9 +123,12 @@ function setupPassport () {
           })
           sendMail({
             to: user.email,
-            from: 'info@analog.cafe',
+            from: { email: 'info@analog.cafe', name: 'Analog.Cafe' },
             subject: 'Welcome to Analog.Cafe',
-            html: 'Welcome to Analog.Cafe'
+            templateId: '43cf07a0-669d-4a25-88fa-4b5e2d0f0cfe',
+            substitutions: {
+              'first_name | there': user.title
+            }
           })
         }
         cb(null, user)
