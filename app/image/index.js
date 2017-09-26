@@ -2,7 +2,7 @@ const express = require('express')
 const passport = require('passport')
 const User = require('../../models/mongo/user')
 const Image = require('../../models/mongo/image')
-const { sendMail } = require('../../helpers/mailer')
+const imageSuggestedEmail = require('../../helpers/mailers/image_suggested')
 const imageApp = express()
 
 imageApp.get('/images/:imageId', async (req, res) => {
@@ -63,13 +63,7 @@ imageApp.put(
     image.featured = true
     await image.save()
     if (imageAuthor.email) {
-      sendMail({
-        to: imageAuthor.email,
-        from: 'info@analog.cafe',
-        subject: 'Your image has been featured',
-        text: 'Your image has been featured',
-        html: 'Your image has been featured'
-      })
+      imageSuggestedEmail(imageAuthor.email, imageAuthor.title)
     }
     res.json({ status: 'ok' })
   }
