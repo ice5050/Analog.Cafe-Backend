@@ -62,10 +62,12 @@ function getImageUrl (raw) {
     .map(imgNode => imgNode.data.src)
 }
 
-function getImageId (imageURLs) {
-  return imageURLs.map(url =>
-    url.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
-  )
+function getImagesId (imageURLs) {
+  return imageURLs.map(getImageId)
+}
+
+function getImageId (imageUrl) {
+  return imageUrl.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
 }
 
 function addUrlImageToContent (key, url, content) {
@@ -117,6 +119,7 @@ module.exports = {
   randomString,
   slugGenerator,
   getImageUrl,
+  getImagesId,
   getImageId,
   addUrlImageToContent,
   uploadImgAsync,
