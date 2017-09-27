@@ -108,7 +108,7 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     })
   }
   const nextArticle = await Article.findOne({
-    'post-date': { $gt: article['post-date'] }
+    'post-date': { $lt: article['post-date'] }
   })
   res.json({
     ...article.toObject(),
