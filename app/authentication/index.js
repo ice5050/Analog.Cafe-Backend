@@ -169,36 +169,20 @@ authApp.post('/auth/email', async (req, res) => {
   res.sendStatus(200)
 })
 
-authApp.get('/auth/email/verify', (req, res) => {
-  const code = req.query.code
-  // check verify email code
-  var verifyTime = new Date()
-  User.findOne({
-    verifyCode: code,
-    expired: { $gt: verifyTime }
-  }).exec((_, user) => {
-    // sign in user and generate token
-    if (user) {
-      const payload = { id: user.id }
-      const token = jwt.sign(payload, jwtOptions.secretOrKey)
-
-      User.update(
-        { id: user.id },
-        {
-          verifyCode: undefined,
-          expired: undefined
-        }
-      ).then(images => {
-        // send token to frontend
-        res.redirect(process.env.ANALOG_FRONTEND_URL + '?token=' + token)
-      })
-    } else {
-      // EXPIRED OR INVALIDCODE
-      res.redirect(
-        process.env.ANALOG_FRONTEND_URL + '?error=INVALID_OR_EXPIRED'
-      )
-    }
-  })
+authApp.get('/auth/email/verify', async (req, res) => {
+  const verifyCode = req.query.code
+  const verifyTime = new Date()
+  let user = await User.findOne({ verifyCode, expired: { $gt: verifyTime } })
+  if (!user) {
+    return res.redirect(
+      process.env.ANALOG_FRONTEND_URL + '?error=INVALID_OR_EXPIRED'
+    )
+  }
+  const payload = { id: user.id }
+  const token = jwt.sign(payload, jwtOptions.secretOrKey)
+  user = { ...user, verifyCode: undefined, expired: undefined }
+  await user.save()
+  res.redirect(process.env.ANALOG_FRONTEND_URL + '?token=' + token)
 })
 
 module.exports = authApp
