@@ -10,11 +10,11 @@ const ExtractJwt = passportJWT.ExtractJwt
 const JwtStrategy = passportJWT.Strategy
 const authApp = express()
 const jwtOptions = {}
-const { sendVerifyEmail } = require('../../helpers/mailer')
 const welcomeEmail = require('../../helpers/mailers/welcome')
+const signInEmail = require('../../helpers/mailers/sign_in')
 const {
   sanitizeUsername,
-  rand5digit,
+  generateUserSignInURL,
   getProfileImageURL
 } = require('../../helpers/authenticate')
 
@@ -152,51 +152,25 @@ function setupPassport () {
   })
 }
 
-authApp.post('/auth/email', (req, res) => {
+authApp.post('/auth/email', async (req, res) => {
   let email = req.body.email
   let expired = new Date()
   expired.setMinutes(expired.getMinutes() + 10)
 
-  User.findOne({ id: email }).exec((_, user) => {
-    let verifyCode = rand5digit()
-    let verifyLink =
-      req.protocol +
-      '://' +
-      req.get('host') +
-      '/auth/email/verify?code=' +
-      verifyCode
-    if (!user) {
-      User.create(
-        {
-          id: email,
-          email: email,
-          verifyCode: verifyCode,
-          expired: expired
-        },
-        (_, user) => {
-          // send email
-          sendVerifyEmail(user.email, verifyCode, verifyLink)
-          res.sendStatus(200)
-        }
-      )
-    } else {
-      User.update(
-        { id: user.id },
-        {
-          verifyCode: verifyCode,
-          expired: expired
-        }
-      ).then(images => {
-        // send email
-        sendVerifyEmail(user.email, verifyCode, verifyLink)
-        res.sendStatus(200)
-      })
-    }
-  })
+  let user = await User.findOne({ id: email })
+  if (!user) {
+    user = await User.create({ id: email, email: email })
+  }
+  const signInURL = generateUserSignInURL(
+    `${req.protocol}://${req.get('host')}`,
+    user
+  )
+  signInEmail(user.email, signInURL)
+  res.sendStatus(200)
 })
 
 authApp.get('/auth/email/verify', (req, res) => {
-  let code = req.query.code
+  const code = req.query.code
   // check verify email code
   var verifyTime = new Date()
   User.findOne({
