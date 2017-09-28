@@ -1,41 +1,38 @@
 const mongoose = require('mongoose')
 const connection = require('./index.js')
+const timestamps = require('mongoose-ts')
 
 const Schema = mongoose.Schema
 
-const submissionSchema = new Schema(
-  {
-    id: String,
-    slug: String,
-    title: String,
-    subtitle: String,
-    stats: {
-      images: Number,
-      words: Number
-    },
-    author: {
-      id: String,
-      name: String
-    },
-    articleId: String,
-    poster: {
-      small: String,
-      medium: String,
-      large: String
-    },
-    tag: String, // set after scheduling
-    // Status: pending, scheduled, rejected, published
-    // scheduled also means the submission has been approved
-    status: { type: String, default: 'pending' },
-    scheduledOrder: Number,
-    summary: String,
-    content: Schema.Types.Mixed
+const submissionSchema = new Schema({
+  id: String,
+  slug: String,
+  title: String,
+  subtitle: String,
+  stats: {
+    images: Number,
+    words: Number
   },
-  {
-    timestamps: true
-  }
-)
+  author: {
+    id: String,
+    name: String
+  },
+  articleId: String,
+  poster: {
+    small: String,
+    medium: String,
+    large: String
+  },
+  tag: String, // set after scheduling
+  // Status: pending, scheduled, rejected, published
+  // scheduled also means the submission has been approved
+  status: { type: String, default: 'pending' },
+  scheduledOrder: Number,
+  summary: String,
+  content: Schema.Types.Mixed
+})
 
+submissionSchema.plugin(timestamps)
 const Submission = connection.model('Submission', submissionSchema)
 
 module.exports = Submission
