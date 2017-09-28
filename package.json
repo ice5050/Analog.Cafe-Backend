@@ -37,7 +37,8 @@
     "slugify": "^1.2.1",
     "url-pattern": "^1.0.3",
     "word-count": "^0.2.2",
-    "ws": "^3.1.0"
+    "ws": "^3.1.0",
+    "mongoose-ts": "0.1.0"
   },
   "devDependencies": {
     "husky": "^0.14.3",
