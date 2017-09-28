@@ -38,7 +38,8 @@ app.use(
   require('./submission'),
   require('./article'),
   require('./author'),
-  require('./image')
+  require('./image'),
+  require('./api')
 )
 
 module.exports = app
