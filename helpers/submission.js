@@ -1,6 +1,8 @@
 const Chance = require('chance')
 const slugify = require('slugify')
 const cloudinary = require('cloudinary')
+const sizeOf = require('image-size')
+const shortid = require('shortid')
 const Image = require('../models/mongo/image')
 
 const chance = new Chance()
@@ -56,14 +58,10 @@ function slugGenerator (str, id) {
   return slugify(str) + (id || randomString(4))
 }
 
-function getImageUrl (raw) {
+function getImageURLs (raw) {
   return raw.document.nodes
     .filter(node => node.type === 'image')
     .map(imgNode => imgNode.data.src)
-}
-
-function getImagesId (imageURLs) {
-  return imageURLs.map(getImageId)
 }
 
 function getImageId (imageUrl) {
@@ -80,31 +78,36 @@ function addUrlImageToContent (key, url, content) {
 async function uploadImgAsync (req, res, content, ws) {
   let imgs = req.files.images
   if (imgs) {
-    let keys = Object.keys(imgs)
+    const keys = Object.keys(imgs)
     for (let i = 0; i < keys.length; i++) {
-      await cloudinary.uploader.upload(imgs[keys[i]].path, async result => {
-        ws.send((i + 1) / keys.length * 100)
-        let image = new Image({
-          id: result.public_id,
-          author: {
-            name: req.user.title,
-            id: req.user.id
-          },
-          fullConsent: req.body.isFullConsent
-        })
-        addUrlImageToContent(keys[i], result.url, content)
-        await image.save()
-      })
+      const imgPath = imgs[keys[i]].path
+      const dimension = sizeOf(imgPath)
+      const ratio = (dimension.width / dimension.height * 1000000).toFixed(0)
+      const hash = shortid.generate()
+      await cloudinary.uploader.upload(
+        imgPath,
+        { public_id: `image-froth_${ratio}_${hash}` },
+        async result => {
+          ws.send((i + 1) / keys.length * 100)
+          let image = new Image({
+            id: result.public_id,
+            author: {
+              name: req.user.title,
+              id: req.user.id
+            },
+            fullConsent: req.body.isFullConsent
+          })
+          addUrlImageToContent(keys[i], result.url, content)
+          await image.save()
+        }
+      )
     }
   }
 }
 
 function sanitizeUsername (username) {
   if (!username) return null
-  return username
-    .split('@')[0]
-    .toLowerCase()
-    .replace(/\W/g, '.')
+  return username.split('@')[0].toLowerCase().replace(/\W/g, '.')
 }
 
 function rand5digit () {
@@ -118,8 +121,7 @@ module.exports = {
   rawImageCount,
   randomString,
   slugGenerator,
-  getImageUrl,
-  getImagesId,
+  getImageURLs,
   getImageId,
   addUrlImageToContent,
   uploadImgAsync,

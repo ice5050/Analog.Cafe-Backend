@@ -11,7 +11,7 @@ const {
   parseHeader,
   raw2Text,
   rawImageCount,
-  getImageUrl
+  getImageURLs
 } = require('../../helpers/submission')
 const articleApp = express()
 
@@ -133,7 +133,7 @@ articleApp.put(
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.content)
     const rawText = content ? raw2Text(content) : undefined
-    const imageURLs = content ? getImageUrl(content) : undefined
+    const imageURLs = content ? getImageURLs(content) : undefined
 
     let submission = new Submission({
       ...article,
