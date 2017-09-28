@@ -32,6 +32,7 @@ app.get('/', (req, res) => {
 })
 
 app.use(
+  require('./api'),
   require('./article'),
   require('./authentication'),
   require('./author'),
