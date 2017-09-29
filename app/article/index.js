@@ -110,6 +110,8 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   const nextArticle = await Article.findOne({
     'post-date': { $lt: article['post-date'] }
   })
+    .sort({ 'post-date': 'desc' })
+    .exec()
   res.json({
     ...article.toObject(),
     nextArticle: (nextArticle && nextArticle.slug) || undefined
