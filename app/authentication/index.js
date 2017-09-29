@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken')
 const passportJWT = require('passport-jwt')
 const TwitterStrategy = require('passport-twitter').Strategy
 const FacebookStrategy = require('passport-facebook').Strategy
-const WebSocket = require('ws')
 const User = require('../../models/mongo/user.js')
 const ExtractJwt = passportJWT.ExtractJwt
 const JwtStrategy = passportJWT.Strategy
@@ -21,15 +20,8 @@ const {
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
 
-const wss = new WebSocket.Server({
-  port: process.env.WEBSOCKET_PORT_AUTHEN_TOKEN
-})
-let ws = null
-wss.on('connection', _ws => {
-  ws = _ws
-})
-
 setupPassport()
+
 authApp.get('/auth/twitter', passport.authenticate('twitter'))
 authApp.get(
   '/auth/twitter/callback',
@@ -38,11 +30,7 @@ authApp.get(
     const user = req.user
     const payload = { id: user.id }
     const token = jwt.sign(payload, jwtOptions.secretOrKey)
-    if (ws) {
-      ws.send(token)
-    }
-    res.set('Content-Type', 'text/html')
-    res.send(Buffer.from('<script>window.close();</script>'))
+    res.redirect(`${process.env.ANALOG_FRONTEND_URL}?token=${token}`)
   }
 )
 
@@ -57,11 +45,7 @@ authApp.get(
     const user = req.user
     const payload = { id: user.id }
     const token = jwt.sign(payload, jwtOptions.secretOrKey)
-    if (ws) {
-      ws.send(token)
-    }
-    res.set('Content-Type', 'text/html')
-    res.send(Buffer.from('<script>window.close();</script>'))
+    res.redirect(`${process.env.ANALOG_FRONTEND_URL}?token=${token}`)
   }
 )
 
@@ -83,7 +67,6 @@ function setupPassport () {
         callbackURL: process.env.TWITTER_CALLBACK_URL
       },
       async (token, tokenSecret, profile, cb) => {
-        console.log(profile._json.profile_image_url)
         const username = sanitizeUsername(profile.username)
         const profileImageURL =
           profile._json &&
