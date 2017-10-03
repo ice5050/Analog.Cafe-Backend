@@ -13,15 +13,6 @@ const {
 } = require('../../helpers/submission')
 const articleApp = express()
 
-/**
- * @swagger
- * /:
- *   get:
- *     description: Returns the homepage
- *     responses:
- *       200:
- *         description: hello world
- */
 articleApp.get(['/articles', '/list'], async (req, res) => {
   const tags = (req.query.tag && req.query.tag.split(':')) || []
   const author = req.query.author

@@ -14,7 +14,11 @@ var swaggerDefinition = {
 
 var options = {
   swaggerDefinition: swaggerDefinition,
-  apis: ['./app/article/index.js']
+  apis: [
+    './app/article/index.js',
+    './app/authentication/index.js',
+    './app/submission/index.js'
+  ]
 }
 
 var swaggerSpec = swaggerJSDoc(options)

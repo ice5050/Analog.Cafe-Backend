@@ -4,7 +4,6 @@ const count = require('word-count')
 const multipart = require('connect-multiparty')
 const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user')
-const Image = require('../../models/mongo/image')
 const redisClient = require('../../helpers/redis')
 const submissionStatusUpdatedEmail = require('../../helpers/mailers/submission_updated')
 const {
@@ -84,6 +83,82 @@ submissionApp.get('/submissions/status/:submissionId', async (req, res) => {
   res.json({ progress })
 })
 
+/**
+  * @swagger
+  * /submissions:
+  *   post:
+  *     description: Create submission
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: header
+  *              in: query
+  *              schema:
+  *                type: object
+  *                properties:
+  *                  title:
+  *                    type: string
+  *                    required: true
+  *                  subtitle:
+  *                    type: string
+  *              required: true
+  *              description: Article header
+  *            - name: content.
+  *              in: query
+  *              schema:
+  *                type: object
+  *                properties:
+  *                  kind:
+  *                    type: string
+  *                  document:
+  *                    type: object
+  *                    properties:
+  *                      kind:
+  *                        type: string
+  *                      nodes:
+  *                        type: array
+  *                        items:
+  *                          type: object
+  *                          properties:
+  *                            type:
+  *                              type: string
+  *                            isVoid:
+  *                              type: boolean
+  *                            kind:
+  *                              type: string
+  *                            data:
+  *                              type: object
+  *                              properties:
+  *                                src:
+  *                                  type: string
+  *                            nodes:
+  *                              type: array
+  *                              items:
+  *                                type: object
+  *                                properties:
+  *                                  kind:
+  *                                    type: string
+  *                                  ranges:
+  *                                    type: array
+  *                                    items:
+  *                                      type: object
+  *                                      properties:
+  *                                        text:
+  *                                          type: string
+  *                                          description: Article subtitle
+  *                                        kind:
+  *                                          type: string
+  *                                        marks:
+  *                                          type: array
+  *              description:  Submission body
+  *     responses:
+  *       200:
+  *         description: Created submission.
+  */
 submissionApp.post(
   '/submissions',
   multipartMiddleware,
@@ -185,16 +260,6 @@ submissionApp.put(
     res.json(submission.toObject())
   }
 )
-
-submissionApp.get('/submit/confirm_full_consent', (req, res) => {
-  Image.update(
-    { id: { $in: req.query.images } },
-    { $set: { fullConsent: true } },
-    { multi: true }
-  ).then(images => {
-    res.sendStatus(200)
-  })
-})
 
 submissionApp.post(
   '/submissions/:submissionId/approve',

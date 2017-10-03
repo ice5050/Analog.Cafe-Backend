@@ -24,7 +24,26 @@ jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
 
 setupPassport()
 
+/**
+ * @swagger
+ * /auth/twitter:
+ *   get:
+ *     description: Twitter OAuth. Using passport
+ *     responses:
+ *       200:
+ *         description: Success sending request
+ */
 authApp.get('/auth/twitter', passport.authenticate('twitter'))
+
+/**
+ * @swagger
+ * /auth/twitter/callback:
+ *   get:
+ *     description: Twitter OAuth callback.
+ *     responses:
+ *       200:
+ *         description: Generate and save token to user
+ */
 authApp.get(
   '/auth/twitter/callback',
   passport.authenticate('twitter'),
@@ -36,10 +55,29 @@ authApp.get(
   }
 )
 
+/**
+ * @swagger
+ * /auth/facebook:
+ *   get:
+ *     description: Facebook OAuth. Using passport
+ *     responses:
+ *       200:
+ *         description: Success sending request
+ */
 authApp.get(
   '/auth/facebook',
   passport.authenticate('facebook', { scope: ['public_profile', 'email'] })
 )
+
+/**
+ * @swagger
+ * /auth/facebook/callback:
+ *   get:
+ *     description: Facebook OAuth callback.
+ *     responses:
+ *       200:
+ *         description: Generate and save token to user
+ */
 authApp.get(
   '/auth/facebook/callback',
   passport.authenticate('facebook'),
@@ -138,6 +176,22 @@ function setupPassport () {
   })
 }
 
+/**
+ * @swagger
+ * /auth/email:
+ *   post:
+ *     description: Authenticate or create user by email. This function will generate verify code and send email.
+ *     parameters:
+ *            - name: email
+ *              in: query
+ *              schema:
+ *                type: string
+ *              required: true
+ *              description: User email for registration or loging in
+ *     responses:
+ *       200:
+ *         description: Successfull send verify email.
+ */
 authApp.post('/auth/email', async (req, res) => {
   const email = req.body.email
   let expired = new Date()
@@ -167,6 +221,21 @@ authApp.post('/auth/email', async (req, res) => {
   res.sendStatus(200)
 })
 
+/**
+ * @swagger
+ * /auth/email/verify:
+ *   get:
+ *     description: Active user account if code is correct and code is not expired.
+ *     parameters:
+ *            - name: code
+ *              in: query
+ *              schema:
+ *                type: string
+ *              description: Verify code that generate at /auth/email
+ *     responses:
+ *       200:
+ *         description: Successfull active user account.
+ */
 authApp.get('/auth/email/verify', async (req, res) => {
   const verifyCode = req.query.code
   const verifyTime = new Date()
