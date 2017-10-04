@@ -5,7 +5,7 @@ const multipart = require('connect-multiparty')
 const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user')
 const Image = require('../../models/mongo/image')
-const WebSocket = require('ws')
+const redisClient = require('../../helpers/redis')
 const submissionStatusUpdatedEmail = require('../../helpers/mailers/submission_updated')
 const {
   parseContent,
@@ -20,14 +20,6 @@ const {
 
 const submissionApp = express()
 const multipartMiddleware = multipart()
-
-const wss = new WebSocket.Server({
-  port: process.env.WEBSOCKET_PORT_UPLOAD_PROGRESS
-})
-let ws
-wss.on('connection', _ws => {
-  ws = _ws
-})
 
 submissionApp.get(
   '/submissions',
@@ -74,6 +66,12 @@ submissionApp.get('/submissions/:submissionId', (req, res) => {
   })
 })
 
+submissionApp.get('/submissions/status/:submissionId', async (req, res) => {
+  const submissionId = req.params.submissionId
+  const progress = await redisClient.getAsync(`${submissionId}_upload_progress`)
+  res.json({ progress })
+})
+
 submissionApp.post(
   '/submissions',
   multipartMiddleware,
@@ -83,7 +81,6 @@ submissionApp.post(
     const header = parseHeader(req.body.header)
     const rawText = raw2Text(content)
     const id = randomString()
-    await uploadImgAsync(req, res, content, ws) // and add image url to content
     const imageURLs = getImageURLs(content) // Do after add image url to content
     const newSubmission = new Submission({
       id,
@@ -106,8 +103,10 @@ submissionApp.post(
       summary: rawText.substring(0, 250),
       content: { raw: content }
     })
-    await newSubmission.save()
-    res.sendStatus(200)
+    const submission = await newSubmission.save()
+    redisClient.set(`${newSubmission.id}_upload_progress`, '0')
+    uploadImgAsync(req, res, newSubmission.id) // and add image url to content
+    res.json(submission.toObject())
   }
 )
 

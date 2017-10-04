@@ -4,6 +4,8 @@ const cloudinary = require('cloudinary')
 const sizeOf = require('image-size')
 const shortid = require('shortid')
 const Image = require('../models/mongo/image')
+const Submission = require('../models/mongo/submission')
+const redisClient = require('../helpers/redis')
 
 const chance = new Chance()
 
@@ -68,41 +70,59 @@ function getImageId (imageUrl) {
   return imageUrl.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
 }
 
-function addUrlImageToContent (key, url, content) {
-  content.document.nodes.filter(node => node.data.key === key).forEach(node => {
-    node.data.src = url
-    node.data.key = null
-  })
+function addImageURLToContent (key, url, rawContent) {
+  rawContent.document.nodes
+    .filter(node => node.data && (node.data.key === key))
+    .forEach(node => {
+      node.data.src = url
+      node.data.key = null
+    })
 }
 
-async function uploadImgAsync (req, res, content, ws) {
-  let imgs = req.files.images
-  if (imgs) {
-    const keys = Object.keys(imgs)
-    for (let i = 0; i < keys.length; i++) {
-      const imgPath = imgs[keys[i]].path
-      const dimension = sizeOf(imgPath)
-      const ratio = (dimension.width / dimension.height * 1000000).toFixed(0)
-      const hash = shortid.generate()
-      await cloudinary.uploader.upload(
-        imgPath,
-        { public_id: `image-froth_${ratio}_${hash}` },
-        async result => {
-          ws.send((i + 1) / keys.length * 100)
-          let image = new Image({
-            id: result.public_id,
-            author: {
-              name: req.user.title,
-              id: req.user.id
-            },
-            fullConsent: req.body.isFullConsent
-          })
-          addUrlImageToContent(keys[i], result.url, content)
-          await image.save()
-        }
-      )
+function getImageRatio (imgPath) {
+  const dimension = sizeOf(imgPath)
+  return (dimension.width / dimension.height * 1000000).toFixed(0)
+}
+
+async function deleteImageFromCloudinary (publicId) {
+  await cloudinary.v2.uploader.destroy(publicId)
+}
+
+async function uploadImgAsync (req, res, submissionId) {
+  const imgs = req.files.images
+  const keys = imgs ? Object.keys(imgs) : []
+  const numberOfImages = keys.length
+  keys.map(async (k, i) => {
+    const imgPath = imgs[k].path
+    const ratio = getImageRatio(imgPath)
+    const hash = shortid.generate()
+    const submission = await Submission.findOne({ id: submissionId })
+    const result = await cloudinary.v2.uploader.upload(
+      imgPath, { public_id: `image-froth_${ratio}_${hash}` }
+    )
+    const duplicatedImage = await Image.findOne({ etag: result.etag })
+    if (duplicatedImage) {
+      await deleteImageFromCloudinary(result.public_id)
+      addImageURLToContent(k, duplicatedImage.url, submission.content.raw)
+    } else {
+      const image = new Image({
+        id: result.public_id,
+        url: result.url,
+        author: { name: req.user.title, id: req.user.id },
+        etag: result.etag,
+        fullConsent: req.body.isFullConsent
+      })
+      await image.save()
+      addImageURLToContent(k, image.url, submission.content.raw)
     }
-  }
+    await submission.save()
+    let progress = await redisClient.getAsync(`${submissionId}_upload_progress`)
+    progress = Number(progress)
+    redisClient.set(
+      `${submissionId}_upload_progress`,
+      ((Math.ceil(progress / 100 * numberOfImages) + 1) / numberOfImages * 100).toFixed(2)
+    )
+  })
 }
 
 function sanitizeUsername (username) {
@@ -123,7 +143,7 @@ module.exports = {
   slugGenerator,
   getImageURLs,
   getImageId,
-  addUrlImageToContent,
+  addImageURLToContent,
   uploadImgAsync,
   sanitizeUsername,
   rand5digit
