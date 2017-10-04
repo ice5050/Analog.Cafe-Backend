@@ -14,9 +14,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(
   session({
-    store: new RedisStore({
-      url: process.env.REDIS_URL
-    }),
+    store: new RedisStore({ url: process.env.REDIS_URL }),
     secret: process.env.APPLICATION_SECRET,
     resave: false,
     saveUninitialized: false
