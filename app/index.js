@@ -34,6 +34,7 @@ app.get('/', (req, res) => {
 app.use(
   require('./authentication'),
   require('./submission'),
+  require('./sitemap'),
   require('./article'),
   require('./author'),
   require('./image')
