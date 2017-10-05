@@ -16,6 +16,8 @@ const {
   generateUserSignInURL,
   getProfileImageURL
 } = require('../../helpers/authenticate')
+const CODE_EXPIRED = 10 // after send verify email, code will expired (minute)
+const LIMIT_EMAIL_SENDING = 1 // cannot send verify email again until (minute)
 
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
@@ -136,13 +138,22 @@ function setupPassport () {
 }
 
 authApp.post('/auth/email', async (req, res) => {
-  let email = req.body.email
+  const email = req.body.email
   let expired = new Date()
-  expired.setMinutes(expired.getMinutes() + 10)
+  expired.setMinutes(expired.getMinutes() + CODE_EXPIRED)
 
   let user = await User.findOne({ id: email })
   if (!user) {
-    user = await User.create({ id: email, email: email })
+    user = await User.create({ id: email, email })
+  }
+  const dateTimeNow = new Date()
+  const limitSendEmail = new Date(
+    new Date(user.expired).getTime() -
+      CODE_EXPIRED * 60000 +
+      LIMIT_EMAIL_SENDING * 60000
+  )
+  if (limitSendEmail >= dateTimeNow) {
+    return res.status(400).json({ error: 'You need to wait for a minute before creating email for signing in again.' })
   }
   const signInURL = generateUserSignInURL(
     `${req.protocol}://${req.get('host')}`,
