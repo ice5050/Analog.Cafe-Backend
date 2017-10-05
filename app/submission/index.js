@@ -10,7 +10,6 @@ const submissionStatusUpdatedEmail = require('../../helpers/mailers/submission_u
 const {
   parseContent,
   parseHeader,
-  raw2Text,
   rawImageCount,
   randomString,
   slugGenerator,
@@ -79,7 +78,7 @@ submissionApp.post(
   async (req, res) => {
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
-    const rawText = raw2Text(content)
+    const rawText = req.body['composer-content-text'] || ''
     const id = randomString()
     const imageURLs = getImageURLs(content) // Do after add image url to content
     const newSubmission = new Submission({
@@ -135,7 +134,7 @@ submissionApp.put(
     const author = await User.findOne({ id: submission.author.id })
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.content)
-    const rawText = content ? raw2Text(content) : undefined
+    const rawText = req.body['composer-content-text'] || undefined
     const imageURLs = content ? getImageURLs(content) : undefined
 
     submission = {
