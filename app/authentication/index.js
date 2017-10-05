@@ -31,7 +31,7 @@ authApp.get(
   (req, res) => {
     const user = req.user
     const payload = { id: user.id }
-    const token = jwt.sign(payload, jwtOptions.secretOrKey)
+    const token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '3d' })
     res.redirect(`${process.env.ANALOG_FRONTEND_URL}?token=${token}`)
   }
 )
@@ -46,7 +46,7 @@ authApp.get(
   (req, res) => {
     const user = req.user
     const payload = { id: user.id }
-    const token = jwt.sign(payload, jwtOptions.secretOrKey)
+    const token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '3d' })
     res.redirect(`${process.env.ANALOG_FRONTEND_URL}?token=${token}`)
   }
 )
@@ -173,7 +173,7 @@ authApp.get('/auth/email/verify', async (req, res) => {
     )
   }
   const payload = { id: user.id }
-  const token = jwt.sign(payload, jwtOptions.secretOrKey)
+  const token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '3d' })
   user = { ...user, verifyCode: undefined, expired: undefined }
   await user.save()
   res.redirect(process.env.ANALOG_FRONTEND_URL + '?token=' + token)
