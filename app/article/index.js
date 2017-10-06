@@ -9,8 +9,7 @@ const passport = require('passport')
 const {
   parseContent,
   parseHeader,
-  rawImageCount,
-  getImageURLs
+  rawImageCount
 } = require('../../helpers/submission')
 const articleApp = express()
 
@@ -134,7 +133,6 @@ articleApp.put(
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.content)
     const rawText = req.body['composer-content-text'] || undefined
-    const imageURLs = content ? getImageURLs(content) : undefined
 
     let submission = new Submission({
       ...article,
@@ -144,13 +142,6 @@ articleApp.put(
         images: rawImageCount(content),
         words: count(rawText)
       },
-      poster: imageURLs
-        ? {
-          small: imageURLs[0],
-          medium: imageURLs[0],
-          large: imageURLs[0]
-        }
-        : undefined,
       summary: rawText ? rawText.substring(0, 250) : undefined,
       content: req.body.content,
       status: req.user.role === 'admin' ? req.body.status : 'pending',

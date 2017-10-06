@@ -17,11 +17,7 @@ const articleSchema = new Schema({
     id: String,
     name: String
   },
-  poster: {
-    small: String,
-    medium: String,
-    large: String
-  },
+  poster: String,
   'post-date': String,
   tag: String,
   status: { type: String, default: 'published' },

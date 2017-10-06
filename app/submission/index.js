@@ -13,7 +13,6 @@ const {
   rawImageCount,
   randomString,
   slugGenerator,
-  getImageURLs,
   uploadImgAsync
 } = require('../../helpers/submission')
 
@@ -80,7 +79,6 @@ submissionApp.post(
     const header = parseHeader(req.body.header)
     const rawText = req.body['composer-content-text'] || ''
     const id = randomString()
-    const imageURLs = getImageURLs(content) // Do after add image url to content
     const newSubmission = new Submission({
       id,
       slug: slugGenerator(header.title, id),
@@ -89,11 +87,6 @@ submissionApp.post(
       stats: {
         images: rawImageCount(content),
         words: count(rawText)
-      },
-      poster: {
-        small: imageURLs[0],
-        medium: imageURLs[0],
-        large: imageURLs[0]
       },
       author: {
         id: req.user.id,
@@ -113,9 +106,7 @@ submissionApp.put(
   '/submissions/:submissionId',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let submission = Submission.findOne({
-      id: req.params.submissionId
-    })
+    let submission = await Submission.findOne({ id: req.params.submissionId })
     if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
       return res.status(401).json({ message: 'No permission to access' })
     }
@@ -132,28 +123,23 @@ submissionApp.put(
     }
 
     const author = await User.findOne({ id: submission.author.id })
+
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.content)
-    const rawText = req.body['composer-content-text'] || undefined
-    const imageURLs = content ? getImageURLs(content) : undefined
+    const rawText = req.body['composer-content-text'] || ''
+    const id = randomString()
 
     submission = {
       ...submission,
+      slug: slugGenerator(header.title, id),
       title: header.title,
       subtitle: header.subtitle,
       stats: {
         images: rawImageCount(content),
         words: count(rawText)
       },
-      poster: imageURLs
-        ? {
-          small: imageURLs[0],
-          medium: imageURLs[0],
-          large: imageURLs[0]
-        }
-        : undefined,
       summary: rawText ? rawText.substring(0, 250) : undefined,
-      content: req.body.content,
+      content: { raw: content },
       status: req.user.role === 'admin' ? req.body.status : 'pending',
       tag: req.user.role === 'admin' ? req.body.tag : undefined
     }
@@ -165,19 +151,23 @@ submissionApp.put(
 
     submission = await submission.save()
     if (!submission) {
-      if (
-        isSubmissionModified &&
-        isSubmissionApprovedOrRejected &&
-        author.email
-      ) {
-        submissionStatusUpdatedEmail(
-          author.email,
-          author.title,
-          submission.status
-        )
-      }
       return res.status(422).json({ message: 'Submission can not be edited' })
     }
+
+    if (
+      isSubmissionModified &&
+      isSubmissionApprovedOrRejected &&
+      author.email
+    ) {
+      submissionStatusUpdatedEmail(
+        author.email,
+        author.title,
+        submission.status
+      )
+    }
+
+    redisClient.set(`${submission.id}_upload_progress`, '0')
+    uploadImgAsync(req, res, submission.id)
     res.json(submission.toObject())
   }
 )
