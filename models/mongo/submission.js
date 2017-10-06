@@ -18,11 +18,7 @@ const submissionSchema = new Schema({
     name: String
   },
   articleId: String,
-  poster: {
-    small: String,
-    medium: String,
-    large: String
-  },
+  poster: String,
   tag: String, // set after scheduling
   // Status: pending, scheduled, rejected, published
   // scheduled also means the submission has been approved

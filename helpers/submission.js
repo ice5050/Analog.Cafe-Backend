@@ -44,12 +44,6 @@ function slugGenerator (str, id) {
   return slugify(str).toLowerCase() + '-' + (id || randomString(4))
 }
 
-function getImageURLs (raw) {
-  return raw.document.nodes
-    .filter(node => node.type === 'image')
-    .map(imgNode => imgNode.data.src)
-}
-
 function getImageId (imageUrl) {
   return imageUrl.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
 }
@@ -99,6 +93,10 @@ async function uploadImgAsync (req, res, submissionId) {
       await image.save()
       addImageURLToContent(k, image.url, submission.content.raw)
     }
+    // If it's the first image, use it as the submission's poster
+    if (i === 0) {
+      submission.poster = result.url
+    }
     await submission.save()
     let progress = await redisClient.getAsync(`${submissionId}_upload_progress`)
     progress = Number(progress)
@@ -124,7 +122,6 @@ module.exports = {
   rawImageCount,
   randomString,
   slugGenerator,
-  getImageURLs,
   getImageId,
   addImageURLToContent,
   uploadImgAsync,
