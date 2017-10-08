@@ -2,6 +2,7 @@ const express = require('express')
 const User = require('../../models/mongo/user')
 const Article = require('../../models/mongo/article')
 const passport = require('passport')
+const { toShowingObject } = require('../../helpers/user')
 const userApp = express()
 
 // Editing his/her own profile
@@ -23,7 +24,7 @@ userApp.put(
     }
     user = await user.save()
     if (user) {
-      res.json(user)
+      res.json({ status: 'ok', info: toShowingObject(user) })
     } else {
       res.status(422).json({ message: 'User can not be edited' })
     }
