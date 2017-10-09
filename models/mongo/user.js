@@ -21,7 +21,6 @@ const userSchema = new Schema({
     }
   ],
   suspend: Boolean,
-  email: String,
   verifyCode: String,
   expired: Date
 })
