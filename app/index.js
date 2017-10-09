@@ -37,7 +37,8 @@ app.use(
   require('./sitemap'),
   require('./article'),
   require('./author'),
-  require('./image')
+  require('./image'),
+  require('./user')
 )
 
 module.exports = app
