@@ -19,7 +19,8 @@ async function generateUserSignInURL (baseURL, user) {
   const verifyCode = generateVerifyCode()
   const expired = new Date()
   expired.setMinutes(expired.getMinutes() + 10)
-  user = { ...user, verifyCode, expired }
+  user.verifyCode = verifyCode
+  user.expired = expired
   await user.save()
   return `${baseURL}/auth/email/verify?code=${verifyCode}`
 }
