@@ -1,19 +1,13 @@
 const Chance = require('chance')
 const slugify = require('slugify')
-const cloudinary = require('cloudinary')
 const sizeOf = require('image-size')
 const shortid = require('shortid')
 const Image = require('../models/mongo/image')
 const Submission = require('../models/mongo/submission')
 const redisClient = require('../helpers/redis')
+const cloudinary = require('../helpers/cloudinary')
 
 const chance = new Chance()
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-})
 
 function parseContent (content) {
   if (typeof content === 'string' || content instanceof String) {
