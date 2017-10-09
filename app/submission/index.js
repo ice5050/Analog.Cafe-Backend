@@ -59,12 +59,16 @@ submissionApp.get(
   }
 )
 
-submissionApp.get('/submissions/:submissionId', (req, res) => {
-  Submission.findOne({
+submissionApp.get('/submissions/:submissionId', async (req, res) => {
+  const submission = await Submission.findOne({
     submissionId: req.params.submissionId
-  }).then(submission => {
-    res.json({ data: submission })
   })
+  if (!submission) {
+    return res.status(404).json({
+      message: 'Submission not found'
+    })
+  }
+  res.json(submission.toObject())
 })
 
 submissionApp.get('/submissions/status/:submissionId', async (req, res) => {
