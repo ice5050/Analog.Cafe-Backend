@@ -80,7 +80,8 @@ function setupPassport () {
             twitterId: profile.id,
             id: username,
             title: profile.displayName,
-            image: profileImageURL
+            image: profileImageURL,
+            text: profile._json.description
           })
         }
         cb(null, user)
@@ -153,12 +154,10 @@ authApp.post('/auth/email', async (req, res) => {
       LIMIT_EMAIL_SENDING * 60000
   )
   if (limitSendEmail >= dateTimeNow) {
-    return res
-      .status(400)
-      .json({
-        error:
-          'You need to wait for a minute before creating email for signing in again.'
-      })
+    return res.status(400).json({
+      error:
+        'You need to wait for a minute before creating email for signing in again.'
+    })
   }
   const signInURL = generateUserSignInURL(
     `${req.protocol}://${req.get('host')}`,
