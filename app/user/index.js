@@ -10,12 +10,16 @@ userApp.put(
   '/users/me',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let user = await User.findOne({ id: req.user.id })
-    user.title = req.body.title || user.title
-    user.image = req.body.image || user.image
-    user.text = req.body.text || user.text
-    user.buttons = req.body.buttons || user.buttons
-    user = await user.save()
+    const user = await User.findOneAndUpdate(
+      { id: req.user.id },
+      {
+        [req.body.title && 'title']: req.body.title,
+        [req.body.image && 'image']: req.body.image,
+        [req.body.text && 'text']: req.body.text,
+        [req.body.buttons && 'buttons']: req.body.buttons
+      },
+      { new: true }
+    )
     if (user) {
       res.json({ status: 'ok', info: toShowingObject(user) })
     } else {
