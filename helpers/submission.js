@@ -50,7 +50,7 @@ function getImageId (imageUrl) {
 
 function addImageURLToContent (key, url, rawContent) {
   rawContent.document.nodes
-    .filter(node => node.data && (node.data.key === key))
+    .filter(node => node.data && node.data.key === key)
     .forEach(node => {
       node.data.src = url
       node.data.key = null
@@ -75,13 +75,15 @@ async function uploadImgAsync (req, res, submissionId) {
     const ratio = getImageRatio(imgPath)
     const hash = shortid.generate()
     const submission = await Submission.findOne({ id: submissionId })
-    const result = await cloudinary.v2.uploader.upload(
-      imgPath, { public_id: `image-froth_${ratio}_${hash}` }
-    )
+    const result = await cloudinary.v2.uploader.upload(imgPath, {
+      public_id: `image-froth_${ratio}_${hash}`
+    })
     const duplicatedImage = await Image.findOne({ etag: result.etag })
     if (duplicatedImage) {
       await deleteImageFromCloudinary(result.public_id)
       addImageURLToContent(k, duplicatedImage.url, submission.content.raw)
+      // If it's the first image, use it as the submission's poster
+      if (i === 0) submission.poster = duplicatedImage.url
     } else {
       const image = new Image({
         id: result.public_id,
@@ -92,17 +94,16 @@ async function uploadImgAsync (req, res, submissionId) {
       })
       await image.save()
       addImageURLToContent(k, image.url, submission.content.raw)
-    }
-    // If it's the first image, use it as the submission's poster
-    if (i === 0) {
-      submission.poster = result.url
+      if (i === 0) submission.poster = result.url
     }
     await submission.save()
     let progress = await redisClient.getAsync(`${submissionId}_upload_progress`)
     progress = Number(progress)
     redisClient.set(
       `${submissionId}_upload_progress`,
-      ((Math.ceil(progress / 100 * numberOfImages) + 1) / numberOfImages * 100).toFixed(2)
+      ((Math.ceil(progress / 100 * numberOfImages) + 1) /
+        numberOfImages *
+        100).toFixed(2)
     )
   })
 }

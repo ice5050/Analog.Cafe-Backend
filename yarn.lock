@@ -2227,9 +2227,9 @@ mongoose-auto-increment@^5.0.1:
   dependencies:
     extend "^3.0.0"
 
-mongoose-ts@0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/mongoose-ts/-/mongoose-ts-0.1.0.tgz#175340a387bd4d2b824fb24f5d9c1a087194ca4f"
+mongoose-timestamp-date-unix@^0.6.2:
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/mongoose-timestamp-date-unix/-/mongoose-timestamp-date-unix-0.6.2.tgz#ddc0cf42e55a4b66ca17b5c65e53226b52aff892"
   dependencies:
     defaults "^1.0.3"
 
