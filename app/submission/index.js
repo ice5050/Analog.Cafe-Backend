@@ -51,7 +51,10 @@ submissionApp.get(
         'items-total': count,
         'items-per-page': itemsPerPage
       },
-      items: submissions
+      items: submissions.map(s => ({
+        ...s.toObject(),
+        'post-date': s.createdAt
+      }))
     })
   }
 )

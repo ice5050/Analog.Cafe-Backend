@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const connection = require('./index.js')
-const timestamps = require('mongoose-ts')
+const timestamps = require('mongoose-timestamp-date-unix')
 
 const Schema = mongoose.Schema
 

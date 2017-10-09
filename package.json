@@ -29,7 +29,7 @@
     "moment": "^2.18.1",
     "mongoose": "^4.11.1",
     "mongoose-auto-increment": "^5.0.1",
-    "mongoose-ts": "0.1.0",
+    "mongoose-timestamp-date-unix": "^0.6.2",
     "passport": "^0.3.2",
     "passport-facebook": "^2.1.1",
     "passport-jwt": "^2.2.1",
