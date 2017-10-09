@@ -10,18 +10,11 @@ userApp.put(
   '/users/me',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    if (req.user.id !== req.body.id) {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
-    let user = await User.findOne(req.user.id)
-    user = {
-      ...user,
-      id: req.body.id || user.id,
-      title: req.body.title || user.title,
-      image: req.body.image || user.image,
-      text: req.body.text || user.text,
-      buttons: req.body.buttons || user.buttons
-    }
+    let user = await User.findOne({ id: req.user.id })
+    user.title = req.body.title || user.title
+    user.image = req.body.image || user.image
+    user.text = req.body.text || user.text
+    user.buttons = req.body.buttons || user.buttons
     user = await user.save()
     if (user) {
       res.json({ status: 'ok', info: toShowingObject(user) })
