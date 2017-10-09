@@ -17,7 +17,12 @@ var options = {
   apis: [
     './app/article/index.js',
     './app/authentication/index.js',
-    './app/submission/index.js'
+    './app/author/index.js',
+    './app/image/index.js',
+    './app/setting/index.js',
+    './app/sitemap/index.js',
+    './app/submission/index.js',
+    './app/user/index.js'
   ]
 }
 
