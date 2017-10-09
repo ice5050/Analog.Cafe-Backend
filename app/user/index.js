@@ -3,6 +3,8 @@ const User = require('../../models/mongo/user')
 const Article = require('../../models/mongo/article')
 const passport = require('passport')
 const { toShowingObject } = require('../../helpers/user')
+const cloudinary = require('../../helpers/cloudinary')
+
 const userApp = express()
 
 // Editing his/her own profile
@@ -10,12 +12,16 @@ userApp.put(
   '/users/me',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
+    let uploadedImage
+    if (req.body.image) {
+      uploadedImage = await cloudinary.v2.uploader.upload(req.body.image)
+    }
     const user = await User.findOneAndUpdate(
       { id: req.user.id },
       {
         [req.body.title && 'title']: req.body.title,
-        [req.body.image && 'image']: req.body.image,
         [req.body.text && 'text']: req.body.text,
+        [uploadedImage && 'image']: uploadedImage.url,
         [req.body.buttons && 'buttons']: req.body.buttons
       },
       { new: true }
