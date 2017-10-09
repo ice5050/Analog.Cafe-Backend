@@ -153,7 +153,12 @@ authApp.post('/auth/email', async (req, res) => {
       LIMIT_EMAIL_SENDING * 60000
   )
   if (limitSendEmail >= dateTimeNow) {
-    return res.status(400).json({ error: 'You need to wait for a minute before creating email for signing in again.' })
+    return res
+      .status(400)
+      .json({
+        error:
+          'You need to wait for a minute before creating email for signing in again.'
+      })
   }
   const signInURL = generateUserSignInURL(
     `${req.protocol}://${req.get('host')}`,
@@ -166,7 +171,11 @@ authApp.post('/auth/email', async (req, res) => {
 authApp.get('/auth/email/verify', async (req, res) => {
   const verifyCode = req.query.code
   const verifyTime = new Date()
-  let user = await User.findOne({ verifyCode, expired: { $gt: verifyTime } })
+  const user = await User.findOneAndUpdate(
+    { verifyCode, expired: { $gt: verifyTime } },
+    { verifyCode: null, expired: null },
+    { new: true }
+  )
   if (!user) {
     return res.redirect(
       process.env.ANALOG_FRONTEND_URL + '?error=INVALID_OR_EXPIRED'
@@ -174,8 +183,6 @@ authApp.get('/auth/email/verify', async (req, res) => {
   }
   const payload = { id: user.id }
   const token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '3d' })
-  user = { ...user, verifyCode: undefined, expired: undefined }
-  await user.save()
   res.redirect(process.env.ANALOG_FRONTEND_URL + '?token=' + token)
 })
 
