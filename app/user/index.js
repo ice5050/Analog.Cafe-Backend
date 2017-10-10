@@ -1,28 +1,39 @@
 const express = require('express')
+const shortid = require('shortid')
 const User = require('../../models/mongo/user')
 const Article = require('../../models/mongo/article')
 const passport = require('passport')
-const { toShowingObject } = require('../../helpers/user')
+const multipart = require('connect-multiparty')
+const { toShowingObject, parseButtons } = require('../../helpers/user')
 const cloudinary = require('../../helpers/cloudinary')
+const { getImageRatio } = require('../../helpers/submission')
 
 const userApp = express()
+const multipartMiddleware = multipart()
 
 // Editing his/her own profile
 userApp.put(
   '/users/me',
+  multipartMiddleware,
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let uploadedImage
-    if (req.body.image) {
-      uploadedImage = await cloudinary.v2.uploader.upload(req.body.image)
+    const buttons = parseButtons(req.body.buttons)
+    if (req.files.image) {
+      const imgPath = req.files.image.path
+      const hash = shortid.generate()
+      const ratio = getImageRatio(imgPath)
+      uploadedImage = await cloudinary.v2.uploader.upload(imgPath, {
+        public_id: `image-froth_${ratio}_${hash}`
+      })
     }
     const user = await User.findOneAndUpdate(
       { id: req.user.id },
       {
         [req.body.title && 'title']: req.body.title,
         [req.body.text && 'text']: req.body.text,
-        [uploadedImage && 'image']: uploadedImage.url,
-        [req.body.buttons && 'buttons']: req.body.buttons
+        [uploadedImage && 'image']: uploadedImage.public_id,
+        [buttons && 'buttons']: buttons
       },
       { new: true }
     )

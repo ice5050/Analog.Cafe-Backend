@@ -112,6 +112,7 @@ function rand5digit () {
 }
 
 module.exports = {
+  getImageRatio,
   parseContent,
   parseHeader,
   rawImageCount,
