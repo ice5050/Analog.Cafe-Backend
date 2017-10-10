@@ -59,17 +59,24 @@ submissionApp.get(
   }
 )
 
-submissionApp.get('/submissions/:submissionId', async (req, res) => {
-  const submission = await Submission.findOne({
-    submissionId: req.params.submissionId
-  })
-  if (!submission) {
-    return res.status(404).json({
-      message: 'Submission not found'
+submissionApp.get(
+  '/submissions/:submissionSlug',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const submission = await Submission.findOne({
+      slug: req.params.submissionSlug
     })
+    if (!submission) {
+      return res.status(404).json({
+        message: 'Submission not found'
+      })
+    }
+    if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    res.json(submission.toObject())
   }
-  res.json(submission.toObject())
-})
+)
 
 submissionApp.get('/submissions/status/:submissionId', async (req, res) => {
   const submissionId = req.params.submissionId
@@ -114,11 +121,11 @@ submissionApp.put(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
-    if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
+    }
+    if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
+      return res.status(401).json({ message: 'No permission to access' })
     }
     if (
       req.user.id === submission.author.id &&
