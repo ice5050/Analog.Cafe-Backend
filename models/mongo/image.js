@@ -10,7 +10,6 @@ const imageSchema = new Schema({
     name: String
   },
   etag: String,
-  url: String,
   fullConsent: Boolean,
   featured: { type: Boolean, default: false }
 })

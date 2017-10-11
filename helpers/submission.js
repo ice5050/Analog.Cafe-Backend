@@ -42,11 +42,11 @@ function getImageId (imageUrl) {
   return imageUrl.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
 }
 
-function addImageURLToContent (key, url, rawContent) {
+function addImageURLToContent (key, image, rawContent) {
   rawContent.document.nodes
     .filter(node => node.data && node.data.key === key)
     .forEach(node => {
-      node.data.src = url
+      node.data.src = image
       node.data.key = null
     })
 }
@@ -75,20 +75,19 @@ async function uploadImgAsync (req, res, submissionId) {
     const duplicatedImage = await Image.findOne({ etag: result.etag })
     if (duplicatedImage) {
       await deleteImageFromCloudinary(result.public_id)
-      addImageURLToContent(k, duplicatedImage.url, submission.content.raw)
+      addImageURLToContent(k, duplicatedImage.id, submission.content.raw)
       // If it's the first image, use it as the submission's poster
-      if (i === 0) submission.poster = duplicatedImage.url
+      if (i === 0) submission.poster = duplicatedImage.id
     } else {
       const image = new Image({
         id: result.public_id,
-        url: result.url,
         author: { name: req.user.title, id: req.user.id },
         etag: result.etag,
         fullConsent: req.body.isFullConsent
       })
       await image.save()
-      addImageURLToContent(k, image.url, submission.content.raw)
-      if (i === 0) submission.poster = result.url
+      addImageURLToContent(k, image.id, submission.content.raw)
+      if (i === 0) submission.poster = image.id
     }
     await submission.save()
     let progress = await redisClient.getAsync(`${submissionId}_upload_progress`)
