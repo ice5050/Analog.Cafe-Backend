@@ -89,6 +89,22 @@ authApp.get(
   }
 )
 
+/**
+ * @swagger
+ * /auth/user:
+ *   get:
+ *     description: Get user object
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *     responses:
+ *       200:
+ *         description: Return user
+ */
 authApp.get(
   '/auth/user',
   passport.authenticate('jwt', { session: false }),

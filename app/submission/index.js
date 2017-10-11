@@ -254,6 +254,94 @@ submissionApp.post(
   }
 )
 
+/**
+  * @swagger
+  * /submissions/:submissionId:
+  *   put:
+  *     description: Update submission
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: Submission id.
+  *            - name: header
+  *              in: query
+  *              schema:
+  *                type: object
+  *                properties:
+  *                  title:
+  *                    type: string
+  *                    required: true
+  *                  subtitle:
+  *                    type: string
+  *              required: true
+  *              description: Article header
+  *            - name: content.
+  *              in: query
+  *              schema:
+  *                type: object
+  *                properties:
+  *                  kind:
+  *                    type: string
+  *                  document:
+  *                    type: object
+  *                    properties:
+  *                      kind:
+  *                        type: string
+  *                      nodes:
+  *                        type: array
+  *                        items:
+  *                          type: object
+  *                          properties:
+  *                            type:
+  *                              type: string
+  *                            isVoid:
+  *                              type: boolean
+  *                            kind:
+  *                              type: string
+  *                            data:
+  *                              type: object
+  *                              properties:
+  *                                src:
+  *                                  type: string
+  *                            nodes:
+  *                              type: array
+  *                              items:
+  *                                type: object
+  *                                properties:
+  *                                  kind:
+  *                                    type: string
+  *                                  ranges:
+  *                                    type: array
+  *                                    items:
+  *                                      type: object
+  *                                      properties:
+  *                                        text:
+  *                                          type: string
+  *                                          description: Article subtitle
+  *                                        kind:
+  *                                          type: string
+  *                                        marks:
+  *                                          type: array
+  *              description:  Submission body
+  *     responses:
+  *       200:
+  *         description: Created submission.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be edited.
+  */
 submissionApp.put(
   '/submissions/:submissionId',
   passport.authenticate('jwt', { session: false }),
