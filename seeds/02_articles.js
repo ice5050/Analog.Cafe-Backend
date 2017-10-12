@@ -2,9 +2,6 @@ const Article = require('../models/mongo/article')
 
 const articles = [
   {
-    _id: {
-      $oid: '598801d0f36d285e99725c2a'
-    },
     tag: 'photo-essay',
     slug: 'brighton-beach-jrwe',
     title: 'Brighton Beach',
@@ -350,9 +347,6 @@ const articles = [
     __v: 0
   },
   {
-    _id: {
-      $oid: '598801e7f36d285e99725c2b'
-    },
     tag: 'editorial',
     slug: 'analog-cafe-e8tr',
     title: 'Analog.Cafe',
@@ -510,9 +504,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '59880240f36d285e99725c31'
-    },
     tag: 'review',
     slug: 'testing-the-olympus-supertrip-in-shanghai-sfd8',
     title: 'Testing the Olympus Supertrip in Shanghai',
@@ -1199,9 +1190,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '59884178ed71caf9e4896183'
-    },
     tag: 'photo-essay',
     slug: 'a-trip-to-taiwan-nwj7',
     title: 'A Trip to Taiwan',
@@ -2343,9 +2331,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '598841caed71caf9e4896184'
-    },
     tag: 'photo-essay',
     slug: 'when-was-this-again-pem1',
     title: 'When Was This, Again?',
@@ -2523,9 +2508,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '598841eded71caf9e4896185'
-    },
     tag: 'photo-essay',
     slug: 'within-the-mind-and-emotions-k38F',
     title: 'Within the Mind and Emotions',
@@ -2880,9 +2862,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '599c41813fed044949d36fcf'
-    },
     tag: 'photo-essay',
     slug: '7-reasons-to-love-instant-film-9dn3',
     title: '7 Reasons to Love Instant Film',
@@ -3662,9 +3641,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '59a58d986f6990def90adbac'
-    },
     tag: 'story',
     slug: 'india-trip-part-2-8afh',
     title: 'India Trip',
@@ -4238,9 +4214,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '59aebb726f6990def934ecf8'
-    },
     tag: 'photo-essay',
     slug: '23-days-in-myanmar-df7d',
     title: '23 Days in Myanmar',
@@ -4895,9 +4868,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '59b8baeb6f6990def96089a6'
-    },
     tag: 'guide',
     slug: 'analogue-photography-98f3',
     title: 'Analogue Photography',
@@ -5980,9 +5950,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '59c148156f6990def9843797'
-    },
     tag: 'review',
     slug: 'shooting-ilford-pan-400-in-shanghai-udfm',
     title: 'Shooting Ilford Pan 400 in Shanghai',
@@ -7503,9 +7470,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '59ca90696f6990def9adbb02'
-    },
     tag: 'photo-essay',
     slug: 'sportsmanship-in-solitude-fd82',
     title: 'Sportsmanship in Solitude',
@@ -7938,9 +7902,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '59ccc66c6f6990def9b94093'
-    },
     tag: 'review',
     slug: 'ql25-df78',
     title: 'QL25',
@@ -8346,9 +8307,6 @@ const articles = [
     __v: 0
   },
   {
-    _id: {
-      $oid: '59d1cc8b6f6990def9cfe1fa'
-    },
     tag: 'story',
     slug: 'india-trip-part-3-83nd',
     title: 'India Trip',
@@ -8987,9 +8945,6 @@ const articles = [
     __v: 0
   },
   {
-    _id: {
-      $oid: '59d603bb6f6990def9e64439'
-    },
     tag: 'editorial',
     slug: 'thank-you-for-reading-87fv',
     title: 'Thank You for Reading!',
@@ -9074,9 +9029,6 @@ const articles = [
     }
   },
   {
-    _id: {
-      $oid: '59dcfdc1eb9de18ef3de9778'
-    },
     tag: 'photo-essay',
     slug: '23-days-in-myanmar-fu9t',
     title: '23 Days in Myanmar',

@@ -2,9 +2,6 @@ const User = require('../models/mongo/user')
 
 const users = [
   {
-    _id: {
-      $oid: '598800cef36d285e99725bf9'
-    },
     id: 'dmitrizzle',
     role: 'admin',
     twitterId: 'dmitrizzle',
@@ -26,9 +23,6 @@ const users = [
     suspend: false
   },
   {
-    _id: {
-      $oid: '598800e4f36d285e99725bfd'
-    },
     id: 'lee-clark',
     twitterId: 'lee-clark',
     title: 'Lee Clark',
@@ -49,9 +43,6 @@ const users = [
     suspend: false
   },
   {
-    _id: {
-      $oid: '598800f9f36d285e99725bfe'
-    },
     id: 'lee-webb',
     twitterId: 'lee-webb',
     title: 'Lee Webb',
@@ -73,9 +64,6 @@ const users = [
     suspend: false
   },
   {
-    _id: {
-      $oid: '598859b5f36d285e997278e9'
-    },
     id: 'betty',
     twitterId: 'betty',
     role: 'contributor',
@@ -97,9 +85,6 @@ const users = [
     suspend: false
   },
   {
-    _id: {
-      $oid: '59885a30f36d285e99727923'
-    },
     id: 'robert-davie',
     twitterId: 'robert-davie',
     role: 'contributor',
@@ -121,9 +106,6 @@ const users = [
     suspend: false
   },
   {
-    _id: {
-      $oid: '599c47443fed044949d387c5'
-    },
     id: 'bailey-tovar',
     twitterId: 'bailey-tovar',
     role: 'contributor',
@@ -144,9 +126,6 @@ const users = [
     suspend: false
   },
   {
-    _id: {
-      $oid: '59a5778c6f6990def909e80e'
-    },
     id: 'jacob-maracle',
     twitterId: 'jacob-maracle',
     title: 'Jacob Maracle',
