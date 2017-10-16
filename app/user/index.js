@@ -77,7 +77,7 @@ userApp.put(
       {
         [req.body.title && 'title']: req.body.title,
         [req.body.text && 'text']: req.body.text,
-        [uploadedImage && 'image']: uploadedImage.public_id,
+        [uploadedImage && 'image']: uploadedImage && uploadedImage.public_id,
         [buttons && 'buttons']: buttons
       },
       { new: true }
