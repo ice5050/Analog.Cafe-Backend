@@ -3,9 +3,20 @@ const sm = require('sitemap')
 const Article = require('../../models/mongo/article')
 const sitemapApp = express()
 
+/**
+ * @swagger
+ * /sitemap.xml:
+ *   get:
+ *     description: Get sitemap.
+ *     responses:
+ *       200:
+ *         description: Return sitemap xml.
+ */
 sitemapApp.get('/sitemap.xml', async (req, res) => {
   let articleRootUrl = '/zine/'
-  let articles = await Article.find().select('slug').exec()
+  let articles = await Article.find()
+    .select('slug')
+    .exec()
 
   const articleUrls = [
     { url: '/' },

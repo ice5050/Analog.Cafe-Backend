@@ -11,7 +11,52 @@ const { getImageRatio } = require('../../helpers/submission')
 const userApp = express()
 const multipartMiddleware = multipart()
 
-// Editing his/her own profile
+/**
+  * @swagger
+  * /users/me:
+  *   put:
+  *     description: Editing his/her own profile
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: id
+  *              in: query
+  *              schema:
+  *                type: string
+  *                required: true
+  *              description: User id.
+  *            - name: title
+  *              in: query
+  *              schema:
+  *                type: string
+  *              description: User title.
+  *            - name: image
+  *              in: query
+  *              schema:
+  *                type: string
+  *              description: User image profile.
+  *            - name: text
+  *              in: query
+  *              schema:
+  *                type: string
+  *              description: User introduction.
+  *            - name: buttons
+  *              in: query
+  *              schema:
+  *                type: string
+  *              description: User buttons.
+  *     responses:
+  *       200:
+  *         description: Return edited user.
+  *       401:
+  *         description: No permission to access.
+  *       422:
+  *         description: User can not be edited.
+  */
 userApp.put(
   '/users/me',
   multipartMiddleware,
@@ -45,7 +90,34 @@ userApp.put(
   }
 )
 
-// Suspend user (only admin)
+/**
+  * @swagger
+  * /users/:userId/suspend:
+  *   put:
+  *     description: Suspend user (only admin)
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: userId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *              description: User id.
+  *     responses:
+  *       200:
+  *         description: Return edited user.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: User not found.
+  *       422:
+  *         description: User can not be suspended.
+  */
 userApp.put(
   '/users/:userId/suspend',
   passport.authenticate('jwt', { session: false }),
@@ -69,7 +141,31 @@ userApp.put(
   }
 )
 
-// Delete user (only admin)
+/**
+  * @swagger
+  * /users/:userId/delete:
+  *   put:
+  *     description: Delete user (only admin)
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: userId
+  *              in: path
+  *              schema:
+  *                type: string
+  *              description: User id.
+  *     responses:
+  *       200:
+  *         description: Return edited user.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: User not found.
+  */
 userApp.put(
   '/users/:userId/delete',
   passport.authenticate('jwt', { session: false }),

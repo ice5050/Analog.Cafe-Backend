@@ -5,6 +5,24 @@ const Image = require('../../models/mongo/image')
 const imageSuggestedEmail = require('../../helpers/mailers/image_suggested')
 const imageApp = express()
 
+/**
+ * @swagger
+ * /images/:imageId:
+ *   get:
+ *     description: Get image by id
+ *     parameters:
+ *            - name: imageId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                description: Image id
+ *                required: true
+ *     responses:
+ *       200:
+ *         description: Return image information.
+ *       404:
+ *         description: Image not found.
+ */
 imageApp.get('/images/:imageId', async (req, res) => {
   const image = await Image.findOne({ id: req.params.imageId })
   if (!image) {
@@ -17,6 +35,38 @@ imageApp.get('/images/:imageId', async (req, res) => {
   })
 })
 
+/**
+ * @swagger
+ * /images/:imageId:
+ *   put:
+ *     description: Update image full consent or basic consent.
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: imageId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                description: Image id
+ *                required: true
+ *            - name: fullConsent
+ *              in: query
+ *              schema:
+ *                type: boolean
+ *                description: true for full-consent. false for basic-consent
+ *                required: true
+ *     responses:
+ *       200:
+ *         description: Upadate image successfully.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Image not found.
+ */
 imageApp.put(
   '/images/:imageId',
   passport.authenticate('jwt', { session: false }),
@@ -37,6 +87,34 @@ imageApp.put(
   }
 )
 
+/**
+ * @swagger
+ * /images/:imageId/feature:
+ *   put:
+ *     description: Set image to be feature image.
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: imageId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                description: Image id
+ *                required: true
+ *     responses:
+ *       200:
+ *         description: Upadate image successfully.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Image not found.
+ *       422:
+ *         description: Featured images can not be more than 8.
+ */
 imageApp.put(
   '/images/:imageId/feature',
   passport.authenticate('jwt', { session: false }),
@@ -69,6 +147,32 @@ imageApp.put(
   }
 )
 
+/**
+ * @swagger
+ * /images/:imageId/unfeature:
+ *   put:
+ *     description: Unset feature image for this image.
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: imageId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                description: Image id
+ *                required: true
+ *     responses:
+ *       200:
+ *         description: Upadate image successfully.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Image not found.
+ */
 imageApp.put(
   '/images/:imageId/unfeature',
   passport.authenticate('jwt', { session: false }),
@@ -86,6 +190,32 @@ imageApp.put(
   }
 )
 
+/**
+ * @swagger
+ * /images:
+ *   get:
+ *     description: Get all images.
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: page
+ *              in: query
+ *              schema:
+ *                type: integer
+ *                description: Current page number.
+ *            - name: items-per-page
+ *              in: query
+ *              schema:
+ *                type: integer
+ *                description: Number of items per one page.
+ *     responses:
+ *       200:
+ *         description: Return images.
+ */
 imageApp.get(
   '/images',
   passport.authenticate('jwt', { session: false }),
@@ -119,7 +249,32 @@ imageApp.get(
   }
 )
 
-// Delete image (only admin)
+/**
+ * @swagger
+ * /images/:imageId/delete:
+ *   put:
+ *     description: Delete image by image id (only admin).
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: imageId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                description: Image id
+ *                required: true
+ *     responses:
+ *       200:
+ *         description: Return images.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Image not found.
+ */
 imageApp.put(
   '/images/:imageId/delete',
   passport.authenticate('jwt', { session: false }),

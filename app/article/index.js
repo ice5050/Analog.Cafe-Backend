@@ -13,6 +13,38 @@ const {
 } = require('../../helpers/submission')
 const articleApp = express()
 
+/**
+ * @swagger
+ * /articles, /list:
+ *   get:
+ *     description: Active user account if code is correct and code is not expired.
+ *     parameters:
+ *            - name: tag
+ *              in: query
+ *              schema:
+ *                type: string
+ *              description: Filter by tag ex. photo-essay:editorial
+ *            - name: author
+ *              in: query
+ *              schema:
+ *                type: string
+ *              description: Filter by author id.
+ *            - name: page
+ *              in: query
+ *              schema:
+ *                type: integer
+ *              description: Current page number.
+ *            - name: items-per-page
+ *              in: query
+ *              schema:
+ *                type: integer
+ *              description: Number of items per one page.
+ *     responses:
+ *       200:
+ *         description: Return articles.
+ *       404:
+ *         description: Author not found.
+ */
 articleApp.get(['/articles', '/list'], async (req, res) => {
   const tags = (req.query.tag && req.query.tag.split(':')) || []
   const author = req.query.author
@@ -77,6 +109,15 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   })
 })
 
+/**
+ * @swagger
+ * /rss:
+ *   get:
+ *     description: Get RSS feeds.
+ *     responses:
+ *       200:
+ *         description: Return RSS feeds xml.
+ */
 articleApp.get('/rss', async (req, res) => {
   const query = Article.find()
     .select(
@@ -98,6 +139,24 @@ articleApp.get('/rss', async (req, res) => {
   res.send(articleFeed.xml())
 })
 
+/**
+ * @swagger
+ * /articles/:articleSlug:
+ *   get:
+ *     description: Get article by slug.
+ *     parameters:
+ *            - name: articleSlug
+ *              in: path
+ *              schema:
+ *                type: string
+ *                description: Article's slug
+ *                required: true
+ *     responses:
+ *       200:
+ *         description: Return article.
+ *       404:
+ *         description: Article not found.
+ */
 articleApp.get('/articles/:articleSlug', async (req, res) => {
   const article = await Article.findOne({ slug: req.params.articleSlug })
   if (!article) {
@@ -116,6 +175,106 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   })
 })
 
+/**
+  * @swagger
+  * /articles/:articleId:
+  *   put:
+  *     description: Update submission
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: Submission id.
+  *            - name: status
+  *              in: query
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: Submission status.
+  *            - name: tag
+  *              in: query
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: Submission tag.
+  *            - name: header
+  *              in: query
+  *              schema:
+  *                type: object
+  *                properties:
+  *                  title:
+  *                    type: string
+  *                    required: true
+  *                  subtitle:
+  *                    type: string
+  *              required: true
+  *              description: Article header
+  *            - name: content.
+  *              in: query
+  *              schema:
+  *                type: object
+  *                properties:
+  *                  kind:
+  *                    type: string
+  *                  document:
+  *                    type: object
+  *                    properties:
+  *                      kind:
+  *                        type: string
+  *                      nodes:
+  *                        type: array
+  *                        items:
+  *                          type: object
+  *                          properties:
+  *                            type:
+  *                              type: string
+  *                            isVoid:
+  *                              type: boolean
+  *                            kind:
+  *                              type: string
+  *                            data:
+  *                              type: object
+  *                              properties:
+  *                                src:
+  *                                  type: string
+  *                            nodes:
+  *                              type: array
+  *                              items:
+  *                                type: object
+  *                                properties:
+  *                                  kind:
+  *                                    type: string
+  *                                  ranges:
+  *                                    type: array
+  *                                    items:
+  *                                      type: object
+  *                                      properties:
+  *                                        text:
+  *                                          type: string
+  *                                          description: Article subtitle
+  *                                        kind:
+  *                                          type: string
+  *                                        marks:
+  *                                          type: array
+  *              description:  Submission body
+  *     responses:
+  *       200:
+  *         description: Created submission.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be edited.
+  */
 articleApp.put(
   '/articles/:articleId',
   passport.authenticate('jwt', { session: false }),

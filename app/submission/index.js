@@ -4,7 +4,6 @@ const count = require('word-count')
 const multipart = require('connect-multiparty')
 const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user')
-const Image = require('../../models/mongo/image')
 const redisClient = require('../../helpers/redis')
 const submissionStatusUpdatedEmail = require('../../helpers/mailers/submission_updated')
 const {
@@ -19,6 +18,33 @@ const {
 const submissionApp = express()
 const multipartMiddleware = multipart()
 
+/**
+  * @swagger
+  * /submissions:
+  *   get:
+  *     description: Get all submissions
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *              description:  Submission body
+  *            - name: page
+  *              in: query
+  *              schema:
+  *                type: integer
+  *              description: Current page number.
+  *            - name: items-per-page
+  *              in: query
+  *              schema:
+  *                type: integer
+  *              description: Number of items per one page.
+  *     responses:
+  *       200:
+  *         description: Return submissions.
+  */
 submissionApp.get(
   '/submissions',
   passport.authenticate('jwt', { session: false }),
@@ -59,6 +85,26 @@ submissionApp.get(
   }
 )
 
+/**
+  * @swagger
+  * /submissions/:submissionSlug:
+  *   get:
+  *     description: Get submission by slug
+  *     parameters:
+  *            - name: submissionSlug
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *              description: Submission slug.
+  *     responses:
+  *       200:
+  *         description: Return a submission.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  */
 submissionApp.get(
   '/submissions/:submissionSlug',
   passport.authenticate('jwt', { session: false }),
@@ -78,12 +124,104 @@ submissionApp.get(
   }
 )
 
+/**
+  * @swagger
+  * /submissions/status/:submissionId:
+  *   get:
+  *     description: Get submission upload status
+  *     parameters:
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *              description: Submission id.
+  *     responses:
+  *       200:
+  *         description: Return a submission upload status.
+  */
 submissionApp.get('/submissions/status/:submissionId', async (req, res) => {
   const submissionId = req.params.submissionId
   const progress = await redisClient.getAsync(`${submissionId}_upload_progress`)
   res.json({ progress })
 })
 
+/**
+  * @swagger
+  * /submissions:
+  *   post:
+  *     description: Create submission
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: header
+  *              in: query
+  *              schema:
+  *                type: object
+  *                properties:
+  *                  title:
+  *                    type: string
+  *                    required: true
+  *                  subtitle:
+  *                    type: string
+  *              required: true
+  *              description: Article header
+  *            - name: content.
+  *              in: query
+  *              schema:
+  *                type: object
+  *                properties:
+  *                  kind:
+  *                    type: string
+  *                  document:
+  *                    type: object
+  *                    properties:
+  *                      kind:
+  *                        type: string
+  *                      nodes:
+  *                        type: array
+  *                        items:
+  *                          type: object
+  *                          properties:
+  *                            type:
+  *                              type: string
+  *                            isVoid:
+  *                              type: boolean
+  *                            kind:
+  *                              type: string
+  *                            data:
+  *                              type: object
+  *                              properties:
+  *                                src:
+  *                                  type: string
+  *                            nodes:
+  *                              type: array
+  *                              items:
+  *                                type: object
+  *                                properties:
+  *                                  kind:
+  *                                    type: string
+  *                                  ranges:
+  *                                    type: array
+  *                                    items:
+  *                                      type: object
+  *                                      properties:
+  *                                        text:
+  *                                          type: string
+  *                                          description: Article subtitle
+  *                                        kind:
+  *                                          type: string
+  *                                        marks:
+  *                                          type: array
+  *              description:  Submission body
+  *     responses:
+  *       200:
+  *         description: Created submission.
+  */
 submissionApp.post(
   '/submissions',
   multipartMiddleware,
@@ -116,6 +254,94 @@ submissionApp.post(
   }
 )
 
+/**
+  * @swagger
+  * /submissions/:submissionId:
+  *   put:
+  *     description: Update submission
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: Submission id.
+  *            - name: header
+  *              in: query
+  *              schema:
+  *                type: object
+  *                properties:
+  *                  title:
+  *                    type: string
+  *                    required: true
+  *                  subtitle:
+  *                    type: string
+  *              required: true
+  *              description: Article header
+  *            - name: content.
+  *              in: query
+  *              schema:
+  *                type: object
+  *                properties:
+  *                  kind:
+  *                    type: string
+  *                  document:
+  *                    type: object
+  *                    properties:
+  *                      kind:
+  *                        type: string
+  *                      nodes:
+  *                        type: array
+  *                        items:
+  *                          type: object
+  *                          properties:
+  *                            type:
+  *                              type: string
+  *                            isVoid:
+  *                              type: boolean
+  *                            kind:
+  *                              type: string
+  *                            data:
+  *                              type: object
+  *                              properties:
+  *                                src:
+  *                                  type: string
+  *                            nodes:
+  *                              type: array
+  *                              items:
+  *                                type: object
+  *                                properties:
+  *                                  kind:
+  *                                    type: string
+  *                                  ranges:
+  *                                    type: array
+  *                                    items:
+  *                                      type: object
+  *                                      properties:
+  *                                        text:
+  *                                          type: string
+  *                                          description: Article subtitle
+  *                                        kind:
+  *                                          type: string
+  *                                        marks:
+  *                                          type: array
+  *              description:  Submission body
+  *     responses:
+  *       200:
+  *         description: Created submission.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be edited.
+  */
 submissionApp.put(
   '/submissions/:submissionId',
   passport.authenticate('jwt', { session: false }),
@@ -186,16 +412,35 @@ submissionApp.put(
   }
 )
 
-submissionApp.get('/submit/confirm_full_consent', (req, res) => {
-  Image.update(
-    { id: { $in: req.query.images } },
-    { $set: { fullConsent: true } },
-    { multi: true }
-  ).then(images => {
-    res.sendStatus(200)
-  })
-})
-
+/**
+  * @swagger
+  * /submissions/:submissionId/approve:
+  *   post:
+  *     description: Approve submission
+  *     parameters:
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *              description: Submission id.
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *              description:  Submission body
+  *     responses:
+  *       200:
+  *         description: Return a approved submission.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be approved.
+  */
 submissionApp.post(
   '/submissions/:submissionId/approve',
   passport.authenticate('jwt', { session: false }),
@@ -219,6 +464,35 @@ submissionApp.post(
   }
 )
 
+/**
+  * @swagger
+  * /submissions/:submissionId/reject:
+  *   post:
+  *     description: Reject submission
+  *     parameters:
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *              description: Submission id.
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *              description:  Submission body
+  *     responses:
+  *       200:
+  *         description: Return a rejected submission.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be rejected.
+  */
 submissionApp.post(
   '/submissions/:submissionId/reject',
   passport.authenticate('jwt', { session: false }),
