@@ -32,12 +32,13 @@ app.get('/', (req, res) => {
 })
 
 app.use(
-  require('./authentication'),
-  require('./submission'),
-  require('./sitemap'),
   require('./article'),
+  require('./authentication'),
   require('./author'),
   require('./image'),
+  require('./monthly_assignment'),
+  require('./sitemap'),
+  require('./submission'),
   require('./user')
 )
 
