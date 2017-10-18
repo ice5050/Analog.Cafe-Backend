@@ -1,15 +1,15 @@
 const express = require('express')
-const MonthlyAssignment = require('../../models/mongo/monthly_assignment')
-const { toShowingObject } = require('../../helpers/monthly_assignment')
+const Collaboration = require('../../models/mongo/collaboration')
+const { toShowingObject } = require('../../helpers/collaboration')
 const passport = require('passport')
 
-const monthlyApp = express()
+const collaborationApp = express()
 
 /**
   * @swagger
-  * /monthly_assignment:
+  * /collaboration:
   *   put:
-  *     description: Edit the monthly assignment
+  *     description: Edit collaborations
   *     parameters:
   *            - name: Authorization
   *              in: header
@@ -36,41 +36,42 @@ const monthlyApp = express()
   *                        description: name of the image's author
   *     responses:
   *       200:
-  *         description: Return updated monthly assignments.
+  *         description: Return updated collaborations.
   *       401:
   *         description: No permission to access.
   *       422:
-  *         description: No monthly assignment included in request body.
+  *         description: No collaboration included in request body.
   */
-monthlyApp.put(
-  '/monthly_assignment',
+collaborationApp.put(
+  '/collaboration',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     if (req.user.role !== 'admin') {
       return res.status(401).json({ message: 'No permission to access' })
     }
     if (req.body) {
-      await MonthlyAssignment.remove()
-      const monthlyAssignments = await MonthlyAssignment.insertMany(req.body)
-      res.json(monthlyAssignments.map(m => toShowingObject(m)))
+      await Collaboration.remove()
+      const collaborations = await Collaboration.insertMany(req.body)
+      res.json(collaborations.map(m => toShowingObject(m)))
     } else {
-      res.status(422).json({ message: 'Please include monthly assignment' })
+      res.status(422).json({ message: 'Please include collaboration' })
     }
   }
 )
 
 /**
   * @swagger
-  * /monthly_assignment:
+  * /collaboration:
   *   get:
-  *     description: Get all monthly assignments
+  *     description: Get all collaborations
   *     responses:
   *       200:
-  *         description: Return monthly assignments.
+  *         description: Return collaborations.
   */
-monthlyApp.get('/monthly_assignment', async (req, res) => {
-  const monthlyAssignments = await MonthlyAssignment.find()
-  res.json(monthlyAssignments.map(m => toShowingObject(m)))
+collaborationApp.get('/collaboration', async (req, res) => {
+  const collaborations = await Collaboration.find()
+  res.json(collaborations.map(m => toShowingObject(m)))
 })
 
-module.exports = monthlyApp
+module.exports = collaborationApp
+

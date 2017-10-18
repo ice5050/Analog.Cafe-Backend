@@ -37,10 +37,11 @@ app.use(
   require('./authentication'),
   require('./author'),
   require('./image'),
-  require('./monthly_assignment'),
+  require('./collaboration'),
   require('./sitemap'),
   require('./submission'),
   require('./user')
 )
 
 module.exports = app
+
