@@ -3,7 +3,7 @@ const connection = require('./index.js')
 
 const Schema = mongoose.Schema
 
-const monthlyAssignmentSchema = new Schema({
+const collaborationSchema = new Schema({
   id: String,
   author: {
     id: String,
@@ -11,9 +11,9 @@ const monthlyAssignmentSchema = new Schema({
   }
 })
 
-const MonthlyAssignment = connection.model(
-  'MonthlyAssignment',
-  monthlyAssignmentSchema
+const Collaboration = connection.model(
+  'Collaboration',
+  collaborationSchema
 )
 
-module.exports = MonthlyAssignment
+module.exports = Collaboration
