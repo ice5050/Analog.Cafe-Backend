@@ -20,3 +20,12 @@ npm run db:seed
 *Clean all collection*
 npm run db:clean
 ```
+
+### Upload Sitemap and RSS to S3
+```
+# You need S3_KEY, S3_REGION, S3_SECRET in environment variable or .env file
+# Then run this command
+yarn run upload-sitemap-rss --host HOST --bucket S3_BUCKET
+eg. yarn run upload-sitemap-rss --host https://api.analog.cafe --bucket analog.cafe 
+```
+
