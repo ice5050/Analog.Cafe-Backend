@@ -132,6 +132,7 @@ articleApp.get('/rss', async (req, res) => {
       description: a.summary,
       author: a.author.id,
       date: a.createdAt,
+      poster: a.poster,
       url: `https://www.analog.cafe/zine/${a.slug}`
     })
   })
