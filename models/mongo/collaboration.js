@@ -11,9 +11,6 @@ const collaborationSchema = new Schema({
   }
 })
 
-const Collaboration = connection.model(
-  'Collaboration',
-  collaborationSchema
-)
+const Collaboration = connection.model('Collaboration', collaborationSchema)
 
 module.exports = Collaboration

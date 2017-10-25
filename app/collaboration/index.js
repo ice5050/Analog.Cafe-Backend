@@ -74,4 +74,3 @@ collaborationApp.get('/collaboration', async (req, res) => {
 })
 
 module.exports = collaborationApp
-
