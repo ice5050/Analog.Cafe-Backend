@@ -57,11 +57,13 @@ async function app () {
 app()
 
 async function getSitemap (host) {
-  await fetchFile(`${host}/sitemap.xml`)
+  const file = await fetchFile(`${host}/sitemap.xml`)
+  return file
 }
 
 async function getRSS (host) {
-  await fetchFile(`${host}/rss`)
+  const file = await fetchFile(`${host}/rss`)
+  return file
 }
 
 function fetchFile (url) {
