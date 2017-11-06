@@ -1,11 +1,11 @@
 const express = require('express')
-const passport = require('passport')
 const count = require('word-count')
 const multipart = require('connect-multiparty')
 const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user')
 const redisClient = require('../../helpers/redis')
 const submissionStatusUpdatedEmail = require('../../helpers/mailers/submission_updated')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
   parseContent,
   parseHeader,
@@ -47,7 +47,7 @@ const multipartMiddleware = multipart()
   */
 submissionApp.get(
   '/submissions',
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     const page = req.query.page || 1
     const itemsPerPage = req.query['items-per-page'] || 10
@@ -107,7 +107,7 @@ submissionApp.get(
   */
 submissionApp.get(
   '/submissions/:submissionSlug',
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     const submission = await Submission.findOne({
       slug: req.params.submissionSlug
@@ -225,7 +225,7 @@ submissionApp.get('/submissions/status/:submissionId', async (req, res) => {
 submissionApp.post(
   '/submissions',
   multipartMiddleware,
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
@@ -344,7 +344,7 @@ submissionApp.post(
   */
 submissionApp.put(
   '/submissions/:submissionId',
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
     if (!submission) {
@@ -443,7 +443,7 @@ submissionApp.put(
   */
 submissionApp.post(
   '/submissions/:submissionId/approve',
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     if (req.user.role !== 'admin') {
       return res.status(401).json({ message: 'No permission to access' })
@@ -495,7 +495,7 @@ submissionApp.post(
   */
 submissionApp.post(
   '/submissions/:submissionId/reject',
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     if (req.user.role !== 'admin') {
       return res.status(401).json({ message: 'No permission to access' })

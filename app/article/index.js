@@ -5,7 +5,7 @@ const Image = require('../../models/mongo/image')
 const User = require('../../models/mongo/user.js')
 const articleFeed = require('./article-feed')
 const Submission = require('../../models/mongo/submission')
-const passport = require('passport')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
   parseContent,
   parseHeader,
@@ -277,7 +277,7 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   */
 articleApp.put(
   '/articles/:articleId',
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     let article = Article.findOne({
       id: req.params.articleId

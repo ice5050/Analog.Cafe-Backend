@@ -1,7 +1,7 @@
 const express = require('express')
 const Collaboration = require('../../models/mongo/collaboration')
 const { toShowingObject } = require('../../helpers/collaboration')
-const passport = require('passport')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
 
 const collaborationApp = express()
 
@@ -44,7 +44,7 @@ const collaborationApp = express()
   */
 collaborationApp.put(
   '/collaboration',
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     if (req.user.role !== 'admin') {
       return res.status(401).json({ message: 'No permission to access' })
