@@ -1,6 +1,6 @@
 const express = require('express')
 const Setting = require('../../models/mongo/setting')
-const passport = require('passport')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
 const settingApp = express()
 
 /**
@@ -21,16 +21,12 @@ const settingApp = express()
  *       401:
  *         description: No permission to access.
  */
-settingApp.get(
-  '/settings',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
-    const setting = await Setting.findOne()
-    res.json(setting.toObject())
+settingApp.get('/settings', authenticationMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(401).json({ message: 'No permission to access' })
   }
-)
+  const setting = await Setting.findOne()
+  res.json(setting.toObject())
+})
 
 module.exports = settingApp

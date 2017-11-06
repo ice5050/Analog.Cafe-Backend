@@ -12,6 +12,7 @@ const jwtOptions = {}
 const welcomeEmail = require('../../helpers/mailers/welcome')
 const signInEmail = require('../../helpers/mailers/sign_in')
 const {
+  authenticationMiddleware,
   sanitizeUsername,
   generateUserSignInURL,
   getProfileImageURL
@@ -105,13 +106,9 @@ authApp.get(
  *       200:
  *         description: Return user
  */
-authApp.get(
-  '/auth/user',
-  passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    res.json({ status: 'ok', info: req.user.toObject() })
-  }
-)
+authApp.get('/auth/user', authenticationMiddleware, (req, res) => {
+  res.json({ status: 'ok', info: req.user.toObject() })
+})
 
 function setupPassport () {
   // Setup Twitter Strategy
