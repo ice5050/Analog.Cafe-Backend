@@ -2,11 +2,11 @@ const express = require('express')
 const shortid = require('shortid')
 const User = require('../../models/mongo/user')
 const Article = require('../../models/mongo/article')
-const passport = require('passport')
 const multipart = require('connect-multiparty')
 const { toShowingObject, parseButtons } = require('../../helpers/user')
 const cloudinary = require('../../helpers/cloudinary')
 const { getImageRatio } = require('../../helpers/submission')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
 
 const userApp = express()
 const multipartMiddleware = multipart()
@@ -60,7 +60,7 @@ const multipartMiddleware = multipart()
 userApp.put(
   '/users/me',
   multipartMiddleware,
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     let uploadedImage
     const buttons = parseButtons(req.body.buttons)
@@ -120,7 +120,7 @@ userApp.put(
   */
 userApp.put(
   '/users/:userId/suspend',
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     if (req.user.role !== 'admin') {
       return res.status(401).json({ message: 'No permission to access' })
@@ -168,7 +168,7 @@ userApp.put(
   */
 userApp.put(
   '/users/:userId/delete',
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware,
   async (req, res) => {
     if (req.user.role !== 'admin') {
       return res.status(401).json({ message: 'No permission to access' })

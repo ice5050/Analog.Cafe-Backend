@@ -1,3 +1,19 @@
+const passport = require('passport')
+
+function authenticationMiddleware (req, res, next) {
+  passport.authenticate('jwt', { session: false }, (_, __, err) => {
+    if (err.name === 'TokenExpiredError') {
+      res.status(401).json({ message: 'Token is already expired' })
+    } else if (err.name === 'JsonWebTokenError') {
+      res.status(401).json({ message: 'Token is invalid' })
+    } else if (err) {
+      next(err)
+    } else {
+      next()
+    }
+  })(req, res, next)
+}
+
 function sanitizeUsername (username) {
   if (!username) return null
   return username.split('@')[0].toLowerCase().replace(/\W/g, '.')
@@ -26,6 +42,7 @@ async function generateUserSignInURL (baseURL, user) {
 }
 
 module.exports = {
+  authenticationMiddleware,
   sanitizeUsername,
   rand5digit,
   getProfileImageURL,
