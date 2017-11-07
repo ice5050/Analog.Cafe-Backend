@@ -1,5 +1,6 @@
 const express = require('express')
 const count = require('word-count')
+const moment = require('moment')
 const Article = require('../../models/mongo/article')
 const Image = require('../../models/mongo/image')
 const User = require('../../models/mongo/user.js')
@@ -11,6 +12,7 @@ const {
   parseHeader,
   rawImageCount
 } = require('../../helpers/submission')
+const { froth } = require('../../helpers/image_froth')
 const articleApp = express()
 
 /**
@@ -127,16 +129,27 @@ articleApp.get('/rss', async (req, res) => {
     .sort({ 'post-date': 'desc' })
   const articles = await query.exec()
   articles.forEach(a => {
-    articleFeed.item({
+    const url = `https://www.analog.cafe/zine/${a.slug}`
+    const image = froth({ src: a.poster })
+    articleFeed.addItem({
       title: a.title,
-      description: a.summary,
-      author: a.author.id,
-      date: a.createdAt,
-      url: `https://www.analog.cafe/zine/${a.slug}`
+      id: url,
+      link: url,
+      description:
+        (image && image.src ? `<p><img src="${image.src}" /></p>` : '') +
+        a.summary,
+      author: [
+        {
+          name: a.author.name,
+          link: `https://www.analog.cafe/author/${a.author.id}`
+        }
+      ],
+      date: moment.unix(a.createdAt).toDate(),
+      image: image && image.src
     })
   })
-  res.type('rss')
-  res.send(articleFeed.xml())
+  res.type('text/xml')
+  res.send(articleFeed.rss2())
 })
 
 /**
