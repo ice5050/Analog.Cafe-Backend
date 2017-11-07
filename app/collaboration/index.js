@@ -11,29 +11,30 @@ const collaborationApp = express()
   *   put:
   *     description: Edit collaborations
   *     parameters:
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name:
-  *              in: body
-  *              type: array
-  *                type: object
-  *                properties:
-  *                  id:
-  *                    type: string
-  *                    description: id of the image
-  *                  author:
-  *                    type: object
-  *                    properties:
-  *                      id:
-  *                        type: string
-  *                        description: id of the image's author
-  *                      name:
-  *                        type: string
-  *                        description: name of the image's author
+  *       - name: Authorization
+  *         in: header
+  *         schema:
+  *           type: string
+  *           required: true
+  *           description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *       - name:
+  *         in: body
+  *         type: array
+  *         items:
+  *           type: object
+  *           properties:
+  *             id:
+  *               type: string
+  *               description: id of the image
+  *             author:
+  *               type: object
+  *               properties:
+  *                 id:
+  *                   type: string
+  *                   description: id of the image's author
+  *                 name:
+  *                   type: string
+  *                   description: name of the image's author
   *     responses:
   *       200:
   *         description: Return updated collaborations.
