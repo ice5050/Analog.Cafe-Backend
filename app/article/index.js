@@ -128,6 +128,7 @@ articleApp.get('/rss', async (req, res) => {
     .limit(30)
     .sort({ 'post-date': 'desc' })
   const articles = await query.exec()
+  articleFeed.items = []
   articles.forEach(a => {
     const url = `https://www.analog.cafe/zine/${a.slug}`
     const image = froth({ src: a.poster })
