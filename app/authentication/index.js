@@ -17,6 +17,7 @@ const {
   generateUserSignInURL,
   getProfileImageURL
 } = require('../../helpers/authenticate')
+const { toShowingObject } = require('../../helpers/user')
 const CODE_EXPIRED = 10 // after send verify email, code will expired (minute)
 const LIMIT_EMAIL_SENDING = 1 // cannot send verify email again until (minute)
 
@@ -107,7 +108,7 @@ authApp.get(
  *         description: Return user
  */
 authApp.get('/auth/user', authenticationMiddleware, (req, res) => {
-  res.json({ status: 'ok', info: req.user.toObject() })
+  res.json({ status: 'ok', info: toShowingObject(req.user) })
 })
 
 function setupPassport () {
