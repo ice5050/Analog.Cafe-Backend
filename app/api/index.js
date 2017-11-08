@@ -1,6 +1,5 @@
 const express = require('express')
 const swaggerJSDoc = require('swagger-jsdoc')
-const article = require('../article/index')
 
 const apiApp = express()
 
@@ -18,6 +17,7 @@ var options = {
     './app/article/index.js',
     './app/authentication/index.js',
     './app/author/index.js',
+    './app/collaboration/index.js',
     './app/image/index.js',
     './app/setting/index.js',
     './app/sitemap/index.js',
