@@ -3,9 +3,9 @@ const passport = require('passport')
 function authenticationMiddleware (req, res, next) {
   passport.authenticate('jwt', { session: false }, (_, user, err) => {
     if (err && err.name === 'TokenExpiredError') {
-      res.status(401).json({ message: 'Token is already expired' })
+      res.status(401).json({ message: err.name })
     } else if (err && err.name === 'JsonWebTokenError') {
-      res.status(401).json({ message: 'Token is invalid' })
+      res.status(401).json({ message: err.name })
     } else if (err) {
       next(err)
     } else {
