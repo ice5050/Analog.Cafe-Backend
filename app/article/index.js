@@ -137,8 +137,7 @@ articleApp.get('/rss', async (req, res) => {
       id: url,
       link: url,
       description:
-        (image && image.src ? `<p><img src="${image.src}" /></p>` : '') +
-        a.summary,
+        (image && image.src ? `<img src="${image.src}" />` : '') + a.summary,
       author: [
         {
           name: a.author.name,
