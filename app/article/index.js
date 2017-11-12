@@ -132,24 +132,18 @@ articleApp.get('/rss', async (req, res) => {
   articles.forEach(a => {
     const url = `https://www.analog.cafe/zine/${a.slug}`
     const image = froth({ src: a.poster })
-    articleFeed.addItem({
+    articleFeed.item({
       title: a.title,
-      id: url,
-      link: url,
-      description:
-        (image && image.src ? `<img src="${image.src}" />` : '') + a.summary,
-      author: [
-        {
-          name: a.author.name,
-          link: `https://www.analog.cafe/author/${a.author.id}`
-        }
-      ],
+      url: url,
+      guid: url,
+      description: a.summary,
+      author: a.author.name,
       date: moment.unix(a.createdAt).toDate(),
-      image: image && image.src
+      enclosure: { url: image.src }
     })
   })
   res.type('text/xml')
-  res.send(articleFeed.rss2())
+  res.send(articleFeed.xml())
 })
 
 /**

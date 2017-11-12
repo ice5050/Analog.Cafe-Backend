@@ -1,6 +1,6 @@
 {
   "name": "analog-cafe-server",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "(Loosely) Collaborative Blogging App by Analog.Cafe (Server)",
   "license": "MPL-2.0",
   "private": true,
@@ -39,6 +39,7 @@
     "passport-jwt": "^2.2.1",
     "passport-twitter": "^1.0.4",
     "redis": "^2.8.0",
+    "rss": "^1.2.2",
     "shortid": "^2.2.8",
     "sib-api-v3-sdk": "^3.0.2",
     "sitemap": "^1.13.0",
