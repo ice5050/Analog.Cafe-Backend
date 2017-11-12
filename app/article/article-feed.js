@@ -1,16 +1,15 @@
-const Feed = require('feed')
-const articleFeed = new Feed({
+const RSS = require('rss')
+const articleFeed = new RSS({
   title: 'Analog.Cafe RSS feed: 30 Latest articles',
   description: 'Analog.Cafe RSS feed: 30 Latest articles',
-  feedLinks: {
-    rss: 'https://api.analog.cafe/rss'
-  },
+  feed_url: 'https://api.analog.cafe/rss',
+  site_url: 'https://analog.cafe',
   favicon: 'https://www.analog.cafe/favicon.ico',
-  id: 'https://www.analog.cafe',
-  link: 'https://www.analog.cafe',
-  image: 'https://www.analog.cafe/apple-touch-icon-180x180.png',
+  image_url: 'https://www.analog.cafe/apple-touch-icon-180x180.png',
+  managingEditor: 'Analog.Cafe',
   copyright: 'Analog.Cafe',
-  updated: new Date(),
+  language: 'en',
+  pubDate: new Date(),
   generator: 'Analog.Cafe feed generator'
 })
 
