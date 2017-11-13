@@ -9,7 +9,7 @@ const articleFeed = new RSS({
   managingEditor: 'Analog.Cafe',
   copyright: 'Analog.Cafe',
   language: 'en',
-  pubDate: new Date(),
+  pubDate: new Date().toString(),
   generator: 'Analog.Cafe feed generator'
 })
 
