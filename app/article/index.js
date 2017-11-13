@@ -138,7 +138,7 @@ articleApp.get('/rss', async (req, res) => {
       guid: url,
       description: a.summary,
       author: a.author.name,
-      date: moment.unix(a.createdAt).toDate().toString(),
+      date: moment.unix(a['post-date']).toDate().toString(),
       categories: [a.tag],
       enclosure: { url: image.src }
     })
