@@ -180,13 +180,13 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   res.json({
     ...article.toObject(),
     next: {
-+      slug: (nextArticle && nextArticle.slug) || undefined,
-+      title: (nextArticle && nextArticle.title) || undefined,
-+      authorName: (nextArticle && nextArticle.author.name) || undefined,
-+      subtitle: (nextArticle && nextArticle.subtitle) || undefined,
-+      tag: (nextArticle && nextArticle.tag) || undefined,
-+      poster: (nextArticle && nextArticle.poster) || undefined
-+    }
+      slug: (nextArticle && nextArticle.slug) || undefined,
+      title: (nextArticle && nextArticle.title) || undefined,
+      authorName: (nextArticle && nextArticle.author.name) || undefined,
+      subtitle: (nextArticle && nextArticle.subtitle) || undefined,
+      tag: (nextArticle && nextArticle.tag) || undefined,
+      poster: (nextArticle && nextArticle.poster) || undefined
+    }
   })
 })
 
