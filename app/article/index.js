@@ -145,8 +145,8 @@ articleApp.get('/rss', async (req, res) => {
         .unix(a['post-date'])
         .toDate()
         .toString(),
-      categories: [a.tag],
-      enclosure: { url: image && image.src }
+      categories: [a.tag]
+      // enclosure: { url: image && image.src }
     })
   })
   res.type('text/xml')
