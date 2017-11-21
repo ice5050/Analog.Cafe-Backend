@@ -131,16 +131,22 @@ articleApp.get('/rss', async (req, res) => {
   articleFeed.items = []
   articles.forEach(a => {
     const url = `https://www.analog.cafe/zine/${a.slug}`
-    const image = froth({ src: a.poster })
+    const image = a.poster && froth({ src: a.poster })
     articleFeed.item({
       title: a.title,
       url: url,
       guid: url,
-      description: a.summary,
+      description:
+        (image && image.src
+          ? `<p><a href="${url}"><img src="${image.src}" alt="Featured post image" class="webfeedsFeaturedVisual" width="600" height="auto" /></a></p>`
+          : '') + `<p>${a.summary}</p>`,
       author: a.author.name,
-      date: moment.unix(a['post-date']).toDate().toString(),
+      date: moment
+        .unix(a['post-date'])
+        .toDate()
+        .toString(),
       categories: [a.tag],
-      enclosure: { url: image.src }
+      enclosure: { url: image && image.src }
     })
   })
   res.type('text/xml')

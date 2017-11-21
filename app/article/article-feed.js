@@ -1,16 +1,17 @@
 const RSS = require('rss')
 const articleFeed = new RSS({
-  title: 'Analog.Cafe RSS feed: 30 Latest articles',
-  description: 'Analog.Cafe RSS feed: 30 Latest articles',
+  title: 'Analog.Cafe',
+  description:
+    'A film photography publication. Photo essays, guides, editorials, reviews, and stories.',
   feed_url: 'https://api.analog.cafe/rss',
-  site_url: 'https://analog.cafe',
+  site_url: 'https://www.analog.cafe',
   favicon: 'https://www.analog.cafe/favicon.ico',
   image_url: 'https://www.analog.cafe/apple-touch-icon-180x180.png',
-  managingEditor: 'Analog.Cafe',
+  managingEditor: 'dmitrizzle',
   copyright: 'Analog.Cafe',
   language: 'en',
   pubDate: new Date().toString(),
-  generator: 'Analog.Cafe feed generator'
+  generator: 'Roast.Cloud feed generator'
 })
 
 module.exports = articleFeed
