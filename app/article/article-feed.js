@@ -1,7 +1,8 @@
 const RSS = require('rss')
 const articleFeed = new RSS({
   title: 'Analog.Cafe RSS feed: 30 Latest articles',
-  description: 'Analog.Cafe RSS feed: 30 Latest articles',
+  description:
+    'A film photography publication. Photo essays, guides, editorials, reviews, and stories.',
   feed_url: 'https://api.analog.cafe/rss',
   site_url: 'https://analog.cafe',
   favicon: 'https://www.analog.cafe/favicon.ico',

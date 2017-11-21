@@ -136,9 +136,12 @@ articleApp.get('/rss', async (req, res) => {
       title: a.title,
       url: url,
       guid: url,
-      description: a.summary,
+      description: `<p><a href="${url}"><img src="${image.src}" alt="Featured post image" class="webfeedsFeaturedVisual" width="600" height="auto" /></a></p><p>${a.summary}</p>`,
       author: a.author.name,
-      date: moment.unix(a['post-date']).toDate().toString(),
+      date: moment
+        .unix(a['post-date'])
+        .toDate()
+        .toString(),
       categories: [a.tag],
       enclosure: { url: image.src }
     })

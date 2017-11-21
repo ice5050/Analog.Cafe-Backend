@@ -2313,12 +2313,6 @@ mongodb@2.2.31:
     mongodb-core "2.1.15"
     readable-stream "2.2.7"
 
-mongoose-auto-increment@^5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/mongoose-auto-increment/-/mongoose-auto-increment-5.0.1.tgz#827e051d9cc371dabe8bff1a704431d341cb79df"
-  dependencies:
-    extend "^3.0.0"
-
 mongoose-timestamp-date-unix@^0.6.2:
   version "0.6.2"
   resolved "https://registry.yarnpkg.com/mongoose-timestamp-date-unix/-/mongoose-timestamp-date-unix-0.6.2.tgz#ddc0cf42e55a4b66ca17b5c65e53226b52aff892"
