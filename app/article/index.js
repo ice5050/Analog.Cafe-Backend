@@ -138,7 +138,7 @@ articleApp.get('/rss', async (req, res) => {
       guid: url,
       description:
         (image && image.src
-          ? `<p><a href="${url}"><img src="${image.src}" alt="Featured post image" class="webfeedsFeaturedVisual" width="600" height="auto" /></a></p>`
+          ? `<p><img src="${image.src}" alt="Featured post image" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
           : '') + `<p>${a.summary}</p>`,
       author: a.author.name,
       date: moment
