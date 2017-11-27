@@ -152,10 +152,11 @@ function setupPassport () {
       },
       async (accessToken, refreshToken, profile, cb) => {
         let user = await User.findOne({ facebookId: profile.id })
+        const username = sanitizeUsername(profile.displayName)
         if (!user) {
           user = await User.create({
             facebookId: profile.id,
-            id: sanitizeUsername(profile.displayName),
+            id: username,
             title: profile.displayName,
             email: profile.emails[0] && profile.emails[0].value,
             image: profile.photos[0] && profile.photos[0].value
