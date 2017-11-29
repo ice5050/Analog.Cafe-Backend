@@ -133,12 +133,12 @@ articleApp.get('/rss', async (req, res) => {
     const url = `https://www.analog.cafe/zine/${a.slug}`
     const image = a.poster && froth({ src: a.poster })
     articleFeed.item({
-      title: a.title,
+      title: a.title + (a.subtitle ? ` (${a.subtitle})` : ''),
       url: url,
       guid: url,
       description:
         (image && image.src
-          ? `<p><img src="${image.src}" alt="Featured post image" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
+          ? `<p><img src="${image.src}" alt="" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
           : '') + `<p>${a.summary}</p>`,
       author: a.author.name,
       date: moment
