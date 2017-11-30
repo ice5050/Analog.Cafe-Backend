@@ -229,7 +229,7 @@ submissionApp.post(
   async (req, res) => {
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
-    const rawText = req.body['composer-content-text'] || ''
+    const textContent = req.body.textContent
     const id = randomString()
     const newSubmission = new Submission({
       id,
@@ -238,13 +238,13 @@ submissionApp.post(
       subtitle: header.subtitle,
       stats: {
         images: rawImageCount(content),
-        words: count(rawText)
+        words: count(textContent)
       },
       author: {
         id: req.user.id,
         name: req.user.title
       },
-      summary: rawText.substring(0, 250),
+      summary: textContent.substring(0, 250),
       content: { raw: content }
     })
     const submission = await newSubmission.save()
