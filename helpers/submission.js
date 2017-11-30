@@ -42,11 +42,11 @@ function getImageId (imageUrl) {
   return imageUrl.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
 }
 
-function addImageURLToContent (key, image, rawContent) {
+function addImageURLToContent (key, imageId, rawContent) {
   rawContent.document.nodes
     .filter(node => node.data && node.data.key === key)
     .forEach(node => {
-      node.data.src = image
+      node.data.src = imageId
       node.data.key = null
     })
 }
@@ -64,7 +64,8 @@ async function uploadImgAsync (req, res, submissionId) {
   const imgs = req.files.images
   const keys = imgs ? Object.keys(imgs) : []
   const numberOfImages = keys.length
-  keys.map(async (k, i) => {
+  for (let i = 0; i < keys.length; i += 1) {
+    const k = keys[i]
     const imgPath = imgs[k].path
     const ratio = getImageRatio(imgPath)
     const hash = shortid.generate()
@@ -89,16 +90,16 @@ async function uploadImgAsync (req, res, submissionId) {
       addImageURLToContent(k, image.id, submission.content.raw)
       if (i === 0) submission.poster = image.id
     }
+    submission.markModified('content.raw')
     await submission.save()
     let progress = await redisClient.getAsync(`${submissionId}_upload_progress`)
     progress = Number(progress)
     redisClient.set(
       `${submissionId}_upload_progress`,
-      ((Math.ceil(progress / 100 * numberOfImages) + 1) /
-        numberOfImages *
-        100).toFixed(2)
+      ((Math.round((progress * numberOfImages / 100)) + 1) * 100 /
+        numberOfImages).toFixed(2)
     )
-  })
+  }
 }
 
 function sanitizeUsername (username) {
