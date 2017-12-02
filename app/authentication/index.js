@@ -1,5 +1,7 @@
 const express = require('express')
 const passport = require('passport')
+const cloudinary = require('cloudinary')
+const shortid = require('shortid')
 const jwt = require('jsonwebtoken')
 const passportJWT = require('passport-jwt')
 const TwitterStrategy = require('passport-twitter').Strategy
@@ -128,11 +130,24 @@ function setupPassport () {
           getProfileImageURL(profile._json.profile_image_url)
         let user = await User.findOne({ twitterId: profile.id })
         if (!user) {
+          let uploadedImage
+          if (profileImageURL) {
+            uploadedImage = await cloudinary.v2.uploader.upload(profileImageURL)
+            const ratio = (uploadedImage.width /
+              uploadedImage.height *
+              1000000
+            ).toFixed(0)
+            const hash = shortid.generate()
+            uploadedImage = await cloudinary.v2.uploader.rename(
+              uploadedImage.public_id,
+              `image-froth_${ratio}_${hash}`
+            )
+          }
           user = await User.create({
             twitterId: profile.id,
             id: username,
             title: profile.displayName,
-            image: profileImageURL,
+            image: uploadedImage && uploadedImage.public_id,
             text: profile._json.description
           })
         }
