@@ -430,7 +430,17 @@ submissionApp.put(
   *                type: string
   *                required: true
   *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *              description:  Submission body
+  *            - name: scheduledOrder
+  *              in: query
+  *              schema:
+  *                type: integer
+  *                required: true
+  *                description: Scheduling order
+  *            - name: tag
+  *              in: query
+  *              schema:
+  *                type: string
+  *                description: Tag of the submission
   *     responses:
   *       200:
   *         description: Return a approved submission.
