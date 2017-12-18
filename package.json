@@ -17,6 +17,7 @@
     "aws-sdk": "^2.130.0",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.2",
+    "cachegoose": "^4.0.1",
     "chance": "^1.0.10",
     "cloudinary": "^1.9.0",
     "commander": "^2.11.0",
