@@ -47,7 +47,8 @@
     "slugify": "^1.2.1",
     "swagger-jsdoc": "1.9.7",
     "url-pattern": "^1.0.3",
-    "word-count": "^0.2.2"
+    "word-count": "^0.2.2",
+    "snyk": "^1.59.1"
   },
   "devDependencies": {
     "husky": "^0.14.3",
@@ -63,12 +64,15 @@
     "db:seed": "node --harmony seeds/index.js",
     "db:clean": "node --harmony seeds/clean_db.js",
     "scheduler:publish": "node --harmony workers/publisher/index.js",
-    "upload-sitemap-rss": "node --harmony upload_rss_sitemap.js --sitemap --rss"
+    "upload-sitemap-rss": "node --harmony upload_rss_sitemap.js --sitemap --rss",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "lint-staged": {
     "{app,models,seeds}/**/*.js": [
       "prettier-standard",
       "git add"
     ]
-  }
+  },
+  "snyk": true
 }
