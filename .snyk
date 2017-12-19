@@ -1,0 +1,19 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.10.1
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  'npm:superagent:20170807':
+    - sib-api-v3-sdk > superagent:
+        reason: None given
+        expires: '2018-01-17T07:54:18.169Z'
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  'npm:debug:20170905':
+    - node-pre-gyp > tar-pack > debug:
+        patched: '2017-12-18T07:52:15.301Z'
+  'npm:ms:20170412':
+    - cachegoose > cacheman > ms:
+        patched: '2017-12-18T07:52:15.301Z'
+  'npm:tough-cookie:20170905':
+    - node-pre-gyp > request > tough-cookie:
+        patched: '2017-12-18T07:52:15.301Z'

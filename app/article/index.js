@@ -89,6 +89,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     .sort({ 'post-date': 'desc' })
+    .cache(300)
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
@@ -133,18 +134,15 @@ articleApp.get('/rss', async (req, res) => {
     const url = `https://www.analog.cafe/zine/${a.slug}`
     const image = a.poster && froth({ src: a.poster })
     articleFeed.item({
-      title: a.title,
+      title: a.title + (a.subtitle ? ` (${a.subtitle})` : ''),
       url: url,
       guid: url,
       description:
         (image && image.src
-          ? `<p><img src="${image.src}" alt="Featured post image" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
+          ? `<p><img src="${image.src}" alt="" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
           : '') + `<p>${a.summary}</p>`,
       author: a.author.name,
-      date: moment
-        .unix(a['post-date'])
-        .toDate()
-        .toString(),
+      date: moment.unix(a['post-date']).toDate().toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })

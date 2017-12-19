@@ -3,6 +3,7 @@ const passport = require('passport')
 const bodyParser = require('body-parser')
 const session = require('express-session')
 const cors = require('cors')
+const compression = require('compression')
 const RedisStore = require('connect-redis')(session)
 
 const corsOptions = {
@@ -26,6 +27,7 @@ app.use((err, req, res, next) => {
   console.log(err)
 })
 app.use(cors(corsOptions))
+app.use(compression())
 
 app.get('/', (req, res) => {
   res.json({ status: 'Analog Cafe API' })

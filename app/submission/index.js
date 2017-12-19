@@ -229,7 +229,7 @@ submissionApp.post(
   async (req, res) => {
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
-    const rawText = req.body['composer-content-text'] || ''
+    const textContent = req.body.textContent
     const id = randomString()
     const newSubmission = new Submission({
       id,
@@ -238,13 +238,13 @@ submissionApp.post(
       subtitle: header.subtitle,
       stats: {
         images: rawImageCount(content),
-        words: count(rawText)
+        words: count(textContent)
       },
       author: {
         id: req.user.id,
         name: req.user.title
       },
-      summary: rawText.substring(0, 250),
+      summary: textContent.substring(0, 250),
       content: { raw: content }
     })
     const submission = await newSubmission.save()
@@ -430,7 +430,17 @@ submissionApp.put(
   *                type: string
   *                required: true
   *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *              description:  Submission body
+  *            - name: scheduledOrder
+  *              in: query
+  *              schema:
+  *                type: integer
+  *                required: true
+  *                description: Scheduling order
+  *            - name: tag
+  *              in: query
+  *              schema:
+  *                type: string
+  *                description: Tag of the submission
   *     responses:
   *       200:
   *         description: Return a approved submission.

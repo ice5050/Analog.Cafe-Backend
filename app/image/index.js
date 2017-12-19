@@ -226,6 +226,7 @@ imageApp.get('/images', authenticationMiddleware, async (req, res) => {
     .select('id author fullConsent')
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
+    .cache(300)
 
   const images = await query.exec()
   const count = await countQuery.count().exec()
