@@ -8,6 +8,7 @@ const imageRepostedEmail = require('../../helpers/mailers/image_reposted')
 const {
   getImageId
 } = require('../../helpers/submission')
+const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
 
 async function run () {
   const now = new Date()
@@ -56,6 +57,8 @@ async function run () {
             imageRepostedEmail(imageAuthor.email, imageAuthor.title)
           }
         })
+    // Upload sitemap to S3
+    uploadRSSAndSitemap(process.env.API_DOMAIN, true, null, process.env.S3_BUCKET)
   })
 }
 
