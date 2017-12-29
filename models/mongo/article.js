@@ -20,6 +20,7 @@ const articleSchema = new Schema({
   poster: String,
   'post-date': String,
   tag: String,
+  // Status: published, deleted
   status: { type: String, default: 'published' },
   summary: String,
   content: Schema.Types.Mixed

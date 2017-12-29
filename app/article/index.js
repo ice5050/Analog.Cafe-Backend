@@ -4,15 +4,20 @@ const moment = require('moment')
 const Article = require('../../models/mongo/article')
 const Image = require('../../models/mongo/image')
 const User = require('../../models/mongo/user.js')
+const multipart = require('connect-multiparty')
 const articleFeed = require('./article-feed')
+const redisClient = require('../../helpers/redis')
 const Submission = require('../../models/mongo/submission')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
   parseContent,
   parseHeader,
-  rawImageCount
+  rawImageCount,
+  uploadImgAsync
 } = require('../../helpers/submission')
 const { froth } = require('../../helpers/image_froth')
+const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
+const multipartMiddleware = multipart()
 const articleApp = express()
 
 /**
@@ -122,7 +127,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
  *         description: Return RSS feeds xml.
  */
 articleApp.get('/rss', async (req, res) => {
-  const query = Article.find()
+  const query = Article.find({ status: 'published' })
     .select(
       'id slug title subtitle stats author poster tag status summary updatedAt createdAt post-date'
     )
@@ -142,7 +147,10 @@ articleApp.get('/rss', async (req, res) => {
           ? `<p><img src="${image.src}" alt="" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
           : '') + `<p>${a.summary}</p>`,
       author: a.author.name,
-      date: moment.unix(a['post-date']).toDate().toString(),
+      date: moment
+        .unix(a['post-date'])
+        .toDate()
+        .toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -198,7 +206,7 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   * @swagger
   * /articles/:articleId:
   *   put:
-  *     description: Update submission
+  *     description: Update article (create new submission for the article)
   *     parameters:
   *            - name: Authorization
   *              in: header
@@ -206,12 +214,12 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   *                type: string
   *                required: true
   *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name: submissionId
+  *            - name: articleId
   *              in: path
   *              schema:
   *                type: string
   *                required: true
-  *                description: Submission id.
+  *                description: Article id.
   *            - name: status
   *              in: query
   *              schema:
@@ -286,16 +294,17 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   *              description:  Submission body
   *     responses:
   *       200:
-  *         description: Created submission.
+  *         description: Created submission for the article.
   *       401:
   *         description: No permission to access.
   *       404:
-  *         description: Submission not found.
+  *         description: Article not found.
   *       422:
-  *         description: Submission can not be edited.
+  *         description: Article can not be edited.
   */
 articleApp.put(
   '/articles/:articleId',
+  multipartMiddleware,
   authenticationMiddleware,
   async (req, res) => {
     let article = Article.findOne({
@@ -309,8 +318,8 @@ articleApp.put(
     }
 
     const content = parseContent(req.body.content)
-    const header = parseHeader(req.body.content)
-    const rawText = req.body['composer-content-text'] || undefined
+    const header = parseHeader(req.body.header)
+    const textContent = req.body.textContent
 
     let submission = new Submission({
       ...article,
@@ -318,19 +327,76 @@ articleApp.put(
       subtitle: header.subtitle,
       stats: {
         images: rawImageCount(content),
-        words: count(rawText)
+        words: count(textContent)
       },
-      summary: rawText ? rawText.substring(0, 250) : undefined,
-      content: req.body.content,
+      summary: textContent.substring(0, 250),
+      content: { raw: content },
       status: req.user.role === 'admin' ? req.body.status : 'pending',
       tag: req.user.role === 'admin' ? req.body.tag : undefined
     })
 
     submission = await submission.save()
-    if (!submission) {
+    redisClient.set(`${submission.id}_upload_progress`, '0')
+    uploadImgAsync(req, res, submission.id) // and add image url to content
+    res.json(submission.toObject())
+  }
+)
+
+/**
+  * @swagger
+  * /articles/:articleId:
+  *   delete:
+  *     description: Delete article
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: articleId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: article id.
+  *     responses:
+  *       200:
+  *         description: Deleted article.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Article not found.
+  *       422:
+  *         description: Article can not be deleted.
+  */
+articleApp.delete(
+  '/articles/:articleId',
+  authenticationMiddleware,
+  async (req, res) => {
+    let article = Article.findOne({
+      id: req.params.articleId
+    })
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!article) {
+      return res.status(404).json({ message: 'Article not found' })
+    }
+
+    article.status = 'deleted'
+
+    article = await article.save()
+    if (!article) {
       return res.status(422).json({ message: 'Article can not be edited' })
     }
-    res.json(submission.toObject())
+    res.status(200).json({ message: 'Article has been deleted' })
+    uploadRSSAndSitemap(
+      process.env.API_DOMAIN,
+      true,
+      null,
+      process.env.S3_BUCKET
+    )
   }
 )
 
