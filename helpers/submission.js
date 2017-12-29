@@ -64,6 +64,9 @@ async function uploadImgAsync (req, res, submissionId) {
   const imgs = req.files.images
   const keys = imgs ? Object.keys(imgs) : []
   const numberOfImages = keys.length
+  if (numberOfImages === 0) {
+    redisClient.set(`${submissionId}_upload_progress`, '100')
+  }
   for (let i = 0; i < keys.length; i += 1) {
     const k = keys[i]
     const imgPath = imgs[k].path
