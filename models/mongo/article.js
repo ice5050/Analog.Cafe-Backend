@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const connection = require('./index.js')
 const timestamps = require('mongoose-timestamp-date-unix')
+const cachegoose = require('cachegoose')
 
 const Schema = mongoose.Schema
 
@@ -27,6 +28,16 @@ const articleSchema = new Schema({
 })
 
 articleSchema.plugin(timestamps)
+
+// Cache clearing
+articleSchema.post('save', article => {
+  cachegoose.clearCache('articles')
+})
+
+articleSchema.post('remove', doc => {
+  cachegoose.clearCache('articles')
+})
+
 const Article = connection.model('Article', articleSchema)
 
 module.exports = Article
