@@ -323,6 +323,7 @@ articleApp.put(
 
     let submission = new Submission({
       ...article,
+      articleId: article.id,
       title: header.title,
       subtitle: header.subtitle,
       stats: {
