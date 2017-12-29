@@ -94,7 +94,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     .sort({ 'post-date': 'desc' })
-    .cache(300)
+    .cache(300, 'articles')
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
