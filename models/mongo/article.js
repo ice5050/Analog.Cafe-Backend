@@ -18,6 +18,14 @@ const articleSchema = new Schema({
     id: String,
     name: String
   },
+  authors: [
+    {
+      _id: false,
+      id: String,
+      name: String,
+      authorship: String
+    }
+  ],
   poster: String,
   'post-date': String,
   tag: String,

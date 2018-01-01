@@ -103,6 +103,8 @@ async function uploadImgAsync (req, res, submissionId) {
         numberOfImages).toFixed(2)
     )
   }
+  const submission = await Submission.findOne({ id: submissionId })
+  return submission
 }
 
 function sanitizeUsername (username) {
@@ -112,6 +114,34 @@ function sanitizeUsername (username) {
 
 function rand5digit () {
   return Math.floor(Math.random() * 89999 + 10000)
+}
+
+/**
+ * Get all image owners from image nodes (from raw content of submission or article)
+ * @param {string[]} srcs - array of image sources (ex. image-froth_xxx)
+ */
+async function getImageOwners (srcs) {
+  const imageOwners = await Image.find({ id: { $in: srcs } }).distinct('author').exec()
+  return imageOwners
+}
+
+/**
+ * Get all image nodes from submission or article
+ * @param {object} submission - submission object
+ */
+function imageNodesFromSubmission (submission) {
+  return submission.content.raw.document.nodes.filter(node => node.type === 'image')
+}
+
+async function updateSubmissionAuthors (submission) {
+  const imageSrcs = imageNodesFromSubmission(submission).map(node => node.data.src)
+  const imageOwners = await getImageOwners(imageSrcs)
+  submission.authors = [
+    submission.authors[0] || { ...submission.author.toObject(), authorship: 'article' },
+    ...(imageOwners.filter(o => o.id !== submission.author.id).map(o => ({ ...o, authorship: 'photography' })))
+  ]
+  await submission.save()
+  return submission
 }
 
 module.exports = {
@@ -125,5 +155,8 @@ module.exports = {
   addImageURLToContent,
   uploadImgAsync,
   sanitizeUsername,
-  rand5digit
+  rand5digit,
+  getImageOwners,
+  imageNodesFromSubmission,
+  updateSubmissionAuthors
 }

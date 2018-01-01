@@ -13,7 +13,8 @@ const {
   parseContent,
   parseHeader,
   rawImageCount,
-  uploadImgAsync
+  uploadImgAsync,
+  updateSubmissionAuthors
 } = require('../../helpers/submission')
 const { froth } = require('../../helpers/image_froth')
 const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
@@ -89,7 +90,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   query
     .select(
-      'id slug title subtitle stats author poster tag status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author authors poster tag status summary updatedAt createdAt post-date'
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
@@ -129,7 +130,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 articleApp.get('/rss', async (req, res) => {
   const query = Article.find({ status: 'published' })
     .select(
-      'id slug title subtitle stats author poster tag status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author authors poster tag status summary updatedAt createdAt post-date'
     )
     .limit(30)
     .sort({ 'post-date': 'desc' })
@@ -338,7 +339,7 @@ articleApp.put(
 
     submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
-    uploadImgAsync(req, res, submission.id) // and add image url to content
+    uploadImgAsync(req, res, submission.id).then(updateSubmissionAuthors)
     res.json(submission.toObject())
   }
 )

@@ -12,7 +12,8 @@ const {
   rawImageCount,
   randomString,
   slugGenerator,
-  uploadImgAsync
+  uploadImgAsync,
+  updateSubmissionAuthors
 } = require('../../helpers/submission')
 
 const submissionApp = express()
@@ -60,7 +61,7 @@ submissionApp.get(
 
     query
       .select(
-        'id slug title subtitle stats author poster articleId tag status scheduledOrder summary updatedAt createdAt'
+        'id slug title subtitle stats author authors poster articleId tag status scheduledOrder summary updatedAt createdAt'
       )
       .limit(itemsPerPage)
       .skip(itemsPerPage * (page - 1))
@@ -249,7 +250,7 @@ submissionApp.post(
     })
     const submission = await newSubmission.save()
     redisClient.set(`${newSubmission.id}_upload_progress`, '0')
-    uploadImgAsync(req, res, newSubmission.id) // and add image url to content
+    uploadImgAsync(req, res, newSubmission.id).then(updateSubmissionAuthors)
     res.json(submission.toObject())
   }
 )
@@ -407,7 +408,7 @@ submissionApp.put(
     }
 
     redisClient.set(`${submission.id}_upload_progress`, '0')
-    uploadImgAsync(req, res, submission.id)
+    uploadImgAsync(req, res, submission.id).then(updateSubmissionAuthors)
     res.json(submission.toObject())
   }
 )
