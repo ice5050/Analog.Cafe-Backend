@@ -251,7 +251,7 @@ authApp.post('/auth/email', async (req, res) => {
         'You need to wait for a minute before creating email for signing in again.'
     })
   }
-  const signInURL = generateUserSignInURL(
+  const signInURL = await generateUserSignInURL(
     `${req.protocol}://${req.get('host')}`,
     user
   )
