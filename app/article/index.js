@@ -147,7 +147,7 @@ articleApp.get('/rss', async (req, res) => {
         (image && image.src
           ? `<p><img src="${image.src}" alt="" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
           : '') + `<p>${a.summary}</p>`,
-      author: a.author.name,
+      author: a.authors.map(author => author.name.split(' ')[0]).join(', '),
       date: moment
         .unix(a['post-date'])
         .toDate()
@@ -195,7 +195,7 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     next: {
       slug: (nextArticle && nextArticle.slug) || undefined,
       title: (nextArticle && nextArticle.title) || undefined,
-      authorName: (nextArticle && nextArticle.author.name) || undefined,
+      authors: (nextArticle && nextArticle.authors) || undefined,
       subtitle: (nextArticle && nextArticle.subtitle) || undefined,
       tag: (nextArticle && nextArticle.tag) || undefined,
       poster: (nextArticle && nextArticle.poster) || undefined
