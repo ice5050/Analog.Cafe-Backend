@@ -12,8 +12,7 @@ const {
   rawImageCount,
   randomString,
   slugGenerator,
-  uploadImgAsync,
-  updateSubmissionAuthors
+  uploadImgAsync
 } = require('../../helpers/submission')
 
 const submissionApp = express()
@@ -250,7 +249,7 @@ submissionApp.post(
     })
     const submission = await newSubmission.save()
     redisClient.set(`${newSubmission.id}_upload_progress`, '0')
-    uploadImgAsync(req, res, newSubmission.id).then(updateSubmissionAuthors)
+    uploadImgAsync(req, res, newSubmission.id)
     res.json(submission.toObject())
   }
 )
@@ -408,7 +407,7 @@ submissionApp.put(
     }
 
     redisClient.set(`${submission.id}_upload_progress`, '0')
-    uploadImgAsync(req, res, submission.id).then(updateSubmissionAuthors)
+    uploadImgAsync(req, res, submission.id)
     res.json(submission.toObject())
   }
 )

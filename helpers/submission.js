@@ -60,16 +60,33 @@ async function deleteImageFromCloudinary (publicId) {
   await cloudinary.v2.uploader.destroy(publicId)
 }
 
+function getFirstImage (rawContent) {
+  return rawContent.document.nodes.find(node => node.type === 'image')
+}
+
+async function findExistingAuthors (srcs) {
+  const imageOwners = await Image.find({ id: { $in: srcs } }).distinct('author').exec()
+  return imageOwners
+}
+
 async function uploadImgAsync (req, res, submissionId) {
-  const imgs = req.files.images
-  const keys = imgs ? Object.keys(imgs) : []
+  const uploadedImgs = req.files.images
+  const keys = uploadedImgs ? Object.keys(uploadedImgs) : []
   const numberOfImages = keys.length
+  let submission = await Submission.findOne({ id: submissionId })
+  submission = await updateSubmissionAuthors(submission)
+  let firstImage = getFirstImage(submission.content.raw)
+  firstImage = firstImage.data && firstImage.data.src
+  if (firstImage) {
+    submission.poster = firstImage
+    await submission.save()
+  }
   if (numberOfImages === 0) {
     redisClient.set(`${submissionId}_upload_progress`, '100')
   }
   for (let i = 0; i < keys.length; i += 1) {
     const k = keys[i]
-    const imgPath = imgs[k].path
+    const imgPath = uploadedImgs[k].path
     const ratio = getImageRatio(imgPath)
     const hash = shortid.generate()
     const submission = await Submission.findOne({ id: submissionId })
@@ -81,7 +98,7 @@ async function uploadImgAsync (req, res, submissionId) {
       await deleteImageFromCloudinary(result.public_id)
       addImageURLToContent(k, duplicatedImage.id, submission.content.raw)
       // If it's the first image, use it as the submission's poster
-      if (i === 0) submission.poster = duplicatedImage.id
+      if ((i === 0) && !firstImage) submission.poster = duplicatedImage.id
     } else {
       const image = new Image({
         id: result.public_id,
@@ -91,7 +108,7 @@ async function uploadImgAsync (req, res, submissionId) {
       })
       await image.save()
       addImageURLToContent(k, image.id, submission.content.raw)
-      if (i === 0) submission.poster = image.id
+      if ((i === 0) && !firstImage) submission.poster = image.id
     }
     submission.markModified('content.raw')
     await submission.save()
@@ -103,7 +120,6 @@ async function uploadImgAsync (req, res, submissionId) {
         numberOfImages).toFixed(2)
     )
   }
-  const submission = await Submission.findOne({ id: submissionId })
   return submission
 }
 
@@ -117,15 +133,6 @@ function rand5digit () {
 }
 
 /**
- * Get all image owners from image nodes (from raw content of submission or article)
- * @param {string[]} srcs - array of image sources (ex. image-froth_xxx)
- */
-async function getImageOwners (srcs) {
-  const imageOwners = await Image.find({ id: { $in: srcs } }).distinct('author').exec()
-  return imageOwners
-}
-
-/**
  * Get all image nodes from submission or article
  * @param {object} submission - submission object
  */
@@ -134,11 +141,10 @@ function imageNodesFromSubmission (submission) {
 }
 
 async function updateSubmissionAuthors (submission) {
-  const imageSrcs = imageNodesFromSubmission(submission).map(node => node.data.src)
-  const imageOwners = await getImageOwners(imageSrcs)
+  const existingAuthors = await findExistingAuthors(imageNodesFromSubmission(submission).map(node => node.data.src))
   submission.authors = [
-    submission.authors[0] || { ...submission.author.toObject(), authorship: 'article' },
-    ...(imageOwners.filter(o => o.id !== submission.author.id).map(o => ({ ...o, authorship: 'photography' })))
+    { ...submission.author.toObject(), authorship: 'article' },
+    ...(existingAuthors.filter(a => a.id !== submission.author.id).map(a => ({ ...a, authorship: 'photography' })))
   ]
   await submission.save()
   return submission
@@ -156,7 +162,6 @@ module.exports = {
   uploadImgAsync,
   sanitizeUsername,
   rand5digit,
-  getImageOwners,
   imageNodesFromSubmission,
   updateSubmissionAuthors
 }

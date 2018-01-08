@@ -13,8 +13,7 @@ const {
   parseContent,
   parseHeader,
   rawImageCount,
-  uploadImgAsync,
-  updateSubmissionAuthors
+  uploadImgAsync
 } = require('../../helpers/submission')
 const { froth } = require('../../helpers/image_froth')
 const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
@@ -339,7 +338,7 @@ articleApp.put(
 
     submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
-    uploadImgAsync(req, res, submission.id).then(updateSubmissionAuthors)
+    uploadImgAsync(req, res, submission.id)
     res.json(submission.toObject())
   }
 )
