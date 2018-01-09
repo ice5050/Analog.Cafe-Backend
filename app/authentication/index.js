@@ -19,6 +19,7 @@ const {
   generateUserSignInURL,
   getProfileImageURL
 } = require('../../helpers/authenticate')
+const { randomString } = require('../../helpers/submission')
 const { toShowingObject } = require('../../helpers/user')
 const CODE_EXPIRED = 10 // after send verify email, code will expired (minute)
 const LIMIT_EMAIL_SENDING = 1 // cannot send verify email again until (minute)
@@ -123,20 +124,21 @@ function setupPassport () {
         callbackURL: process.env.TWITTER_CALLBACK_URL
       },
       async (token, tokenSecret, profile, cb) => {
+        let user = await User.findOne({ twitterId: profile.id })
         const username = sanitizeUsername(profile.username)
+        const name = sanitizeUsername(profile.displayName)
         const profileImageURL =
           profile._json &&
           profile._json.profile_image_url &&
           getProfileImageURL(profile._json.profile_image_url)
-        let user = await User.findOne({ twitterId: profile.id })
         if (!user) {
           const uploadedImage =
             profileImageURL &&
             (await profileImageURLToCloudinary(profileImageURL))
           user = await User.create({
             twitterId: profile.id,
-            id: username,
-            title: profile.displayName,
+            id: username || name,
+            title: name || username,
             image: uploadedImage && uploadedImage.public_id,
             text: profile._json.description
           })
@@ -157,7 +159,9 @@ function setupPassport () {
       },
       async (accessToken, refreshToken, profile, cb) => {
         let user = await User.findOne({ facebookId: profile.id })
-        const username = sanitizeUsername(profile.displayName)
+        const email = profile.emails[0] && profile.emails[0].value
+        const username =
+          sanitizeUsername(profile.displayName) || sanitizeUsername(email)
         const profileImageURL = profile.photos[0] && profile.photos[0].value
         if (!user) {
           const uploadedImage =
@@ -166,8 +170,8 @@ function setupPassport () {
           user = await User.create({
             facebookId: profile.id,
             id: username,
-            title: profile.displayName,
-            email: profile.emails[0] && profile.emails[0].value,
+            title: profile.displayName || username,
+            email,
             image: uploadedImage && uploadedImage.public_id
           })
           welcomeEmail(user.email, user.title)
@@ -232,12 +236,14 @@ async function profileImageURLToCloudinary (profileImageURL) {
  */
 authApp.post('/auth/email', async (req, res) => {
   const email = req.body.email
+  const name = sanitizeUsername(email)
+  const username = name + randomString()
   let expired = new Date()
   expired.setMinutes(expired.getMinutes() + CODE_EXPIRED)
 
   let user = await User.findOne({ id: email })
   if (!user) {
-    user = await User.create({ id: email, email })
+    user = await User.create({ id: username, email, title: name })
   }
   const dateTimeNow = new Date()
   const limitSendEmail = new Date(
