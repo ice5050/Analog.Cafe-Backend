@@ -138,6 +138,25 @@ articleApp.get('/rss', async (req, res) => {
   articles.forEach(a => {
     const url = `https://www.analog.cafe/zine/${a.slug}`
     const image = a.poster && froth({ src: a.poster })
+
+    // smarter name joiner with punctuation
+    const authorNameList = authors => {
+      let compiledNameList = ''
+      if (authors.length === 1) {
+        compiledNameList = authors[0]
+      } else if (authors.length === 2) {
+        // joins all with "and" but no commas
+        // example: "bob and sam"
+        compiledNameList = authors.join(' and ')
+      } else if (authors.length > 2) {
+        // joins all with commas, but last one gets ", and" (oxford comma!)
+        // example: "bob, joe, and sam"
+        compiledNameList =
+          authors.slice(0, -1).join(', ') + ', and ' + authors.slice(-1)
+      }
+      return compiledNameList
+    }
+
     articleFeed.item({
       title: a.title + (a.subtitle ? ` (${a.subtitle})` : ''),
       url: url,
@@ -146,7 +165,9 @@ articleApp.get('/rss', async (req, res) => {
         (image && image.src
           ? `<p><img src="${image.src}" alt="" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
           : '') + `<p>${a.summary}</p>`,
-      author: a.authors.map(author => author.name.split(' ')[0]).join(', '),
+      author: authorNameList(
+        a.authors.map(author => author.name.split(' ')[0])
+      ),
       date: moment
         .unix(a['post-date'])
         .toDate()
