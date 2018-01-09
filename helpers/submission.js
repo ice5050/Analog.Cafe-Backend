@@ -76,7 +76,7 @@ async function uploadImgAsync (req, res, submissionId) {
   let submission = await Submission.findOne({ id: submissionId })
   submission = await updateSubmissionAuthors(submission)
   let firstImage = getFirstImage(submission.content.raw)
-  firstImage = firstImage.data && firstImage.data.src
+  firstImage = firstImage.data && firstImage.data.src && !firstImage.data.src.includes('data:')
   if (firstImage) {
     submission.poster = firstImage
     await submission.save()
