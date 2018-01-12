@@ -1,6 +1,8 @@
 const express = require('express')
 const shortid = require('shortid')
 const User = require('../../models/mongo/user')
+const Image = require('../../models/mongo/image')
+const Submission = require('../../models/mongo/submission')
 const Article = require('../../models/mongo/article')
 const multipart = require('connect-multiparty')
 const { toShowingObject, parseButtons } = require('../../helpers/user')
@@ -72,16 +74,42 @@ userApp.put(
         public_id: `image-froth_${ratio}_${hash}`
       })
     }
-    const user = await User.findOneAndUpdate(
-      { id: req.user.id },
-      {
-        [req.body.title && 'title']: req.body.title,
-        [req.body.text && 'text']: req.body.text,
-        [uploadedImage && 'image']: uploadedImage && uploadedImage.public_id,
-        [buttons && 'buttons']: buttons
-      },
-      { new: true }
-    )
+    let user = await User.findOne({ id: req.user.id })
+    if (user) {
+      user.title = req.body.title || user.title
+      user.text = req.body.text || user.text
+      user.image = (uploadedImage && uploadedImage.public_id) || user.image
+      user.buttons = buttons || user.buttons
+      const isTitleModified = user.isModified('title')
+      await user.save()
+      if (isTitleModified) {
+        await Image.update(
+          { 'author.id': user.id },
+          { 'author.name': user.title },
+          { multi: true }
+        )
+        await Submission.update(
+          { 'author.id': user.id },
+          { 'author.name': user.title },
+          { multi: true }
+        )
+        await Submission.update(
+          { authors: { $elemMatch: { id: user.id } } },
+          { $set: { 'authors.$.name': user.title } },
+          { multi: true }
+        )
+        await Article.update(
+          { 'author.id': user.id },
+          { 'author.name': user.title },
+          { multi: true }
+        )
+        await Article.update(
+          { authors: { $elemMatch: { id: user.id } } },
+          { $set: { 'authors.$.name': user.title } },
+          { multi: true }
+        )
+      }
+    }
     if (user) {
       res.json({ status: 'ok', info: toShowingObject(user) })
     } else {

@@ -17,6 +17,14 @@ const submissionSchema = new Schema({
     id: String,
     name: String
   },
+  authors: [
+    {
+      _id: false,
+      id: String,
+      name: String,
+      authorship: String
+    }
+  ],
   articleId: String,
   poster: String,
   tag: String, // set after scheduling

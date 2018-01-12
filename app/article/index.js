@@ -89,7 +89,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   query
     .select(
-      'id slug title subtitle stats author poster tag status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author authors poster tag status summary updatedAt createdAt post-date'
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
@@ -129,7 +129,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 articleApp.get('/rss', async (req, res) => {
   const query = Article.find({ status: 'published' })
     .select(
-      'id slug title subtitle stats author poster tag status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author authors poster tag status summary updatedAt createdAt post-date'
     )
     .limit(30)
     .sort({ 'post-date': 'desc' })
@@ -138,6 +138,25 @@ articleApp.get('/rss', async (req, res) => {
   articles.forEach(a => {
     const url = `https://www.analog.cafe/zine/${a.slug}`
     const image = a.poster && froth({ src: a.poster })
+
+    // smarter name joiner with punctuation
+    const authorNameList = authors => {
+      let compiledNameList = ''
+      if (authors.length === 1) {
+        compiledNameList = authors[0]
+      } else if (authors.length === 2) {
+        // joins all with "and" but no commas
+        // example: "bob and sam"
+        compiledNameList = authors.join(' and ')
+      } else if (authors.length > 2) {
+        // joins all with commas, but last one gets ", and" (oxford comma!)
+        // example: "bob, joe, and sam"
+        compiledNameList =
+          authors.slice(0, -1).join(', ') + ', and ' + authors.slice(-1)
+      }
+      return compiledNameList
+    }
+
     articleFeed.item({
       title: a.title + (a.subtitle ? ` (${a.subtitle})` : ''),
       url: url,
@@ -146,7 +165,9 @@ articleApp.get('/rss', async (req, res) => {
         (image && image.src
           ? `<p><img src="${image.src}" alt="" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
           : '') + `<p>${a.summary}</p>`,
-      author: a.author.name,
+      author: authorNameList(
+        a.authors.map(author => author.name.split(' ')[0])
+      ),
       date: moment
         .unix(a['post-date'])
         .toDate()
@@ -194,7 +215,7 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     next: {
       slug: (nextArticle && nextArticle.slug) || undefined,
       title: (nextArticle && nextArticle.title) || undefined,
-      authorName: (nextArticle && nextArticle.author.name) || undefined,
+      authors: (nextArticle && nextArticle.authors) || undefined,
       subtitle: (nextArticle && nextArticle.subtitle) || undefined,
       tag: (nextArticle && nextArticle.tag) || undefined,
       poster: (nextArticle && nextArticle.poster) || undefined
@@ -338,7 +359,7 @@ articleApp.put(
 
     submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
-    uploadImgAsync(req, res, submission.id) // and add image url to content
+    uploadImgAsync(req, res, submission.id)
     res.json(submission.toObject())
   }
 )
