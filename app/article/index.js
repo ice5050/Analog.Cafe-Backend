@@ -2,7 +2,6 @@ const express = require('express')
 const count = require('word-count')
 const moment = require('moment')
 const Article = require('../../models/mongo/article')
-const Image = require('../../models/mongo/image')
 const User = require('../../models/mongo/user.js')
 const multipart = require('connect-multiparty')
 const articleFeed = require('./article-feed')
@@ -54,34 +53,27 @@ const articleApp = express()
  */
 articleApp.get(['/articles', '/list'], async (req, res) => {
   const tags = (req.query.tag && req.query.tag.split(':')) || []
-  const author = req.query.author
+  const authorId = req.query.author
   const page = req.query.page || 1
   const itemsPerPage = req.query['items-per-page'] || 10
+  const authorshipType = req.query.authorship
 
   let queries = [Article.find(), Article.find()]
   queries.map(q => q.find({ status: 'published' }))
   if (tags && tags.length !== 0) {
     queries.map(q => q.where('tag').in(tags))
   }
-  let user
-  if (author) {
-    user = await User.findOne({ id: author }).exec()
-    if (!user) {
+  let author
+  if (authorId) {
+    author = await User.findOne({ id: authorId }).exec()
+    if (!author) {
       res.status(404).json({ message: 'Author not found' })
     }
-    const images = await Image.find({ 'author.id': author })
-    const imagesRegex = images.map(i => new RegExp(`.*${i.id}.*`, 'g'))
+    queries.map(q => q.find({ authors: { $elemMatch: { id: authorId } } }))
+  }
+  if (authorshipType) {
     queries.map(q =>
-      q.or([
-        { 'author.id': author },
-        {
-          'content.raw.document.nodes': {
-            $elemMatch: {
-              $and: [{ type: 'image' }, { 'data.src': { $in: imagesRegex } }]
-            }
-          }
-        }
-      ])
+      q.find({ 'authors.1': { $exists: authorshipType === 'collaboration' } })
     )
   }
 
@@ -94,7 +86,6 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     .sort({ 'post-date': 'desc' })
-    .cache(300, 'articles')
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
@@ -103,8 +94,8 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     status: 'ok',
     filter: {
       tags: tags,
-      author: author
-        ? { id: author, name: (user && user.title) || '' }
+      author: authorId
+        ? { id: authorId, name: (author && author.title) || '' }
         : undefined
     },
     page: {
