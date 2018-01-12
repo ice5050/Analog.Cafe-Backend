@@ -75,10 +75,10 @@ async function uploadImgAsync (req, res, submissionId) {
   const numberOfImages = keys.length
   let submission = await Submission.findOne({ id: submissionId })
   submission = await updateSubmissionAuthors(submission)
-  let firstImage = getFirstImage(submission.content.raw)
-  firstImage = firstImage.data && firstImage.data.src && !firstImage.data.src.includes('data:')
-  if (firstImage) {
-    submission.poster = firstImage
+  const firstImage = getFirstImage(submission.content.raw)
+  const isFirstImageSuggestion = firstImage.data && firstImage.data.src && !firstImage.data.src.includes('data:')
+  if (isFirstImageSuggestion) {
+    submission.poster = firstImage.data.src
     await submission.save()
   }
   if (numberOfImages === 0) {
@@ -98,7 +98,7 @@ async function uploadImgAsync (req, res, submissionId) {
       await deleteImageFromCloudinary(result.public_id)
       addImageURLToContent(k, duplicatedImage.id, submission.content.raw)
       // If it's the first image, use it as the submission's poster
-      if ((i === 0) && !firstImage) submission.poster = duplicatedImage.id
+      if ((i === 0) && !isFirstImageSuggestion) submission.poster = duplicatedImage.id
     } else {
       const image = new Image({
         id: result.public_id,
@@ -108,7 +108,7 @@ async function uploadImgAsync (req, res, submissionId) {
       })
       await image.save()
       addImageURLToContent(k, image.id, submission.content.raw)
-      if ((i === 0) && !firstImage) submission.poster = image.id
+      if ((i === 0) && !isFirstImageSuggestion) submission.poster = image.id
     }
     submission.markModified('content.raw')
     await submission.save()
