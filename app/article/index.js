@@ -2,17 +2,21 @@ const express = require('express')
 const count = require('word-count')
 const moment = require('moment')
 const Article = require('../../models/mongo/article')
-const Image = require('../../models/mongo/image')
 const User = require('../../models/mongo/user.js')
+const multipart = require('connect-multiparty')
 const articleFeed = require('./article-feed')
+const redisClient = require('../../helpers/redis')
 const Submission = require('../../models/mongo/submission')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
   parseContent,
   parseHeader,
-  rawImageCount
+  rawImageCount,
+  uploadImgAsync
 } = require('../../helpers/submission')
 const { froth } = require('../../helpers/image_froth')
+const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
+const multipartMiddleware = multipart()
 const articleApp = express()
 
 /**
@@ -49,34 +53,27 @@ const articleApp = express()
  */
 articleApp.get(['/articles', '/list'], async (req, res) => {
   const tags = (req.query.tag && req.query.tag.split(':')) || []
-  const author = req.query.author
+  const authorId = req.query.author
   const page = req.query.page || 1
   const itemsPerPage = req.query['items-per-page'] || 10
+  const authorshipType = req.query.authorship
 
   let queries = [Article.find(), Article.find()]
   queries.map(q => q.find({ status: 'published' }))
   if (tags && tags.length !== 0) {
     queries.map(q => q.where('tag').in(tags))
   }
-  let user
-  if (author) {
-    user = await User.findOne({ id: author }).exec()
-    if (!user) {
+  let author
+  if (authorId) {
+    author = await User.findOne({ id: authorId }).exec()
+    if (!author) {
       res.status(404).json({ message: 'Author not found' })
     }
-    const images = await Image.find({ 'author.id': author })
-    const imagesRegex = images.map(i => new RegExp(`.*${i.id}.*`, 'g'))
+    queries.map(q => q.find({ authors: { $elemMatch: { id: authorId } } }))
+  }
+  if (authorshipType) {
     queries.map(q =>
-      q.or([
-        { 'author.id': author },
-        {
-          'content.raw.document.nodes': {
-            $elemMatch: {
-              $and: [{ type: 'image' }, { 'data.src': { $in: imagesRegex } }]
-            }
-          }
-        }
-      ])
+      q.find({ 'authors.1': { $exists: authorshipType === 'collaboration' } })
     )
   }
 
@@ -84,12 +81,11 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   query
     .select(
-      'id slug title subtitle stats author poster tag status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author authors poster tag status summary updatedAt createdAt post-date'
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     .sort({ 'post-date': 'desc' })
-    .cache(300)
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
@@ -98,8 +94,8 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     status: 'ok',
     filter: {
       tags: tags,
-      author: author
-        ? { id: author, name: (user && user.title) || '' }
+      author: authorId
+        ? { id: authorId, name: (author && author.title) || '' }
         : undefined
     },
     page: {
@@ -122,9 +118,9 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
  *         description: Return RSS feeds xml.
  */
 articleApp.get('/rss', async (req, res) => {
-  const query = Article.find()
+  const query = Article.find({ status: 'published' })
     .select(
-      'id slug title subtitle stats author poster tag status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author authors poster tag status summary updatedAt createdAt post-date'
     )
     .limit(30)
     .sort({ 'post-date': 'desc' })
@@ -133,6 +129,25 @@ articleApp.get('/rss', async (req, res) => {
   articles.forEach(a => {
     const url = `https://www.analog.cafe/zine/${a.slug}`
     const image = a.poster && froth({ src: a.poster })
+
+    // smarter name joiner with punctuation
+    const authorNameList = authors => {
+      let compiledNameList = ''
+      if (authors.length === 1) {
+        compiledNameList = authors[0]
+      } else if (authors.length === 2) {
+        // joins all with "and" but no commas
+        // example: "bob and sam"
+        compiledNameList = authors.join(' and ')
+      } else if (authors.length > 2) {
+        // joins all with commas, but last one gets ", and" (oxford comma!)
+        // example: "bob, joe, and sam"
+        compiledNameList =
+          authors.slice(0, -1).join(', ') + ', and ' + authors.slice(-1)
+      }
+      return compiledNameList
+    }
+
     articleFeed.item({
       title: a.title + (a.subtitle ? ` (${a.subtitle})` : ''),
       url: url,
@@ -141,8 +156,13 @@ articleApp.get('/rss', async (req, res) => {
         (image && image.src
           ? `<p><img src="${image.src}" alt="" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
           : '') + `<p>${a.summary}</p>`,
-      author: a.author.name,
-      date: moment.unix(a['post-date']).toDate().toString(),
+      author: authorNameList(
+        a.authors.map(author => author.name.split(' ')[0])
+      ),
+      date: moment
+        .unix(a['post-date'])
+        .toDate()
+        .toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -186,7 +206,7 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     next: {
       slug: (nextArticle && nextArticle.slug) || undefined,
       title: (nextArticle && nextArticle.title) || undefined,
-      authorName: (nextArticle && nextArticle.author.name) || undefined,
+      authors: (nextArticle && nextArticle.authors) || undefined,
       subtitle: (nextArticle && nextArticle.subtitle) || undefined,
       tag: (nextArticle && nextArticle.tag) || undefined,
       poster: (nextArticle && nextArticle.poster) || undefined
@@ -198,7 +218,7 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   * @swagger
   * /articles/:articleId:
   *   put:
-  *     description: Update submission
+  *     description: Update article (create new submission for the article)
   *     parameters:
   *            - name: Authorization
   *              in: header
@@ -206,12 +226,12 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   *                type: string
   *                required: true
   *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name: submissionId
+  *            - name: articleId
   *              in: path
   *              schema:
   *                type: string
   *                required: true
-  *                description: Submission id.
+  *                description: Article id.
   *            - name: status
   *              in: query
   *              schema:
@@ -286,16 +306,17 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   *              description:  Submission body
   *     responses:
   *       200:
-  *         description: Created submission.
+  *         description: Created submission for the article.
   *       401:
   *         description: No permission to access.
   *       404:
-  *         description: Submission not found.
+  *         description: Article not found.
   *       422:
-  *         description: Submission can not be edited.
+  *         description: Article can not be edited.
   */
 articleApp.put(
   '/articles/:articleId',
+  multipartMiddleware,
   authenticationMiddleware,
   async (req, res) => {
     let article = Article.findOne({
@@ -309,28 +330,86 @@ articleApp.put(
     }
 
     const content = parseContent(req.body.content)
-    const header = parseHeader(req.body.content)
-    const rawText = req.body['composer-content-text'] || undefined
+    const header = parseHeader(req.body.header)
+    const textContent = req.body.textContent
 
     let submission = new Submission({
       ...article,
+      articleId: article.id,
       title: header.title,
       subtitle: header.subtitle,
       stats: {
         images: rawImageCount(content),
-        words: count(rawText)
+        words: count(textContent)
       },
-      summary: rawText ? rawText.substring(0, 250) : undefined,
-      content: req.body.content,
+      summary: textContent.substring(0, 250),
+      content: { raw: content },
       status: req.user.role === 'admin' ? req.body.status : 'pending',
       tag: req.user.role === 'admin' ? req.body.tag : undefined
     })
 
     submission = await submission.save()
-    if (!submission) {
+    redisClient.set(`${submission.id}_upload_progress`, '0')
+    uploadImgAsync(req, res, submission.id)
+    res.json(submission.toObject())
+  }
+)
+
+/**
+  * @swagger
+  * /articles/:articleId:
+  *   delete:
+  *     description: Delete article
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: articleId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: article id.
+  *     responses:
+  *       200:
+  *         description: Deleted article.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Article not found.
+  *       422:
+  *         description: Article can not be deleted.
+  */
+articleApp.delete(
+  '/articles/:articleId',
+  authenticationMiddleware,
+  async (req, res) => {
+    let article = Article.findOne({
+      id: req.params.articleId
+    })
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!article) {
+      return res.status(404).json({ message: 'Article not found' })
+    }
+
+    article.status = 'deleted'
+
+    article = await article.save()
+    if (!article) {
       return res.status(422).json({ message: 'Article can not be edited' })
     }
-    res.json(submission.toObject())
+    res.status(200).json({ message: 'Article has been deleted' })
+    uploadRSSAndSitemap(
+      process.env.API_DOMAIN,
+      true,
+      null,
+      process.env.S3_BUCKET
+    )
   }
 )
 

@@ -8,6 +8,7 @@ const imageRepostedEmail = require('../../helpers/mailers/image_reposted')
 const {
   getImageId
 } = require('../../helpers/submission')
+const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
 
 async function run () {
   const now = new Date()
@@ -20,20 +21,40 @@ async function run () {
 
   if (!scheduledSubmissions) return
   scheduledSubmissions.map(async submission => {
-    let article = new Article({
-      id: submission.id,
-      slug: submission.slug,
-      title: submission.title,
-      subtitle: submission.subtitle,
-      stats: submission.stat,
-      author: submission.author,
-      poster: submission.poster,
-      tag: submission.tag,
-      summary: submission.summary,
-      content: submission.content,
-      'post-date': moment().unix(),
-      status: 'published'
-    })
+    let article
+    if (submission.articleId) {
+      article = Article.findOne({ id: submission.articleId })
+      article = {
+        ...article,
+        title: submission.title,
+        subtitle: submission.subtitle,
+        stats: submission.stats,
+        author: submission.author,
+        authors: submission.authors,
+        poster: submission.poster,
+        tag: submission.tag,
+        summary: submission.summary,
+        content: submission.content,
+        'post-date': moment().unix(),
+        status: 'published'
+      }
+    } else {
+      article = new Article({
+        id: submission.id,
+        slug: submission.slug,
+        title: submission.title,
+        subtitle: submission.subtitle,
+        stats: submission.stats,
+        author: submission.author,
+        authors: submission.authors,
+        poster: submission.poster,
+        tag: submission.tag,
+        summary: submission.summary,
+        content: submission.content,
+        'post-date': moment().unix(),
+        status: 'published'
+      })
+    }
     submission.articleId = submission.id
     submission.status = 'published'
     await article.save()
@@ -56,6 +77,8 @@ async function run () {
             imageRepostedEmail(imageAuthor.email, imageAuthor.title)
           }
         })
+    // Upload sitemap to S3
+    uploadRSSAndSitemap(process.env.API_DOMAIN, true, null, process.env.S3_BUCKET)
   })
 }
 
