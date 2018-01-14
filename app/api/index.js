@@ -1,5 +1,6 @@
 const express = require('express')
 const swaggerJSDoc = require('swagger-jsdoc')
+const swaggerUi = require('swagger-ui-express')
 
 const apiApp = express()
 
@@ -28,9 +29,6 @@ var options = {
 
 var swaggerSpec = swaggerJSDoc(options)
 
-apiApp.get('/api-docs', function (req, res) {
-  res.setHeader('Content-Type', 'application/json')
-  res.send(swaggerSpec)
-})
+apiApp.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 module.exports = apiApp
