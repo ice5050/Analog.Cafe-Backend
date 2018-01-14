@@ -21,7 +21,7 @@ const articleApp = express()
 
 /**
  * @swagger
- * /articles, /list:
+ * /list:
  *   get:
  *     description: Active user account if code is correct and code is not expired.
  *     parameters:
@@ -45,11 +45,22 @@ const articleApp = express()
  *              schema:
  *                type: integer
  *              description: Number of items per one page.
+ *            - name: authorship
+ *              in: query
+ *              schema:
+ *                type: string
+ *                enum: [solo, collaboration]
+ *              description: Filter articles by authorship type
  *     responses:
  *       200:
- *         description: Return articles.
+ *         description: Return list of published articles.
  *       404:
  *         description: Author not found.
+ */
+
+/**
+ * /articles:
+ *   $ref: '#/paths/~1list
  */
 articleApp.get(['/articles', '/list'], async (req, res) => {
   const tags = (req.query.tag && req.query.tag.split(':')) || []
@@ -159,10 +170,7 @@ articleApp.get('/rss', async (req, res) => {
       author: authorNameList(
         a.authors.map(author => author.name.split(' ')[0])
       ),
-      date: moment
-        .unix(a['post-date'])
-        .toDate()
-        .toString(),
+      date: moment.unix(a['post-date']).toDate().toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
