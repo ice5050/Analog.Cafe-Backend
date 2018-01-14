@@ -244,6 +244,7 @@ authApp.post('/auth/email', async (req, res) => {
   let user = await User.findOne({ id: email })
   if (!user) {
     user = await User.create({ id: username, email, title: name })
+    welcomeEmail(user.email, user.title)
   }
   const dateTimeNow = new Date()
   const limitSendEmail = new Date(
