@@ -223,9 +223,6 @@ imageApp.put(
  *         description: Return images.
  */
 imageApp.get('/images', authenticationMiddleware, async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(401).json({ message: 'No permission to access' })
-  }
   const page = req.query.page || 1
   const itemsPerPage = req.query['items-per-page'] || 10
   const { fullConsent, featured } = req.query
