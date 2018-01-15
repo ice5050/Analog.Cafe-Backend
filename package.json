@@ -45,10 +45,11 @@
     "sib-api-v3-sdk": "3.0.2",
     "sitemap": "^1.13.0",
     "slugify": "^1.2.1",
+    "snyk": "^1.59.1",
     "swagger-jsdoc": "1.9.7",
+    "swagger-ui-express": "^2.0.14",
     "url-pattern": "^1.0.3",
-    "word-count": "^0.2.2",
-    "snyk": "^1.59.1"
+    "word-count": "^0.2.2"
   },
   "devDependencies": {
     "husky": "^0.14.3",

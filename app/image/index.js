@@ -1,5 +1,4 @@
 const express = require('express')
-const passport = require('passport')
 const User = require('../../models/mongo/user')
 const Image = require('../../models/mongo/image')
 const imageSuggestedEmail = require('../../helpers/mailers/image_suggested')
@@ -209,21 +208,39 @@ imageApp.put(
  *              schema:
  *                type: integer
  *                description: Number of items per one page.
+ *            - name: fullConsent
+ *              in: query
+ *              schema:
+ *                type: boolean
+ *                description: Filter only full consent images.
+ *            - name: featured
+ *              in: query
+ *              schema:
+ *                type: boolean
+ *                description: Filter only featured images.
  *     responses:
  *       200:
  *         description: Return images.
  */
 imageApp.get('/images', authenticationMiddleware, async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(401).json({ message: 'No permission to access' })
-  }
   const page = req.query.page || 1
   const itemsPerPage = req.query['items-per-page'] || 10
+  const { fullConsent, featured } = req.query
 
-  let [query, countQuery] = [Image.find(), Image.find()]
+  let queries = [Image.find(), Image.find()]
+
+  if (fullConsent) {
+    queries.map(q => q.find({ fullConsent: true }))
+  }
+
+  if (featured) {
+    queries.map(q => q.find({ featured: true }))
+  }
+
+  let [query, countQuery] = queries
 
   query
-    .select('id author fullConsent')
+    .select('id author fullConsent featured')
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     .cache(300)
