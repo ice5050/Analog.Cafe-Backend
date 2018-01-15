@@ -236,13 +236,13 @@ async function profileImageURLToCloudinary (profileImageURL) {
  */
 authApp.post('/auth/email', async (req, res) => {
   const email = req.body.email
-  const name = sanitizeUsername(email)
-  const username = `${name}-${randomString()}`
   let expired = new Date()
   expired.setMinutes(expired.getMinutes() + CODE_EXPIRED)
 
-  let user = await User.findOne({ id: email })
+  let user = await User.findOne({ email })
   if (!user) {
+    const name = sanitizeUsername(email)
+    const username = `${name}-${randomString()}`
     user = await User.create({ id: username, email, title: name })
     welcomeEmail(user.email, user.title)
   }
