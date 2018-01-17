@@ -365,8 +365,8 @@ submissionApp.put(
     const author = await User.findOne({ id: submission.author.id })
 
     const content = parseContent(req.body.content)
-    const header = parseHeader(req.body.content)
-    const rawText = req.body['composer-content-text'] || ''
+    const header = parseHeader(req.body.header)
+    const textContent = req.body.textContent
     const id = randomString()
 
     submission = {
@@ -376,9 +376,9 @@ submissionApp.put(
       subtitle: header.subtitle,
       stats: {
         images: rawImageCount(content),
-        words: count(rawText)
+        words: count(textContent)
       },
-      summary: rawText ? rawText.substring(0, 250) : undefined,
+      summary: textContent ? textContent.substring(0, 250) : undefined,
       content: { raw: content },
       status: req.user.role === 'admin' ? req.body.status : 'pending',
       tag: req.user.role === 'admin' ? req.body.tag : undefined
