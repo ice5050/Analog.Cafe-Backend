@@ -366,22 +366,28 @@ submissionApp.put(
 
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
+    const title = header && header.title
+    const subtitle = header && header.subtitle
     const textContent = req.body.textContent
+    const tag = req.body.tag
     const id = randomString()
 
     submission = {
       ...submission,
-      slug: slugGenerator(header.title, id),
-      title: header.title,
-      subtitle: header.subtitle,
-      stats: {
+      [title ? 'slug' : undefined]: title && slugGenerator(title, id),
+      [title ? 'title' : undefined]: title,
+      [subtitle ? 'subtitle' : undefined]: subtitle,
+      [content && textContent ? 'stats' : undefined]: {
         images: rawImageCount(content),
         words: count(textContent)
       },
-      summary: textContent ? textContent.substring(0, 250) : undefined,
-      content: { raw: content },
-      status: req.user.role === 'admin' ? req.body.status : 'pending',
-      tag: req.user.role === 'admin' ? req.body.tag : undefined
+      [textContent ? 'summary' : undefined]: textContent
+        ? textContent.substring(0, 250)
+        : undefined,
+      [content ? 'content' : undefined]: { raw: content },
+      status:
+        req.user.role === 'admin' ? req.body.status || 'pending' : 'pending',
+      [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
     }
 
     const isSubmissionModified = submission.isModified('status')
