@@ -353,10 +353,7 @@ submissionApp.put(
     if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
       return res.status(401).json({ message: 'No permission to access' })
     }
-    if (
-      req.user.id === submission.author.id &&
-      submission.status === 'pending'
-    ) {
+    if (req.user.role !== 'admin' && submission.status === 'pending') {
       return res
         .status(401)
         .json({ message: 'No permission to edit pending submission' })
