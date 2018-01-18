@@ -353,10 +353,7 @@ submissionApp.put(
     if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
       return res.status(401).json({ message: 'No permission to access' })
     }
-    if (
-      req.user.id === submission.author.id &&
-      submission.status === 'pending'
-    ) {
+    if (req.user.role !== 'admin' && submission.status === 'pending') {
       return res
         .status(401)
         .json({ message: 'No permission to edit pending submission' })
@@ -365,23 +362,29 @@ submissionApp.put(
     const author = await User.findOne({ id: submission.author.id })
 
     const content = parseContent(req.body.content)
-    const header = parseHeader(req.body.content)
-    const rawText = req.body['composer-content-text'] || ''
+    const header = parseHeader(req.body.header)
+    const title = header && header.title
+    const subtitle = header && header.subtitle
+    const textContent = req.body.textContent
+    const tag = req.body.tag
     const id = randomString()
 
     submission = {
       ...submission,
-      slug: slugGenerator(header.title, id),
-      title: header.title,
-      subtitle: header.subtitle,
-      stats: {
+      [title ? 'slug' : undefined]: title && slugGenerator(title, id),
+      [title ? 'title' : undefined]: title,
+      [subtitle ? 'subtitle' : undefined]: subtitle,
+      [content && textContent ? 'stats' : undefined]: {
         images: rawImageCount(content),
-        words: count(rawText)
+        words: count(textContent)
       },
-      summary: rawText ? rawText.substring(0, 250) : undefined,
-      content: { raw: content },
-      status: req.user.role === 'admin' ? req.body.status : 'pending',
-      tag: req.user.role === 'admin' ? req.body.tag : undefined
+      [textContent ? 'summary' : undefined]: textContent
+        ? textContent.substring(0, 250)
+        : undefined,
+      [content ? 'content' : undefined]: { raw: content },
+      status:
+        req.user.role === 'admin' ? req.body.status || 'pending' : 'pending',
+      [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
     }
 
     const isSubmissionModified = submission.isModified('status')
