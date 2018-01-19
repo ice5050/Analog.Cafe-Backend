@@ -12,7 +12,8 @@ const {
   rawImageCount,
   randomString,
   slugGenerator,
-  uploadImgAsync
+  uploadImgAsync,
+  publish
 } = require('../../helpers/submission')
 
 const submissionApp = express()
@@ -469,6 +470,9 @@ submissionApp.post(
     submission.scheduledOrder = req.body.scheduledOrder
     submission.tag = req.body.tag
     submission = await submission.save()
+    if (req.body.scheduledOrder === 0) {
+      submission = await publish(submission)
+    }
     if (submission) {
       res.json(submission)
     } else {
