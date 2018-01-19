@@ -222,7 +222,7 @@ imageApp.put(
  *       200:
  *         description: Return images.
  */
-imageApp.get('/images', authenticationMiddleware, async (req, res) => {
+imageApp.get('/images', async (req, res) => {
   const page = req.query.page || 1
   const itemsPerPage = req.query['items-per-page'] || 10
   const { fullConsent, featured } = req.query
