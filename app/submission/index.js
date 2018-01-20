@@ -345,6 +345,7 @@ submissionApp.post(
   */
 submissionApp.put(
   '/submissions/:submissionId',
+  multipartMiddleware,
   authenticationMiddleware,
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
@@ -370,8 +371,7 @@ submissionApp.put(
     const tag = req.body.tag
     const id = randomString()
 
-    submission = {
-      ...submission,
+    submission = Object.assign(submission, {
       [title ? 'slug' : undefined]: title && slugGenerator(title, id),
       [title ? 'title' : undefined]: title,
       [subtitle ? 'subtitle' : undefined]: subtitle,
@@ -386,7 +386,7 @@ submissionApp.put(
       status:
         req.user.role === 'admin' ? req.body.status || 'pending' : 'pending',
       [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
-    }
+    })
 
     const isSubmissionModified = submission.isModified('status')
     const isSubmissionApprovedOrRejected = ['scheduled', 'rejected'].includes(
