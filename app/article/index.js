@@ -327,22 +327,24 @@ articleApp.put(
   multipartMiddleware,
   authenticationMiddleware,
   async (req, res) => {
-    let article = Article.findOne({
-      id: req.params.articleId
-    })
-    if (req.user.role !== 'admin' && req.user.id !== article.author.id) {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
+    let article = Article.findOne({ id: req.params.articleId })
     if (!article) {
       return res.status(404).json({ message: 'Article not found' })
+    }
+    if (req.user.role !== 'admin' && req.user.id !== article.author.id) {
+      return res.status(401).json({ message: 'No permission to access' })
     }
 
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
     const textContent = req.body.textContent
+    const tag = req.body.tag
 
     let submission = new Submission({
-      ...article,
+      ...article.toObject(),
+      _id: undefined,
+      updatedAt: undefined,
+      createdAt: undefined,
       articleId: article.id,
       title: header.title,
       subtitle: header.subtitle,
@@ -352,8 +354,8 @@ articleApp.put(
       },
       summary: textContent.substring(0, 250),
       content: { raw: content },
-      status: req.user.role === 'admin' ? req.body.status : 'pending',
-      tag: req.user.role === 'admin' ? req.body.tag : undefined
+      status: req.body.status || 'pending',
+      tag: tag || article.tag
     })
 
     submission = await submission.save()
