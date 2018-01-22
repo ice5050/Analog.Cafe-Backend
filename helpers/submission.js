@@ -196,7 +196,7 @@ async function publish (submission) {
   await submission.save()
   // Send an email to the image owner that isn't the article owner
   submission.content.raw.document.nodes
-      .filters(node => node.type === 'image')
+      .filter(node => node.type === 'image')
       .map(node => node.data.src)
       .map(getImageId)
       .map(async id => {

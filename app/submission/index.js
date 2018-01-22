@@ -470,7 +470,7 @@ submissionApp.post(
     submission.scheduledOrder = req.body.scheduledOrder
     submission.tag = req.body.tag
     submission = await submission.save()
-    if (req.body.scheduledOrder === 0) {
+    if (Number(req.body.scheduledOrder) === 0) {
       submission = await publish(submission)
     }
     if (submission) {
