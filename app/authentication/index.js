@@ -23,6 +23,7 @@ const { randomString } = require('../../helpers/submission')
 const { toShowingObject } = require('../../helpers/user')
 const CODE_EXPIRED = 10 // after send verify email, code will expired (minute)
 const LIMIT_EMAIL_SENDING = 1 // cannot send verify email again until (minute)
+const TOKEN_EXPIRES_IN = '3d'
 
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
@@ -55,7 +56,9 @@ authApp.get(
   (req, res) => {
     const user = req.user
     const payload = { id: user.id }
-    const token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '3d' })
+    const token = jwt.sign(payload, jwtOptions.secretOrKey, {
+      expiresIn: TOKEN_EXPIRES_IN
+    })
     res.redirect(`${process.env.ANALOG_FRONTEND_URL}?token=${token}`)
   }
 )
@@ -89,7 +92,9 @@ authApp.get(
   (req, res) => {
     const user = req.user
     const payload = { id: user.id }
-    const token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '3d' })
+    const token = jwt.sign(payload, jwtOptions.secretOrKey, {
+      expiresIn: TOKEN_EXPIRES_IN
+    })
     res.redirect(`${process.env.ANALOG_FRONTEND_URL}?token=${token}`)
   }
 )
@@ -295,7 +300,9 @@ authApp.get('/auth/email/verify', async (req, res) => {
     )
   }
   const payload = { id: user.id }
-  const token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '3d' })
+  const token = jwt.sign(payload, jwtOptions.secretOrKey, {
+    expiresIn: TOKEN_EXPIRES_IN
+  })
   res.redirect(process.env.ANALOG_FRONTEND_URL + '?token=' + token)
 })
 
