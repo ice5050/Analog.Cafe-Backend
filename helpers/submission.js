@@ -193,7 +193,7 @@ async function publish (submission) {
   }
   submission.status = 'published'
   await article.save()
-  await submission.save()
+  submission = await submission.save()
   // Send an email to the image owner that isn't the article owner
   submission.content.raw.document.nodes
       .filter(node => node.type === 'image')
