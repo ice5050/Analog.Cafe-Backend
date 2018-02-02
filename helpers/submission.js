@@ -170,7 +170,9 @@ async function publish (submission) {
       tag: submission.tag,
       summary: submission.summary,
       content: submission.content,
-      'post-date': moment().unix(),
+      date: {
+        published: moment().unix()
+      },
       status: 'published'
     }
   } else {
@@ -186,7 +188,9 @@ async function publish (submission) {
       tag: submission.tag,
       summary: submission.summary,
       content: submission.content,
-      'post-date': moment().unix(),
+      date: {
+        published: moment().unix()
+      },
       status: 'published'
     })
     submission.articleId = submission.id

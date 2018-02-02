@@ -32,6 +32,7 @@
     "image-size": "^0.6.1",
     "jsonwebtoken": "7.4.3",
     "moment": "2.19.3",
+    "mongodb": "^3.0.2",
     "mongoose": "4.11.14",
     "mongoose-timestamp-date-unix": "^0.6.2",
     "mongoose-ts": "0.1.0",
