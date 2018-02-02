@@ -170,7 +170,10 @@ articleApp.get('/rss', async (req, res) => {
       author: authorNameList(
         a.authors.map(author => author.name.split(' ')[0])
       ),
-      date: moment.unix(a['post-date']).toDate().toString(),
+      date: moment
+        .unix(a['post-date'])
+        .toDate()
+        .toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -352,7 +355,11 @@ articleApp.put(
         images: rawImageCount(content),
         words: count(textContent)
       },
-      summary: textContent.substring(0, 250),
+      summary: textContent
+        .replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
+        .replace(/\s+$/, '') // remove any trailing spaces
+        .replace(/^[ \t]+/, '') // remove any leading spaces
+        .replace(/ {2}+/g, ' '), // remove any reoccuring (double) spaces
       content: { raw: content },
       status: req.body.status || 'pending',
       tag: tag || article.tag

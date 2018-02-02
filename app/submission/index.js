@@ -245,7 +245,11 @@ submissionApp.post(
         id: req.user.id,
         name: req.user.title
       },
-      summary: textContent.substring(0, 250),
+      summary: textContent
+        .replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
+        .replace(/\s+$/, '') // remove any trailing spaces
+        .replace(/^[ \t]+/, '') // remove any leading spaces
+        .replace(/ {2}+/g, ' '), // remove any reoccuring (double) spaces
       content: { raw: content }
     })
     const submission = await newSubmission.save()
@@ -380,7 +384,11 @@ submissionApp.put(
         words: count(textContent)
       },
       [textContent ? 'summary' : undefined]: textContent
-        ? textContent.substring(0, 250)
+        ? textContent
+            .replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
+            .replace(/\s+$/, '') // remove any trailing spaces
+            .replace(/^[ \t]+/, '') // remove any leading spaces
+            .replace(/ {2}+/g, ' ') // remove any reoccuring (double) spaces
         : undefined,
       [content ? 'content' : undefined]: { raw: content },
       status:
