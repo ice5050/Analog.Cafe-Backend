@@ -92,11 +92,11 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   query
     .select(
-      'id slug title subtitle stats author authors poster tag status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author authors poster tag status summary date'
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
-    .sort({ 'post-date': 'desc' })
+    .sort({ 'date.published': 'desc' })
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
@@ -131,10 +131,10 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 articleApp.get('/rss', async (req, res) => {
   const query = Article.find({ status: 'published' })
     .select(
-      'id slug title subtitle stats author authors poster tag status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author authors poster tag status summary date'
     )
     .limit(30)
-    .sort({ 'post-date': 'desc' })
+    .sort({ 'date.published': 'desc' })
   const articles = await query.exec()
   articleFeed.items = []
   articles.forEach(a => {
@@ -170,10 +170,7 @@ articleApp.get('/rss', async (req, res) => {
       author: authorNameList(
         a.authors.map(author => author.name.split(' ')[0])
       ),
-      date: moment
-        .unix(a['post-date'])
-        .toDate()
-        .toString(),
+      date: moment.unix(a.date.published).toDate().toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -208,9 +205,9 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     })
   }
   const nextArticle = await Article.findOne({
-    'post-date': { $lt: article['post-date'] }
+    'date.published': { $lt: article.date.published }
   })
-    .sort({ 'post-date': 'desc' })
+    .sort({ 'date.published': 'desc' })
     .exec()
   res.json({
     ...article.toObject(),
@@ -346,8 +343,7 @@ articleApp.put(
     let submission = new Submission({
       ...article.toObject(),
       _id: undefined,
-      updatedAt: undefined,
-      createdAt: undefined,
+      date: {},
       articleId: article.id,
       title: header.title,
       subtitle: header.subtitle,

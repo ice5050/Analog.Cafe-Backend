@@ -61,11 +61,11 @@ submissionApp.get(
 
     query
       .select(
-        'id slug title subtitle stats author authors poster articleId tag status scheduledOrder summary updatedAt createdAt'
+        'id slug title subtitle stats author authors poster articleId tag status scheduledOrder summary date'
       )
       .limit(itemsPerPage)
       .skip(itemsPerPage * (page - 1))
-      .sort({ updatedAt: 'desc' })
+      .sort({ 'date.updated': 'desc' })
 
     const submissions = await query.exec()
     const count = await countQuery.count().exec()
@@ -80,7 +80,10 @@ submissionApp.get(
       },
       items: submissions.map(s => ({
         ...s.toObject(),
-        'post-date': s.createdAt
+        date: {
+          ...s.date,
+          published: s.date.created
+        }
       }))
     })
   }
