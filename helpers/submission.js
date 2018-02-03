@@ -11,6 +11,8 @@ const redisClient = require('../helpers/redis')
 const cloudinary = require('../helpers/cloudinary')
 const imageRepostedEmail = require('../helpers/mailers/image_reposted')
 const uploadRSSAndSitemap = require('../upload_rss_sitemap')
+const submissionPublishedEmail = require('../helpers/mailers/submission_published')
+const submissionRejectedEmail = require('../helpers/mailers/submission_rejected')
 
 const chance = new Chance()
 
@@ -196,8 +198,13 @@ async function publish (submission) {
     submission.articleId = submission.id
   }
   submission.status = 'published'
-  await article.save()
+  article = await article.save()
   submission = await submission.save()
+  const author = await User.findOne({ id: submission.author.id })
+  submissionPublishedEmail(
+    author,
+    article
+  )
   // Send an email to the image owner that isn't the article owner
   submission.content.raw.document.nodes
       .filter(node => node.type === 'image')
@@ -221,6 +228,14 @@ async function publish (submission) {
   return submission
 }
 
+async function reject (submission) {
+  submission.status = 'rejected'
+  submission = await submission.save()
+  const author = await User.findOne({ id: submission.author.id })
+  submissionRejectedEmail(author)
+  return submission
+}
+
 module.exports = {
   getImageRatio,
   parseContent,
@@ -235,5 +250,6 @@ module.exports = {
   rand5digit,
   imageNodesFromSubmission,
   updateSubmissionAuthors,
-  publish
+  publish,
+  reject
 }
