@@ -2,9 +2,7 @@ const express = require('express')
 const count = require('word-count')
 const multipart = require('connect-multiparty')
 const Submission = require('../../models/mongo/submission')
-const User = require('../../models/mongo/user')
 const redisClient = require('../../helpers/redis')
-const submissionStatusUpdatedEmail = require('../../helpers/mailers/submission_updated')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
   parseContent,
@@ -252,7 +250,7 @@ submissionApp.post(
         .replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
         .replace(/\s+$/, '') // remove any trailing spaces
         .replace(/^[ \t]+/, '') // remove any leading spaces
-        .replace(/ {2}+/g, ' '), // remove any reoccuring (double) spaces
+        .replace(/(\s{2})+/g, ' '), // remove any reoccuring (double) spaces
       content: { raw: content }
     })
     const submission = await newSubmission.save()
@@ -368,8 +366,6 @@ submissionApp.put(
         .json({ message: 'No permission to edit pending submission' })
     }
 
-    const author = await User.findOne({ id: submission.author.id })
-
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
     const title = header && header.title
@@ -391,34 +387,15 @@ submissionApp.put(
             .replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
             .replace(/\s+$/, '') // remove any trailing spaces
             .replace(/^[ \t]+/, '') // remove any leading spaces
-            .replace(/ {2}+/g, ' ') // remove any reoccuring (double) spaces
+            .replace(/(\s{2})+/g, ' ') // remove any reoccuring (double) spaces
         : undefined,
       [content ? 'content' : undefined]: { raw: content },
-      status:
-        req.user.role === 'admin' ? req.body.status || 'pending' : 'pending',
       [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
     })
-
-    const isSubmissionModified = submission.isModified('status')
-    const isSubmissionApprovedOrRejected = ['scheduled', 'rejected'].includes(
-      submission.status
-    )
 
     submission = await submission.save()
     if (!submission) {
       return res.status(422).json({ message: 'Submission can not be edited' })
-    }
-
-    if (
-      isSubmissionModified &&
-      isSubmissionApprovedOrRejected &&
-      author.email
-    ) {
-      submissionStatusUpdatedEmail(
-        author.email,
-        author.title,
-        submission.status
-      )
     }
 
     redisClient.set(`${submission.id}_upload_progress`, '0')
@@ -482,6 +459,7 @@ submissionApp.post(
         .status(422)
         .json({ message: 'Only pending submission can be approved' })
     }
+
     submission.status = 'scheduled'
     submission.scheduledOrder = req.body.scheduledOrder
     submission.tag = req.body.tag
@@ -489,6 +467,7 @@ submissionApp.post(
     if (Number(req.body.scheduledOrder) === 0) {
       submission = await publish(submission)
     }
+
     if (submission) {
       res.json(submission)
     } else {
