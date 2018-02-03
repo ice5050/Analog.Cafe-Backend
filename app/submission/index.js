@@ -11,7 +11,8 @@ const {
   randomString,
   slugGenerator,
   uploadImgAsync,
-  publish
+  publish,
+  reject
 } = require('../../helpers/submission')
 
 const submissionApp = express()
@@ -516,8 +517,8 @@ submissionApp.post(
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
     }
-    submission.status = 'rejected'
-    submission = await submission.save()
+
+    submission = await reject(submission)
     if (submission) {
       res.json(submission)
     } else {
