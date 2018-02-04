@@ -1,6 +1,9 @@
 const express = require('express')
 const Setting = require('../../models/mongo/setting')
-const { authenticationMiddleware } = require('../../helpers/authenticate')
+const {
+  authenticationMiddleware,
+  filterRoleMiddleware
+} = require('../../helpers/authenticate')
 const settingApp = express()
 
 /**
@@ -21,12 +24,14 @@ const settingApp = express()
  *       401:
  *         description: No permission to access.
  */
-settingApp.get('/settings', authenticationMiddleware, async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(401).json({ message: 'No permission to access' })
+settingApp.get(
+  '/settings',
+  authenticationMiddleware,
+  filterRoleMiddleware('admin'),
+  async (req, res) => {
+    const setting = await Setting.findOne()
+    res.json(setting.toObject())
   }
-  const setting = await Setting.findOne()
-  res.json(setting.toObject())
-})
+)
 
 module.exports = settingApp

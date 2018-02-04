@@ -1,7 +1,10 @@
 const express = require('express')
 const Collaboration = require('../../models/mongo/collaboration')
 const { toShowingObject } = require('../../helpers/collaboration')
-const { authenticationMiddleware } = require('../../helpers/authenticate')
+const {
+  authenticationMiddleware,
+  filterRoleMiddleware
+} = require('../../helpers/authenticate')
 
 const collaborationApp = express()
 
@@ -46,10 +49,8 @@ const collaborationApp = express()
 collaborationApp.put(
   '/collaboration',
   authenticationMiddleware,
+  filterRoleMiddleware('admin'),
   async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
     if (req.body) {
       await Collaboration.remove()
       const collaborations = await Collaboration.insertMany(req.body)

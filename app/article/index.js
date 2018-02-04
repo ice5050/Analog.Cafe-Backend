@@ -7,7 +7,10 @@ const multipart = require('connect-multiparty')
 const articleFeed = require('./article-feed')
 const redisClient = require('../../helpers/redis')
 const Submission = require('../../models/mongo/submission')
-const { authenticationMiddleware } = require('../../helpers/authenticate')
+const {
+  authenticationMiddleware,
+  filterRoleMiddleware
+} = require('../../helpers/authenticate')
 const {
   parseContent,
   parseHeader,
@@ -330,12 +333,13 @@ articleApp.put(
   '/articles/:articleId',
   multipartMiddleware,
   authenticationMiddleware,
+  filterRoleMiddleware('admin', 'editor'),
   async (req, res) => {
     let article = await Article.findOne({ id: req.params.articleId })
     if (!article) {
       return res.status(404).json({ message: 'Article not found' })
     }
-    if (req.user.role !== 'admin' && req.user.id !== article.author.id) {
+    if (req.user.id !== article.author.id) {
       return res.status(401).json({ message: 'No permission to access' })
     }
 
@@ -398,13 +402,11 @@ articleApp.put(
 articleApp.delete(
   '/articles/:articleId',
   authenticationMiddleware,
+  filterRoleMiddleware('admin'),
   async (req, res) => {
     let article = Article.findOne({
       id: req.params.articleId
     })
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
     if (!article) {
       return res.status(404).json({ message: 'Article not found' })
     }

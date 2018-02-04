@@ -8,7 +8,10 @@ const multipart = require('connect-multiparty')
 const { toShowingObject, parseButtons } = require('../../helpers/user')
 const cloudinary = require('../../helpers/cloudinary')
 const { getImageRatio } = require('../../helpers/submission')
-const { authenticationMiddleware } = require('../../helpers/authenticate')
+const {
+  authenticationMiddleware,
+  filterRoleMiddleware
+} = require('../../helpers/authenticate')
 
 const userApp = express()
 const multipartMiddleware = multipart()
@@ -149,10 +152,8 @@ userApp.put(
 userApp.put(
   '/users/:userId/suspend',
   authenticationMiddleware,
+  filterRoleMiddleware('admin'),
   async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
     let user = await User.findOne({ id: req.params.userId })
     if (!user) {
       return res.status(404).json({ message: 'User not found' })
@@ -197,10 +198,8 @@ userApp.put(
 userApp.put(
   '/users/:userId/delete',
   authenticationMiddleware,
+  filterRoleMiddleware('admin'),
   async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
     let user = await User.findOne({ id: req.params.userId })
     if (!user) {
       return res.status(404).json({ message: 'User not found' })
