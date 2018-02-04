@@ -331,7 +331,7 @@ articleApp.put(
   multipartMiddleware,
   authenticationMiddleware,
   async (req, res) => {
-    let article = Article.findOne({ id: req.params.articleId })
+    let article = await Article.findOne({ id: req.params.articleId })
     if (!article) {
       return res.status(404).json({ message: 'Article not found' })
     }
@@ -344,9 +344,9 @@ articleApp.put(
     const textContent = req.body.textContent
     const tag = req.body.tag
 
-    let submission = new Submission({
+    const submission = await Submission.create({
       ...article.toObject(),
-      _id: undefined,
+      _id: null,
       date: {},
       articleId: article.id,
       title: header.title,
@@ -361,7 +361,6 @@ articleApp.put(
       tag: tag || article.tag
     })
 
-    submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
     uploadImgAsync(req, res, submission.id)
     res.json(submission.toObject())
