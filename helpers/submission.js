@@ -236,6 +236,36 @@ async function reject (submission) {
   return submission
 }
 
+function summarize (textContent) {
+  return trimByCharToSentence(
+    textContent.replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
+                .replace(/\s+$/, '') // remove any trailing spaces
+                .replace(/^[ \t]+/, '') // remove any leading spaces
+                .replace(/(\s{2})+/g, ' '), // remove any reoccuring (double) spaces
+    250)
+}
+
+function trimByCharToSentence (text = '', chars = 0) {
+  // string is broken down into sentences;
+  // this is done by splitting it into array between
+  // the most common sentence-ending punctuation marks:
+  // period, exclaimation, ellipsis and question mark;
+  // if string consists of a single statement, make an array
+  // anyways
+  const sentences = text.match(/[^\.!…\?]+[\.!…\?]+/g) || [text]
+  // store
+  let result = ''
+  // cycle through sentences array
+  sentences.forEach(sentence => {
+    // if the `result` store isn't long enough
+    // add a sentence, until we're out of available
+    // sentences
+    if (result.length < chars) result += sentence
+  })
+  // return the trimmed sentence or empty string as default
+  return result
+}
+
 module.exports = {
   getImageRatio,
   parseContent,
@@ -251,5 +281,6 @@ module.exports = {
   imageNodesFromSubmission,
   updateSubmissionAuthors,
   publish,
-  reject
+  reject,
+  summarize
 }

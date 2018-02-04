@@ -12,7 +12,8 @@ const {
   slugGenerator,
   uploadImgAsync,
   publish,
-  reject
+  reject,
+  summarize
 } = require('../../helpers/submission')
 
 const submissionApp = express()
@@ -247,11 +248,7 @@ submissionApp.post(
         id: req.user.id,
         name: req.user.title
       },
-      summary: textContent
-        .replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
-        .replace(/\s+$/, '') // remove any trailing spaces
-        .replace(/^[ \t]+/, '') // remove any leading spaces
-        .replace(/(\s{2})+/g, ' '), // remove any reoccuring (double) spaces
+      summary: summarize(textContent),
       content: { raw: content }
     })
     const submission = await newSubmission.save()
@@ -384,11 +381,7 @@ submissionApp.put(
         words: count(textContent)
       },
       [textContent ? 'summary' : undefined]: textContent
-        ? textContent
-            .replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
-            .replace(/\s+$/, '') // remove any trailing spaces
-            .replace(/^[ \t]+/, '') // remove any leading spaces
-            .replace(/(\s{2})+/g, ' ') // remove any reoccuring (double) spaces
+        ? summarize(textContent)
         : undefined,
       [content ? 'content' : undefined]: { raw: content },
       [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
