@@ -12,7 +12,8 @@ const {
   parseContent,
   parseHeader,
   rawImageCount,
-  uploadImgAsync
+  uploadImgAsync,
+  summarize
 } = require('../../helpers/submission')
 const { froth } = require('../../helpers/image_froth')
 const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
@@ -354,11 +355,7 @@ articleApp.put(
         images: rawImageCount(content),
         words: count(textContent)
       },
-      summary: textContent
-        .replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
-        .replace(/\s+$/, '') // remove any trailing spaces
-        .replace(/^[ \t]+/, '') // remove any leading spaces
-        .replace(/(\s{2})+/g, ' '), // remove any reoccuring (double) spaces
+      summary: summarize(textContent),
       content: { raw: content },
       status: req.body.status || 'pending',
       tag: tag || article.tag
