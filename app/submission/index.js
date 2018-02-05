@@ -4,6 +4,7 @@ const multipart = require('connect-multiparty')
 const Submission = require('../../models/mongo/submission')
 const redisClient = require('../../helpers/redis')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
+const { permissionMiddleware, isRole } = require('../../helpers/authorization')
 const {
   parseContent,
   parseHeader,
@@ -112,6 +113,7 @@ submissionApp.get(
 submissionApp.get(
   '/submissions/:submissionSlug',
   authenticationMiddleware,
+  permissionMiddleware(isRole(['admin', 'editor'])),
   async (req, res) => {
     const submission = await Submission.findOne({
       slug: req.params.submissionSlug
@@ -121,7 +123,7 @@ submissionApp.get(
         message: 'Submission not found'
       })
     }
-    if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
+    if (req.user.id !== submission.author.id) {
       return res.status(401).json({ message: 'No permission to access' })
     }
     res.json(submission.toObject())
@@ -350,15 +352,16 @@ submissionApp.put(
   '/submissions/:submissionId',
   multipartMiddleware,
   authenticationMiddleware,
+  permissionMiddleware(isRole(['admin', 'editor'])),
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
     }
-    if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
+    if (req.user.id !== submission.author.id) {
       return res.status(401).json({ message: 'No permission to access' })
     }
-    if (req.user.role !== 'admin' && submission.status === 'pending') {
+    if (submission.status === 'pending') {
       return res
         .status(401)
         .json({ message: 'No permission to edit pending submission' })
@@ -384,7 +387,7 @@ submissionApp.put(
         ? summarize(textContent)
         : undefined,
       [content ? 'content' : undefined]: { raw: content },
-      [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
+      [tag ? 'tag' : undefined]: tag
     })
 
     submission = await submission.save()
@@ -440,10 +443,8 @@ submissionApp.put(
 submissionApp.post(
   '/submissions/:submissionId/approve',
   authenticationMiddleware,
+  permissionMiddleware(isRole(['admin', 'editor'])),
   async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
     let submission = await Submission.findOne({ id: req.params.submissionId })
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
@@ -502,10 +503,8 @@ submissionApp.post(
 submissionApp.post(
   '/submissions/:submissionId/reject',
   authenticationMiddleware,
+  permissionMiddleware(isRole(['admin', 'editor'])),
   async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
     let submission = await Submission.findOne({ id: req.params.submissionId })
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })

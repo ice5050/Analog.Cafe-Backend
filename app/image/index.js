@@ -3,6 +3,7 @@ const User = require('../../models/mongo/user')
 const Image = require('../../models/mongo/image')
 const imageSuggestedEmail = require('../../helpers/mailers/image_suggested')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
+const { permissionMiddleware, isRole } = require('../../helpers/authorization')
 const imageApp = express()
 
 /**
@@ -67,21 +68,23 @@ imageApp.get('/images/:imageId', async (req, res) => {
  *       404:
  *         description: Image not found.
  */
-imageApp.put('/images/:imageId', authenticationMiddleware, async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(401).json({ message: 'No permission to access' })
+imageApp.put(
+  '/images/:imageId',
+  authenticationMiddleware,
+  permissionMiddleware(isRole(['admin'])),
+  async (req, res) => {
+    let image = await Image.findOne({ id: req.params.imageId })
+    if (!image) {
+      return res.status(404).json({ message: 'Image not found' })
+    }
+    image = {
+      ...image,
+      fullConsent: req.body.fullConsent
+    }
+    await image.save()
+    res.json({ status: 'ok' })
   }
-  let image = await Image.findOne({ id: req.params.imageId })
-  if (!image) {
-    return res.status(404).json({ message: 'Image not found' })
-  }
-  image = {
-    ...image,
-    fullConsent: req.body.fullConsent
-  }
-  await image.save()
-  res.json({ status: 'ok' })
-})
+)
 
 /**
  * @swagger
@@ -114,10 +117,8 @@ imageApp.put('/images/:imageId', authenticationMiddleware, async (req, res) => {
 imageApp.put(
   '/images/:imageId/feature',
   authenticationMiddleware,
+  permissionMiddleware(isRole(['admin'])),
   async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
     const image = await Image.findOne({ id: req.params.imageId })
     if (!image) {
       return res.status(404).json({ message: 'Image not found' })
@@ -172,10 +173,8 @@ imageApp.put(
 imageApp.put(
   '/images/:imageId/unfeature',
   authenticationMiddleware,
+  permissionMiddleware(isRole(['admin'])),
   async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
     const image = await Image.findOne({ id: req.params.imageId })
     if (!image) {
       return res.status(404).json({ message: 'Image not found' })
@@ -289,10 +288,8 @@ imageApp.get('/images', async (req, res) => {
 imageApp.put(
   '/images/:imageId/delete',
   authenticationMiddleware,
+  permissionMiddleware(isRole(['admin'])),
   async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
     let image = await Image.findOne({ id: req.params.imageId })
     if (!image) {
       return res.status(404).json({ message: 'Image not found' })
