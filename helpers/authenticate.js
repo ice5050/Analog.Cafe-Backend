@@ -15,16 +15,6 @@ function authenticationMiddleware (req, res, next) {
   })(req, res, next)
 }
 
-function filterRoleMiddleware (roles) {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      res.status(401).json({ message: 'No permission to access' })
-    } else {
-      next()
-    }
-  }
-}
-
 function sanitizeUsername (username) {
   if (!username) return null
   return username.split('@')[0].toLowerCase().replace(/\W/g, '.')
@@ -58,6 +48,5 @@ module.exports = {
   rand5digit,
   getProfileImageURL,
   generateVerifyCode,
-  generateUserSignInURL,
-  filterRoleMiddleware
+  generateUserSignInURL
 }

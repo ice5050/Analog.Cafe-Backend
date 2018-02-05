@@ -1,9 +1,7 @@
 const express = require('express')
 const Setting = require('../../models/mongo/setting')
-const {
-  authenticationMiddleware,
-  filterRoleMiddleware
-} = require('../../helpers/authenticate')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
+const { permissionMiddleware, isRole } = require('../../helpers/authorization')
 const settingApp = express()
 
 /**
@@ -27,7 +25,7 @@ const settingApp = express()
 settingApp.get(
   '/settings',
   authenticationMiddleware,
-  filterRoleMiddleware('admin'),
+  permissionMiddleware(isRole(['admin'])),
   async (req, res) => {
     const setting = await Setting.findOne()
     res.json(setting.toObject())

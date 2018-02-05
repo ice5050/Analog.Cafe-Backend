@@ -40,6 +40,7 @@
     "passport-facebook": "^2.1.1",
     "passport-jwt": "2.2.1",
     "passport-twitter": "^1.0.4",
+    "ramda": "^0.25.0",
     "redis": "^2.8.0",
     "rss": "^1.2.2",
     "shortid": "^2.2.8",

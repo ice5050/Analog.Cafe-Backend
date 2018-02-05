@@ -2,10 +2,8 @@ const express = require('express')
 const User = require('../../models/mongo/user')
 const Image = require('../../models/mongo/image')
 const imageSuggestedEmail = require('../../helpers/mailers/image_suggested')
-const {
-  authenticationMiddleware,
-  filterRoleMiddleware
-} = require('../../helpers/authenticate')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
+const { permissionMiddleware, isRole } = require('../../helpers/authorization')
 const imageApp = express()
 
 /**
@@ -73,7 +71,7 @@ imageApp.get('/images/:imageId', async (req, res) => {
 imageApp.put(
   '/images/:imageId',
   authenticationMiddleware,
-  filterRoleMiddleware('admin'),
+  permissionMiddleware(isRole(['admin'])),
   async (req, res) => {
     let image = await Image.findOne({ id: req.params.imageId })
     if (!image) {
@@ -119,7 +117,7 @@ imageApp.put(
 imageApp.put(
   '/images/:imageId/feature',
   authenticationMiddleware,
-  filterRoleMiddleware('admin'),
+  permissionMiddleware(isRole(['admin'])),
   async (req, res) => {
     const image = await Image.findOne({ id: req.params.imageId })
     if (!image) {
@@ -175,7 +173,7 @@ imageApp.put(
 imageApp.put(
   '/images/:imageId/unfeature',
   authenticationMiddleware,
-  filterRoleMiddleware('admin'),
+  permissionMiddleware(isRole(['admin'])),
   async (req, res) => {
     const image = await Image.findOne({ id: req.params.imageId })
     if (!image) {
@@ -290,7 +288,7 @@ imageApp.get('/images', async (req, res) => {
 imageApp.put(
   '/images/:imageId/delete',
   authenticationMiddleware,
-  filterRoleMiddleware('admin'),
+  permissionMiddleware(isRole(['admin'])),
   async (req, res) => {
     let image = await Image.findOne({ id: req.params.imageId })
     if (!image) {

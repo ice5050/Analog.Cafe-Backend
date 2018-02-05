@@ -1,4 +1,5 @@
 const express = require('express')
+const R = require('ramda')
 const count = require('word-count')
 const moment = require('moment')
 const Article = require('../../models/mongo/article')
@@ -7,10 +8,7 @@ const multipart = require('connect-multiparty')
 const articleFeed = require('./article-feed')
 const redisClient = require('../../helpers/redis')
 const Submission = require('../../models/mongo/submission')
-const {
-  authenticationMiddleware,
-  filterRoleMiddleware
-} = require('../../helpers/authenticate')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
   parseContent,
   parseHeader,
@@ -18,6 +16,9 @@ const {
   uploadImgAsync,
   summarize
 } = require('../../helpers/submission')
+const { permissionMiddleware, isRole } = require('../../helpers/authorization')
+const { articleMiddleware, isArticleOwner } = require('../../helpers/article')
+const { authorNameList } = require('../../helpers/user')
 const { froth } = require('../../helpers/image_froth')
 const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
 const multipartMiddleware = multipart()
@@ -144,24 +145,6 @@ articleApp.get('/rss', async (req, res) => {
   articles.forEach(a => {
     const url = `https://www.analog.cafe/zine/${a.slug}`
     const image = a.poster && froth({ src: a.poster })
-
-    // smarter name joiner with punctuation
-    const authorNameList = authors => {
-      let compiledNameList = ''
-      if (authors.length === 1) {
-        compiledNameList = authors[0]
-      } else if (authors.length === 2) {
-        // joins all with "and" but no commas
-        // example: "bob and sam"
-        compiledNameList = authors.join(' and ')
-      } else if (authors.length > 2) {
-        // joins all with commas, but last one gets ", and" (oxford comma!)
-        // example: "bob, joe, and sam"
-        compiledNameList =
-          authors.slice(0, -1).join(', ') + ', and ' + authors.slice(-1)
-      }
-      return compiledNameList
-    }
 
     articleFeed.item({
       title: a.title + (a.subtitle ? ` (${a.subtitle})` : ''),
@@ -333,16 +316,10 @@ articleApp.put(
   '/articles/:articleId',
   multipartMiddleware,
   authenticationMiddleware,
-  filterRoleMiddleware('admin', 'editor'),
+  articleMiddleware,
+  permissionMiddleware(R.either(isRole(['admin', 'editor']), isArticleOwner())),
   async (req, res) => {
-    let article = await Article.findOne({ id: req.params.articleId })
-    if (!article) {
-      return res.status(404).json({ message: 'Article not found' })
-    }
-    if (req.user.id !== article.author.id) {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
-
+    const article = req.article
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
     const textContent = req.body.textContent
@@ -402,17 +379,11 @@ articleApp.put(
 articleApp.delete(
   '/articles/:articleId',
   authenticationMiddleware,
-  filterRoleMiddleware('admin'),
+  articleMiddleware,
+  permissionMiddleware(isRole(['admin'])),
   async (req, res) => {
-    let article = Article.findOne({
-      id: req.params.articleId
-    })
-    if (!article) {
-      return res.status(404).json({ message: 'Article not found' })
-    }
-
+    let article = req.article
     article.status = 'deleted'
-
     article = await article.save()
     if (!article) {
       return res.status(422).json({ message: 'Article can not be edited' })

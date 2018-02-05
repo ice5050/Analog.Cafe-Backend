@@ -1,10 +1,8 @@
 const express = require('express')
 const Collaboration = require('../../models/mongo/collaboration')
 const { toShowingObject } = require('../../helpers/collaboration')
-const {
-  authenticationMiddleware,
-  filterRoleMiddleware
-} = require('../../helpers/authenticate')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
+const { permissionMiddleware, isRole } = require('../../helpers/authorization')
 
 const collaborationApp = express()
 
@@ -49,7 +47,7 @@ const collaborationApp = express()
 collaborationApp.put(
   '/collaboration',
   authenticationMiddleware,
-  filterRoleMiddleware('admin'),
+  permissionMiddleware(isRole(['admin'])),
   async (req, res) => {
     if (req.body) {
       await Collaboration.remove()

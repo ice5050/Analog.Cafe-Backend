@@ -3,10 +3,8 @@ const count = require('word-count')
 const multipart = require('connect-multiparty')
 const Submission = require('../../models/mongo/submission')
 const redisClient = require('../../helpers/redis')
-const {
-  authenticationMiddleware,
-  filterRoleMiddleware
-} = require('../../helpers/authenticate')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
+const { permissionMiddleware, isRole } = require('../../helpers/authorization')
 const {
   parseContent,
   parseHeader,
@@ -115,7 +113,7 @@ submissionApp.get(
 submissionApp.get(
   '/submissions/:submissionSlug',
   authenticationMiddleware,
-  filterRoleMiddleware('admin', 'editor'),
+  permissionMiddleware(isRole(['admin', 'editor'])),
   async (req, res) => {
     const submission = await Submission.findOne({
       slug: req.params.submissionSlug
@@ -354,7 +352,7 @@ submissionApp.put(
   '/submissions/:submissionId',
   multipartMiddleware,
   authenticationMiddleware,
-  filterRoleMiddleware('admin', 'editor'),
+  permissionMiddleware(isRole(['admin', 'editor'])),
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
     if (!submission) {
@@ -445,7 +443,7 @@ submissionApp.put(
 submissionApp.post(
   '/submissions/:submissionId/approve',
   authenticationMiddleware,
-  filterRoleMiddleware('admin', 'editor'),
+  permissionMiddleware(isRole(['admin', 'editor'])),
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
     if (!submission) {
@@ -505,7 +503,7 @@ submissionApp.post(
 submissionApp.post(
   '/submissions/:submissionId/reject',
   authenticationMiddleware,
-  filterRoleMiddleware('admin', 'editor'),
+  permissionMiddleware(isRole(['admin', 'editor'])),
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
     if (!submission) {
