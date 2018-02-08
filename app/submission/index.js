@@ -510,6 +510,11 @@ submissionApp.post(
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
     }
+    if (submission.status !== 'pending') {
+      return res
+        .status(422)
+        .json({ message: 'Only pending submission can be rejected' })
+    }
 
     submission = await reject(submission)
     if (submission) {
