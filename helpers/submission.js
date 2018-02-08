@@ -201,10 +201,12 @@ async function publish (submission) {
   article = await article.save()
   submission = await submission.save()
   const author = await User.findOne({ id: submission.author.id })
-  submissionPublishedEmail(
-    author,
-    article
-  )
+  if (author.email) {
+    submissionPublishedEmail(
+      author,
+      article
+    )
+  }
   // Send an email to the image owner that isn't the article owner
   submission.content.raw.document.nodes
       .filter(node => node.type === 'image')
@@ -232,7 +234,9 @@ async function reject (submission) {
   submission.status = 'rejected'
   submission = await submission.save()
   const author = await User.findOne({ id: submission.author.id })
-  submissionRejectedEmail(author)
+  if (author.email) {
+    submissionRejectedEmail(author)
+  }
   return submission
 }
 
