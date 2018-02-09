@@ -162,11 +162,11 @@ async function publish (submission) {
   if (submission.articleId) {
     article = Article.findOne({ id: submission.articleId })
     article = {
-      ...article,
+      ...article.toObject(),
       title: submission.title,
       subtitle: submission.subtitle,
-      stats: submission.stats,
-      author: submission.author,
+      stats: submission.toObject().stats,
+      author: submission.toObject().author,
       authors: submission.authors,
       poster: submission.poster,
       tag: submission.tag,
@@ -183,8 +183,8 @@ async function publish (submission) {
       slug: submission.slug,
       title: submission.title,
       subtitle: submission.subtitle,
-      stats: submission.stats,
-      author: submission.author,
+      stats: submission.toObject().stats,
+      author: submission.toObject().author,
       authors: submission.authors,
       poster: submission.poster,
       tag: submission.tag,
