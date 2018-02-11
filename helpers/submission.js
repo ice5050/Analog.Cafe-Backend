@@ -2,10 +2,17 @@ const Chance = require('chance')
 const slugify = require('slugify')
 const sizeOf = require('image-size')
 const shortid = require('shortid')
+const moment = require('moment')
 const Image = require('../models/mongo/image')
+const Article = require('../models/mongo/article')
 const Submission = require('../models/mongo/submission')
+const User = require('../models/mongo/user')
 const redisClient = require('../helpers/redis')
 const cloudinary = require('../helpers/cloudinary')
+const imageRepostedEmail = require('../helpers/mailers/image_reposted')
+const uploadRSSAndSitemap = require('../upload_rss_sitemap')
+const submissionPublishedEmail = require('../helpers/mailers/submission_published')
+const submissionRejectedEmail = require('../helpers/mailers/submission_rejected')
 
 const chance = new Chance()
 
@@ -150,6 +157,119 @@ async function updateSubmissionAuthors (submission) {
   return submission
 }
 
+async function publish (submission) {
+  let article
+  if (submission.articleId) {
+    article = Article.findOne({ id: submission.articleId })
+    article = {
+      ...article.toObject(),
+      title: submission.title,
+      subtitle: submission.subtitle,
+      stats: submission.toObject().stats,
+      author: submission.toObject().author,
+      authors: submission.authors,
+      poster: submission.poster,
+      tag: submission.tag,
+      summary: submission.summary,
+      content: submission.content,
+      date: {
+        published: moment().unix()
+      },
+      status: 'published'
+    }
+  } else {
+    article = new Article({
+      id: submission.id,
+      slug: submission.slug,
+      title: submission.title,
+      subtitle: submission.subtitle,
+      stats: submission.toObject().stats,
+      author: submission.toObject().author,
+      authors: submission.authors,
+      poster: submission.poster,
+      tag: submission.tag,
+      summary: submission.summary,
+      content: submission.content,
+      date: {
+        published: moment().unix()
+      },
+      status: 'published'
+    })
+    submission.articleId = submission.id
+  }
+  submission.status = 'published'
+  article = await article.save()
+  submission = await submission.save()
+  const author = await User.findOne({ id: submission.author.id })
+  if (author.email) {
+    submissionPublishedEmail(
+      author,
+      article
+    )
+  }
+  // Send an email to the image owner that isn't the article owner
+  submission.content.raw.document.nodes
+      .filter(node => node.type === 'image')
+      .map(node => node.data.src)
+      .map(getImageId)
+      .map(async id => {
+        const image = await Image.findOne({ id })
+        const imageAuthor =
+          image && (await User.findOne({ id: image.author.id }))
+        if (
+          image &&
+          imageAuthor &&
+          imageAuthor.email &&
+          image.author.id !== submission.author.id
+        ) {
+          imageRepostedEmail(imageAuthor.email, imageAuthor.title)
+        }
+      })
+  // Upload sitemap to S3
+  uploadRSSAndSitemap(process.env.API_DOMAIN, true, null, process.env.S3_BUCKET)
+  return submission
+}
+
+async function reject (submission) {
+  submission.status = 'rejected'
+  submission = await submission.save()
+  const author = await User.findOne({ id: submission.author.id })
+  if (author.email) {
+    submissionRejectedEmail(author)
+  }
+  return submission
+}
+
+function summarize (textContent) {
+  return trimByCharToSentence(
+    textContent.replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
+                .replace(/\s+$/, '') // remove any trailing spaces
+                .replace(/^[ \t]+/, '') // remove any leading spaces
+                .replace(/(\s{2})+/g, ' '), // remove any reoccuring (double) spaces
+    250)
+}
+
+function trimByCharToSentence (text = '', chars = 0) {
+  // string is broken down into sentences;
+  // this is done by splitting it into array between
+  // the most common sentence-ending punctuation marks:
+  // period, exclaimation, ellipsis and question mark;
+  // if string consists of a single statement, make an array
+  // anyways
+  const sentences = text.match(/[^\.!…\?]+[\.!…\?]+/g) || [text]
+  // store
+  let result = ''
+  // cycle through sentences array
+  sentences.forEach(sentence => {
+    // if the `result` store isn't long enough
+    // add a sentence, until we're out of available
+    // sentences
+    if (result.length < chars) result += sentence
+  })
+  // return the trimmed sentence or empty string as default
+  return result
+}
+
 module.exports = {
   getImageRatio,
   parseContent,
@@ -163,5 +283,8 @@ module.exports = {
   sanitizeUsername,
   rand5digit,
   imageNodesFromSubmission,
-  updateSubmissionAuthors
+  updateSubmissionAuthors,
+  publish,
+  reject,
+  summarize
 }

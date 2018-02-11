@@ -12,7 +12,8 @@ const {
   parseContent,
   parseHeader,
   rawImageCount,
-  uploadImgAsync
+  uploadImgAsync,
+  summarize
 } = require('../../helpers/submission')
 const { froth } = require('../../helpers/image_froth')
 const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
@@ -92,11 +93,11 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   query
     .select(
-      'id slug title subtitle stats author authors poster tag status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author authors poster tag status summary date'
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
-    .sort({ 'post-date': 'desc' })
+    .sort({ 'date.published': 'desc' })
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
@@ -131,10 +132,10 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 articleApp.get('/rss', async (req, res) => {
   const query = Article.find({ status: 'published' })
     .select(
-      'id slug title subtitle stats author authors poster tag status summary updatedAt createdAt post-date'
+      'id slug title subtitle stats author authors poster tag status summary date'
     )
     .limit(30)
-    .sort({ 'post-date': 'desc' })
+    .sort({ 'date.published': 'desc' })
   const articles = await query.exec()
   articleFeed.items = []
   articles.forEach(a => {
@@ -170,7 +171,10 @@ articleApp.get('/rss', async (req, res) => {
       author: authorNameList(
         a.authors.map(author => author.name.split(' ')[0])
       ),
-      date: moment.unix(a['post-date']).toDate().toString(),
+      date: moment
+        .unix(a.date.published)
+        .toDate()
+        .toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -205,9 +209,9 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     })
   }
   const nextArticle = await Article.findOne({
-    'post-date': { $lt: article['post-date'] }
+    'date.published': { $lt: article.date.published }
   })
-    .sort({ 'post-date': 'desc' })
+    .sort({ 'date.published': 'desc' })
     .exec()
   res.json({
     ...article.toObject(),
@@ -327,22 +331,23 @@ articleApp.put(
   multipartMiddleware,
   authenticationMiddleware,
   async (req, res) => {
-    let article = Article.findOne({
-      id: req.params.articleId
-    })
-    if (req.user.role !== 'admin' && req.user.id !== article.author.id) {
-      return res.status(401).json({ message: 'No permission to access' })
-    }
+    let article = await Article.findOne({ id: req.params.articleId })
     if (!article) {
       return res.status(404).json({ message: 'Article not found' })
+    }
+    if (req.user.role !== 'admin' && req.user.id !== article.author.id) {
+      return res.status(401).json({ message: 'No permission to access' })
     }
 
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
     const textContent = req.body.textContent
+    const tag = req.body.tag
 
-    let submission = new Submission({
-      ...article,
+    const submission = await Submission.create({
+      ...article.toObject(),
+      _id: null,
+      date: {},
       articleId: article.id,
       title: header.title,
       subtitle: header.subtitle,
@@ -350,13 +355,12 @@ articleApp.put(
         images: rawImageCount(content),
         words: count(textContent)
       },
-      summary: textContent.substring(0, 250),
+      summary: summarize(textContent),
       content: { raw: content },
-      status: req.user.role === 'admin' ? req.body.status : 'pending',
-      tag: req.user.role === 'admin' ? req.body.tag : undefined
+      status: req.body.status || 'pending',
+      tag: tag || article.tag
     })
 
-    submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
     uploadImgAsync(req, res, submission.id)
     res.json(submission.toObject())

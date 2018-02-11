@@ -2,9 +2,7 @@ const express = require('express')
 const count = require('word-count')
 const multipart = require('connect-multiparty')
 const Submission = require('../../models/mongo/submission')
-const User = require('../../models/mongo/user')
 const redisClient = require('../../helpers/redis')
-const submissionStatusUpdatedEmail = require('../../helpers/mailers/submission_updated')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
   parseContent,
@@ -12,7 +10,10 @@ const {
   rawImageCount,
   randomString,
   slugGenerator,
-  uploadImgAsync
+  uploadImgAsync,
+  publish,
+  reject,
+  summarize
 } = require('../../helpers/submission')
 
 const submissionApp = express()
@@ -60,11 +61,11 @@ submissionApp.get(
 
     query
       .select(
-        'id slug title subtitle stats author authors poster articleId tag status scheduledOrder summary updatedAt createdAt'
+        'id slug title subtitle stats author authors poster articleId tag status scheduledOrder summary date'
       )
       .limit(itemsPerPage)
       .skip(itemsPerPage * (page - 1))
-      .sort({ updatedAt: 'desc' })
+      .sort({ 'date.updated': 'desc' })
 
     const submissions = await query.exec()
     const count = await countQuery.count().exec()
@@ -79,7 +80,10 @@ submissionApp.get(
       },
       items: submissions.map(s => ({
         ...s.toObject(),
-        'post-date': s.createdAt
+        date: {
+          ...s.date,
+          published: s.date.created
+        }
       }))
     })
   }
@@ -244,7 +248,7 @@ submissionApp.post(
         id: req.user.id,
         name: req.user.title
       },
-      summary: textContent.substring(0, 250),
+      summary: summarize(textContent),
       content: { raw: content }
     })
     const submission = await newSubmission.save()
@@ -344,6 +348,7 @@ submissionApp.post(
   */
 submissionApp.put(
   '/submissions/:submissionId',
+  multipartMiddleware,
   authenticationMiddleware,
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
@@ -359,8 +364,6 @@ submissionApp.put(
         .json({ message: 'No permission to edit pending submission' })
     }
 
-    const author = await User.findOne({ id: submission.author.id })
-
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
     const title = header && header.title
@@ -369,8 +372,7 @@ submissionApp.put(
     const tag = req.body.tag
     const id = randomString()
 
-    submission = {
-      ...submission,
+    submission = Object.assign(submission, {
       [title ? 'slug' : undefined]: title && slugGenerator(title, id),
       [title ? 'title' : undefined]: title,
       [subtitle ? 'subtitle' : undefined]: subtitle,
@@ -379,34 +381,15 @@ submissionApp.put(
         words: count(textContent)
       },
       [textContent ? 'summary' : undefined]: textContent
-        ? textContent.substring(0, 250)
+        ? summarize(textContent)
         : undefined,
       [content ? 'content' : undefined]: { raw: content },
-      status:
-        req.user.role === 'admin' ? req.body.status || 'pending' : 'pending',
       [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
-    }
-
-    const isSubmissionModified = submission.isModified('status')
-    const isSubmissionApprovedOrRejected = ['scheduled', 'rejected'].includes(
-      submission.status
-    )
+    })
 
     submission = await submission.save()
     if (!submission) {
       return res.status(422).json({ message: 'Submission can not be edited' })
-    }
-
-    if (
-      isSubmissionModified &&
-      isSubmissionApprovedOrRejected &&
-      author.email
-    ) {
-      submissionStatusUpdatedEmail(
-        author.email,
-        author.title,
-        submission.status
-      )
     }
 
     redisClient.set(`${submission.id}_upload_progress`, '0')
@@ -465,10 +448,20 @@ submissionApp.post(
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
     }
+    if (submission.status !== 'pending') {
+      return res
+        .status(422)
+        .json({ message: 'Only pending submission can be approved' })
+    }
+
     submission.status = 'scheduled'
     submission.scheduledOrder = req.body.scheduledOrder
     submission.tag = req.body.tag
     submission = await submission.save()
+    if (Number(req.body.scheduledOrder) === 0) {
+      submission = await publish(submission)
+    }
+
     if (submission) {
       res.json(submission)
     } else {
@@ -517,8 +510,13 @@ submissionApp.post(
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
     }
-    submission.status = 'rejected'
-    submission = await submission.save()
+    if (submission.status !== 'pending') {
+      return res
+        .status(422)
+        .json({ message: 'Only pending submission can be rejected' })
+    }
+
+    submission = await reject(submission)
     if (submission) {
       res.json(submission)
     } else {

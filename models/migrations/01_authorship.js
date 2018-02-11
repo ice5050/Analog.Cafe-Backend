@@ -15,7 +15,7 @@ async function migrate () {
 
 async function app () {
   await migrate()
-  console.log('Migration finished')
+  console.log('Multiple authorship migration: finished')
   process.exit()
 }
 
