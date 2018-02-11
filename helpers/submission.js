@@ -222,7 +222,7 @@ async function publish (submission) {
           imageAuthor.email &&
           image.author.id !== submission.author.id
         ) {
-          imageRepostedEmail(imageAuthor.email, imageAuthor.title)
+          imageRepostedEmail(imageAuthor.email, imageAuthor.title, article)
         }
       })
   // Upload sitemap to S3
