@@ -93,7 +93,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   query
     .select(
-      'id slug title subtitle stats author authors poster tag status summary date'
+      'id slug title subtitle stats submittedBy authors poster tag status summary date'
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
@@ -132,7 +132,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 articleApp.get('/rss', async (req, res) => {
   const query = Article.find({ status: 'published' })
     .select(
-      'id slug title subtitle stats author authors poster tag status summary date'
+      'id slug title subtitle stats submittedBy authors poster tag status summary date'
     )
     .limit(30)
     .sort({ 'date.published': 'desc' })
@@ -171,10 +171,7 @@ articleApp.get('/rss', async (req, res) => {
       author: authorNameList(
         a.authors.map(author => author.name.split(' ')[0])
       ),
-      date: moment
-        .unix(a.date.published)
-        .toDate()
-        .toString(),
+      date: moment.unix(a.date.published).toDate().toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -335,7 +332,7 @@ articleApp.put(
     if (!article) {
       return res.status(404).json({ message: 'Article not found' })
     }
-    if (req.user.role !== 'admin' && req.user.id !== article.author.id) {
+    if (req.user.role !== 'admin' && req.user.id !== article.submittedBy.id) {
       return res.status(401).json({ message: 'No permission to access' })
     }
 

@@ -336,7 +336,7 @@ const articles = [
     },
     status: 'published',
     poster: 'image-froth_1661188_e836994792c049bf94352fbeff06274d',
-    author: {
+    submittedBy: {
       name: 'Lee Clark',
       id: 'lee-clark'
     },
@@ -357,7 +357,7 @@ const articles = [
       images: '1',
       words: '119'
     },
-    author: {
+    submittedBy: {
       name: 'dmitrizzle',
       id: 'dmitrizzle'
     },
@@ -514,7 +514,7 @@ const articles = [
       images: '4',
       words: '454'
     },
-    author: {
+    submittedBy: {
       name: 'Lee Webb',
       id: 'lee-webb'
     },
@@ -1200,7 +1200,7 @@ const articles = [
       images: '10',
       words: '991'
     },
-    author: {
+    submittedBy: {
       name: 'dmitrizzle',
       id: 'dmitrizzle'
     },
@@ -2341,7 +2341,7 @@ const articles = [
       images: '1',
       words: '110'
     },
-    author: {
+    submittedBy: {
       name: 'dmitrizzle',
       id: 'dmitrizzle'
     },
@@ -2518,7 +2518,7 @@ const articles = [
       images: '3',
       words: '533'
     },
-    author: {
+    submittedBy: {
       name: 'Robert Davie',
       id: 'robert-davie'
     },
@@ -2872,7 +2872,7 @@ const articles = [
       images: '6',
       words: '1089'
     },
-    author: {
+    submittedBy: {
       name: 'Bailey Tovar',
       id: 'bailey-tovar'
     },
@@ -3651,7 +3651,7 @@ const articles = [
       images: '1',
       words: '639'
     },
-    author: {
+    submittedBy: {
       name: 'Jacob Maracle',
       id: 'jacob-maracle'
     },
@@ -4224,7 +4224,7 @@ const articles = [
       images: '4',
       words: '1209'
     },
-    author: {
+    submittedBy: {
       name: 'dmitrizzle',
       id: 'dmitrizzle'
     },
@@ -4878,7 +4878,7 @@ const articles = [
       images: '7',
       words: '1418'
     },
-    author: {
+    submittedBy: {
       name: 'dmitrizzle',
       id: 'dmitrizzle'
     },
@@ -5960,7 +5960,7 @@ const articles = [
       images: '15',
       words: '907'
     },
-    author: {
+    submittedBy: {
       name: 'Lee Webb',
       id: 'lee-webb'
     },
@@ -7480,7 +7480,7 @@ const articles = [
       images: '3',
       words: '607'
     },
-    author: {
+    submittedBy: {
       name: 'dmitrizzle',
       id: 'dmitrizzle'
     },
@@ -8296,7 +8296,7 @@ const articles = [
     },
     status: 'published',
     poster: 'image-froth_669104_a50edf34d4d141aaa2264bef5643b2aa',
-    author: {
+    submittedBy: {
       name: 'dmitrizzle',
       id: 'dmitrizzle'
     },
@@ -8934,7 +8934,7 @@ const articles = [
     },
     status: 'published',
     poster: 'image-froth_1421801_3594a3b486ec433585abf725f6cb03bd',
-    author: {
+    submittedBy: {
       name: 'Jacob Maracle',
       id: 'jacob-maracle'
     },
@@ -8955,7 +8955,7 @@ const articles = [
       images: '1',
       words: '26'
     },
-    author: {
+    submittedBy: {
       name: 'dmitrizzle',
       id: 'dmitrizzle'
     },
@@ -9554,7 +9554,7 @@ const articles = [
     },
     status: 'published',
     poster: 'image-froth_1398859_c2700ff1baab405fa6a60e4a452502db',
-    author: {
+    submittedBy: {
       name: 'dmitrizzle',
       id: 'dmitrizzle'
     },
