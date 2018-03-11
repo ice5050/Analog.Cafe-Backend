@@ -150,8 +150,8 @@ function imageNodesFromSubmission (submission) {
 async function updateSubmissionAuthors (submission) {
   const existingAuthors = await findExistingAuthors(imageNodesFromSubmission(submission).map(node => node.data.src))
   submission.authors = [
-    { ...submission.author.toObject(), authorship: 'article' },
-    ...(existingAuthors.filter(a => a.id !== submission.author.id).map(a => ({ ...a, authorship: 'photography' })))
+    { ...submission.submittedBy.toObject(), authorship: 'article' },
+    ...(existingAuthors.filter(a => a.id !== submission.submittedBy.id).map(a => ({ ...a, authorship: 'photography' })))
   ]
   await submission.save()
   return submission
@@ -166,7 +166,7 @@ async function publish (submission) {
       title: submission.title,
       subtitle: submission.subtitle,
       stats: submission.toObject().stats,
-      author: submission.toObject().author,
+      submittedBy: submission.toObject().submittedBy,
       authors: submission.authors,
       poster: submission.poster,
       tag: submission.tag,
@@ -184,7 +184,7 @@ async function publish (submission) {
       title: submission.title,
       subtitle: submission.subtitle,
       stats: submission.toObject().stats,
-      author: submission.toObject().author,
+      submittedBy: submission.toObject().submittedBy,
       authors: submission.authors,
       poster: submission.poster,
       tag: submission.tag,
@@ -200,7 +200,7 @@ async function publish (submission) {
   submission.status = 'published'
   article = await article.save()
   submission = await submission.save()
-  const author = await User.findOne({ id: submission.author.id })
+  const author = await User.findOne({ id: submission.submittedBy.id })
   if (author.email) {
     submissionPublishedEmail(
       author,
@@ -220,7 +220,7 @@ async function publish (submission) {
           image &&
           imageAuthor &&
           imageAuthor.email &&
-          image.author.id !== submission.author.id
+          image.author.id !== submission.submittedBy.id
         ) {
           imageRepostedEmail(imageAuthor.email, imageAuthor.title, article)
         }
@@ -233,7 +233,7 @@ async function publish (submission) {
 async function reject (submission) {
   submission.status = 'rejected'
   submission = await submission.save()
-  const author = await User.findOne({ id: submission.author.id })
+  const author = await User.findOne({ id: submission.submittedBy.id })
   if (author.email) {
     submissionRejectedEmail(author)
   }

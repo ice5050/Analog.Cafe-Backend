@@ -89,8 +89,8 @@ userApp.put(
           { multi: true }
         )
         await Submission.update(
-          { 'author.id': user.id },
-          { 'author.name': user.title },
+          { 'submittedBy.id': user.id },
+          { 'submittedBy.name': user.title },
           { multi: true }
         )
         await Submission.update(
@@ -99,8 +99,8 @@ userApp.put(
           { multi: true }
         )
         await Article.update(
-          { 'author.id': user.id },
-          { 'author.name': user.title },
+          { 'submittedBy.id': user.id },
+          { 'submittedBy.name': user.title },
           { multi: true }
         )
         await Article.update(
@@ -161,7 +161,10 @@ userApp.put(
     user = await user.save()
     if (user) {
       // Suspend all user's articles
-      await Article.update({ 'author.id': user.id }, { status: 'suspended' })
+      await Article.update(
+        { 'submittedBy.id': user.id },
+        { status: 'suspended' }
+      )
       res.json(user)
     } else {
       res.status(422).json({ message: 'User can not be suspended' })
@@ -207,7 +210,7 @@ userApp.put(
     }
     user = await user.remove()
     // Remove all user's articles
-    await Article.remove({ 'author.id': user.id })
+    await Article.remove({ 'submittedBy.id': user.id })
     res.json({ status: 'ok' })
   }
 )
