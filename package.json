@@ -30,7 +30,7 @@
     "express-session": "1.15.6",
     "feed": "^1.1.0",
     "image-size": "^0.6.1",
-    "jsonwebtoken": "7.4.3",
+    "jsonwebtoken": "8.0.0",
     "moment": "2.19.3",
     "mongodb": "^3.0.2",
     "mongoose": "4.11.14",
