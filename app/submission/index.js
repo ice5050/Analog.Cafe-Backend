@@ -55,13 +55,13 @@ submissionApp.get(
 
     let queries = [Submission.find(), Submission.find()]
     if (!['admin', 'editor'].includes(req.user.role)) {
-      queries = queries.map(q => q.find({ 'author.id': req.user.id }))
+      queries = queries.map(q => q.find({ 'submittedBy.id': req.user.id }))
     }
     let [query, countQuery] = queries
 
     query
       .select(
-        'id slug title subtitle stats author authors poster articleId tag status scheduledOrder summary date'
+        'id slug title subtitle stats submittedBy authors poster articleId tag status scheduledOrder summary date'
       )
       .limit(itemsPerPage)
       .skip(itemsPerPage * (page - 1))
@@ -121,7 +121,10 @@ submissionApp.get(
         message: 'Submission not found'
       })
     }
-    if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
+    if (
+      req.user.role !== 'admin' &&
+      req.user.id !== submission.submittedBy.id
+    ) {
       return res.status(401).json({ message: 'No permission to access' })
     }
     res.json(submission.toObject())
@@ -244,7 +247,7 @@ submissionApp.post(
         images: rawImageCount(content),
         words: count(textContent)
       },
-      author: {
+      submittedBy: {
         id: req.user.id,
         name: req.user.title
       },
@@ -355,7 +358,10 @@ submissionApp.put(
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
     }
-    if (req.user.role !== 'admin' && req.user.id !== submission.author.id) {
+    if (
+      req.user.role !== 'admin' &&
+      req.user.id !== submission.submittedBy.id
+    ) {
       return res.status(401).json({ message: 'No permission to access' })
     }
     if (req.user.role !== 'admin' && submission.status === 'pending') {
