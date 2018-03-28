@@ -1,5 +1,5 @@
 # Headless CMS API server
-> 🥐 Built for Analog.Cafe
+> 🥐 Built for [Analog.Cafe](https://github.com/dmitrizzle/Analog.Cafe)
 
 
 ### Setting up a local development Server
