@@ -17,7 +17,7 @@ const userSchema = new Schema({
     {
       to: String,
       text: String,
-      red: Boolean
+      branded: Boolean
     }
   ],
   suspend: Boolean,
