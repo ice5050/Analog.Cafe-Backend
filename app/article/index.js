@@ -15,7 +15,7 @@ const {
   uploadImgAsync,
   summarize
 } = require('../../helpers/submission')
-const { froth } = require('../../helpers/image_froth')
+const { imageFroth } = require('../../helpers/image_froth')
 const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
 const multipartMiddleware = multipart()
 const articleApp = express()
@@ -140,7 +140,7 @@ articleApp.get('/rss', async (req, res) => {
   articleFeed.items = []
   articles.forEach(a => {
     const url = `https://www.analog.cafe/zine/${a.slug}`
-    const image = a.poster && froth({ src: a.poster })
+    const image = a.poster && imageFroth({ src: a.poster })
 
     // smarter name joiner with punctuation
     const authorNameList = authors => {
