@@ -224,7 +224,7 @@ imageApp.put(
  */
 imageApp.get('/images', async (req, res) => {
   const page = req.query.page || 1
-  const itemsPerPage = req.query['items-per-page'] || 10
+  const itemsPerPage = Number(req.query['items-per-page']) || 10
   const { fullConsent, featured } = req.query
 
   let queries = [Image.find(), Image.find()]
