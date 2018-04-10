@@ -14,6 +14,67 @@ const userApp = express()
 const multipartMiddleware = multipart()
 
 /**
+ * @swagger
+ * /users:
+ *   get:
+ *     description: Get all users.
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: page
+ *              in: query
+ *              schema:
+ *                type: integer
+ *                description: Current page number.
+ *            - name: items-per-page
+ *              in: query
+ *              schema:
+ *                type: integer
+ *                description: Number of users per one page.
+ *     responses:
+ *       200:
+ *         description: Return users.
+ */
+userApp.get('/users', authenticationMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(401).json({ message: 'No permission to access' })
+  }
+
+  const page = req.query.page || 1
+  const itemsPerPage = req.query['items-per-page'] || 10
+
+  let queries = [User.find(), User.find()]
+
+  let [query, countQuery] = queries
+
+  query
+    .select(
+      'id title image text twitterId facebookId email role buttons suspend'
+    )
+    .limit(itemsPerPage)
+    .skip(itemsPerPage * (page - 1))
+    .cache(300)
+
+  const users = await query.exec()
+  const count = await countQuery.count().exec()
+
+  res.json({
+    status: 'ok',
+    page: {
+      current: page,
+      total: Math.ceil(count / itemsPerPage),
+      'items-total': count,
+      'items-per-page': itemsPerPage
+    },
+    items: users
+  })
+})
+
+/**
   * @swagger
   * /users/me:
   *   put:
