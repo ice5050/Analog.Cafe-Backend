@@ -243,6 +243,7 @@ imageApp.get('/images', async (req, res) => {
     .select('id author fullConsent featured')
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
+    .sort({ updatedAt: 'desc' })
     .cache(300)
 
   const images = await query.exec()
