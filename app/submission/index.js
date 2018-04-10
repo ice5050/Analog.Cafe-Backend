@@ -376,10 +376,8 @@ submissionApp.put(
     const subtitle = header && header.subtitle
     const textContent = req.body.textContent
     const tag = req.body.tag
-    const id = randomString()
 
     submission = Object.assign(submission, {
-      [title ? 'slug' : undefined]: title && slugGenerator(title, id),
       [title ? 'title' : undefined]: title,
       [subtitle ? 'subtitle' : undefined]: subtitle,
       [content && textContent ? 'stats' : undefined]: {
