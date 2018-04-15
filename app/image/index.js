@@ -138,7 +138,7 @@ imageApp.put(
     image.featured = true
     await image.save()
     if (imageAuthor.email) {
-      const imageUrl = imageFroth({ src: req.params.imageId })
+      const imageUrl = imageFroth({ src: req.params.imageId }).src
       imageSuggestedEmail(imageAuthor, imageUrl)
     }
     res.json({ status: 'ok' })
