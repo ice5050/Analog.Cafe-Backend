@@ -52,6 +52,12 @@ submissionApp.get(
   async (req, res) => {
     const page = req.query.page || 1
     const itemsPerPage = req.query['items-per-page'] || 10
+    const sort =
+      req.query.sort &&
+      (str =>
+        str.match(/^-.*/g)
+          ? { [`date.${str.substring(1)}`]: 'desc' }
+          : { [`date.${str}`]: 'asc' })(req.query.sort)
 
     let queries = [Submission.find(), Submission.find()]
     if (!['admin', 'editor'].includes(req.user.role)) {
@@ -65,7 +71,12 @@ submissionApp.get(
       )
       .limit(itemsPerPage)
       .skip(itemsPerPage * (page - 1))
-      .sort({ 'date.updated': 'desc' })
+
+    if (sort) {
+      query.sort(sort)
+    } else {
+      query.sort({ 'date.created': 'desc' })
+    }
 
     const submissions = await query.exec()
     const count = await countQuery.count().exec()
