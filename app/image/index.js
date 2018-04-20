@@ -4,6 +4,7 @@ const Image = require('../../models/mongo/image')
 const imageSuggestedEmail = require('../../helpers/mailers/image_suggested')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const imageApp = express()
+const { imageFroth } = require('../../helpers/image_froth')
 
 /**
  * @swagger
@@ -137,7 +138,8 @@ imageApp.put(
     image.featured = true
     await image.save()
     if (imageAuthor.email) {
-      imageSuggestedEmail(imageAuthor.email, imageAuthor.title)
+      const imageUrl = imageFroth({ src: req.params.imageId }).src
+      imageSuggestedEmail(imageAuthor, imageUrl)
     }
     res.json({ status: 'ok' })
   }
