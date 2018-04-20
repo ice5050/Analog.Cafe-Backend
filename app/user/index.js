@@ -45,7 +45,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
   }
 
   const page = req.query.page || 1
-  const itemsPerPage = req.query['items-per-page'] || 10
+  const itemsPerPage = Number(req.query['items-per-page']) || 10
 
   let queries = [User.find(), User.find()]
 
