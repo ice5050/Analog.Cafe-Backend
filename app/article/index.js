@@ -341,22 +341,17 @@ articleApp.put(
     const textContent = req.body.textContent
     const tag = req.body.tag
 
-    const submission = await Submission.create({
-      ...article.toObject(),
-      _id: null,
-      date: {},
-      articleId: article.id,
-      title: header.title,
-      subtitle: header.subtitle,
-      stats: {
-        images: rawImageCount(content),
-        words: count(textContent)
-      },
-      summary: summarize(textContent),
-      content: { raw: content },
-      status: req.body.status || 'pending',
-      tag: tag || article.tag
-    })
+    const submission = await Submission.findOne({ articleId: article.id })
+    submission.title = header.title
+    submission.subtitle = header.subtitle
+    submission.stats = {
+      images: rawImageCount(content),
+      words: count(textContent)
+    }
+    submission.summary = summarize(textContent)
+    submission.content = { raw: content }
+    submission.status = req.body.status || 'pending'
+    submission.tag = tag || article.tag
 
     redisClient.set(`${submission.id}_upload_progress`, '0')
     uploadImgAsync(req, res, submission.id)
