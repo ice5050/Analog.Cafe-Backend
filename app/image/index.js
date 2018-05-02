@@ -4,6 +4,7 @@ const Image = require('../../models/mongo/image')
 const imageSuggestedEmail = require('../../helpers/mailers/image_suggested')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const imageApp = express()
+const { imageFroth } = require('../../helpers/image_froth')
 
 /**
  * @swagger
@@ -137,7 +138,8 @@ imageApp.put(
     image.featured = true
     await image.save()
     if (imageAuthor.email) {
-      imageSuggestedEmail(imageAuthor.email, imageAuthor.title)
+      const imageUrl = imageFroth({ src: req.params.imageId }).src
+      imageSuggestedEmail(imageAuthor, imageUrl)
     }
     res.json({ status: 'ok' })
   }
@@ -224,7 +226,7 @@ imageApp.put(
  */
 imageApp.get('/images', async (req, res) => {
   const page = req.query.page || 1
-  const itemsPerPage = req.query['items-per-page'] || 10
+  const itemsPerPage = Number(req.query['items-per-page']) || 10
   const { fullConsent, featured } = req.query
 
   let queries = [Image.find(), Image.find()]
@@ -243,6 +245,7 @@ imageApp.get('/images', async (req, res) => {
     .select('id author fullConsent featured')
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
+    .sort({ updatedAt: 'desc' })
     .cache(300)
 
   const images = await query.exec()
