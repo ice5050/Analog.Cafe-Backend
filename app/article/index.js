@@ -341,7 +341,14 @@ articleApp.put(
     const textContent = req.body.textContent
     const tag = req.body.tag
 
-    const submission = await Submission.findOne({ articleId: article.id })
+    let submission = await Submission.findOne({ articleId: article.id })
+    if (!submission) {
+      submission = new Submission({
+        ...article.toObject(),
+        articleId: article.id
+      })
+      submission = await submission.save()
+    }
     submission.title = header.title
     submission.subtitle = header.subtitle
     submission.stats = {
