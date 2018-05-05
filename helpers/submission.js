@@ -160,23 +160,18 @@ async function updateSubmissionAuthors (submission) {
 async function publish (submission) {
   let article
   if (submission.articleId) {
-    article = Article.findOne({ id: submission.articleId })
-    article = {
-      ...article.toObject(),
-      title: submission.title,
-      subtitle: submission.subtitle,
-      stats: submission.toObject().stats,
-      submittedBy: submission.toObject().submittedBy,
-      authors: submission.authors,
-      poster: submission.poster,
-      tag: submission.tag,
-      summary: submission.summary,
-      content: submission.content,
-      date: {
-        published: moment().unix()
-      },
-      status: 'published'
-    }
+    article = await Article.findOne({ id: submission.articleId })
+    article.title = submission.title
+    article.subtitle = submission.subtitle
+    article.stats = submission.toObject().stats
+    article.submittedBy = submission.toObject().submittedBy
+    article.authors = submission.authors
+    article.poster = submission.poster
+    article.tag = submission.tag
+    article.summary = submission.summary
+    article.content = submission.content
+    article.date = { published: moment().unix() }
+    article.status = 'published'
   } else {
     article = new Article({
       id: submission.id,

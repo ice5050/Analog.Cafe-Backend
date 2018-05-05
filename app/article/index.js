@@ -399,7 +399,7 @@ articleApp.delete(
   '/articles/:articleId',
   authenticationMiddleware,
   async (req, res) => {
-    let article = Article.findOne({
+    let article = await Article.findOne({
       id: req.params.articleId
     })
     if (req.user.role !== 'admin') {
