@@ -360,6 +360,7 @@ articleApp.put(
     submission.status = req.body.status || 'pending'
     submission.tag = tag || article.tag
 
+    submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
     uploadImgAsync(req, res, submission.id)
     res.json(submission.toObject())
