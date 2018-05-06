@@ -72,7 +72,9 @@ function getFirstImage (rawContent) {
 }
 
 async function findExistingAuthors (srcs) {
-  const imageOwners = await Image.find({ id: { $in: srcs } }).distinct('author').exec()
+  const imageOwners = await Image.find({ id: { $in: srcs } })
+    .distinct('author')
+    .exec()
   return imageOwners
 }
 
@@ -83,7 +85,10 @@ async function uploadImgAsync (req, res, submissionId) {
   let submission = await Submission.findOne({ id: submissionId })
   submission = await updateSubmissionAuthors(submission)
   const firstImage = getFirstImage(submission.content.raw)
-  const isFirstImageSuggestion = firstImage.data && firstImage.data.src && !firstImage.data.src.includes('data:')
+  const isFirstImageSuggestion =
+    firstImage.data &&
+    firstImage.data.src &&
+    !firstImage.data.src.includes('data:')
   if (isFirstImageSuggestion) {
     submission.poster = firstImage.data.src
     await submission.save()
@@ -105,7 +110,7 @@ async function uploadImgAsync (req, res, submissionId) {
       await deleteImageFromCloudinary(result.public_id)
       addImageURLToContent(k, duplicatedImage.id, submission.content.raw)
       // If it's the first image, use it as the submission's poster
-      if ((i === 0) && !isFirstImageSuggestion) submission.poster = duplicatedImage.id
+      if (i === 0 && !isFirstImageSuggestion) { submission.poster = duplicatedImage.id }
     } else {
       const image = new Image({
         id: result.public_id,
@@ -115,7 +120,7 @@ async function uploadImgAsync (req, res, submissionId) {
       })
       await image.save()
       addImageURLToContent(k, image.id, submission.content.raw)
-      if ((i === 0) && !isFirstImageSuggestion) submission.poster = image.id
+      if (i === 0 && !isFirstImageSuggestion) submission.poster = image.id
     }
     submission.markModified('content.raw')
     await submission.save()
@@ -123,7 +128,8 @@ async function uploadImgAsync (req, res, submissionId) {
     progress = Number(progress)
     redisClient.set(
       `${submissionId}_upload_progress`,
-      ((Math.round((progress * numberOfImages / 100)) + 1) * 100 /
+      ((Math.round(progress * numberOfImages / 100) + 1) *
+        100 /
         numberOfImages).toFixed(2)
     )
   }
@@ -144,20 +150,27 @@ function rand5digit () {
  * @param {object} submission - submission object
  */
 function imageNodesFromSubmission (submission) {
-  return submission.content.raw.document.nodes.filter(node => node.type === 'image')
+  return submission.content.raw.document.nodes.filter(
+    node => node.type === 'image'
+  )
 }
 
 async function updateSubmissionAuthors (submission) {
-  const existingAuthors = await findExistingAuthors(imageNodesFromSubmission(submission).map(node => node.data.src))
+  const existingAuthors = await findExistingAuthors(
+    imageNodesFromSubmission(submission).map(node => node.data.src)
+  )
   submission.authors = [
     { ...submission.submittedBy.toObject(), authorship: 'article' },
-    ...(existingAuthors.filter(a => a.id !== submission.submittedBy.id).map(a => ({ ...a, authorship: 'photography' })))
+    ...existingAuthors
+      .filter(a => a.id !== submission.submittedBy.id)
+      .map(a => ({ ...a, authorship: 'photography' }))
   ]
   await submission.save()
   return submission
 }
 
 async function publish (submission) {
+  const author = await User.findOne({ id: submission.submittedBy.id })
   let article
   if (submission.articleId) {
     article = await Article.findOne({ id: submission.articleId })
@@ -170,9 +183,14 @@ async function publish (submission) {
     article.tag = submission.tag
     article.summary = submission.summary
     article.content = submission.content
-    article.date = { created: article.date.created, published: article.date.published }
+    article.date = {
+      created: article.date.created,
+      published: article.date.published
+    }
     article.status = 'published'
+    article = await article.save()
   } else {
+    submission.articleId = submission.id
     article = new Article({
       id: submission.id,
       slug: submission.slug,
@@ -190,39 +208,38 @@ async function publish (submission) {
       },
       status: 'published'
     })
-    submission.articleId = submission.id
-  }
-  submission.status = 'published'
-  article = await article.save()
-  submission = await submission.save()
-  const author = await User.findOne({ id: submission.submittedBy.id })
-  if (author.email) {
-    submissionPublishedEmail(
-      author,
-      article
+    article = await article.save()
+    if (author.email) {
+      submissionPublishedEmail(author, article)
+    }
+    // Send an email to the image owner that isn't the article owner
+    findCoImageAuthors(submission).map(imageAuthor =>
+      imageRepostedEmail(imageAuthor.email, imageAuthor.title, article)
     )
   }
-  // Send an email to the image owner that isn't the article owner
-  submission.content.raw.document.nodes
-      .filter(node => node.type === 'image')
-      .map(node => node.data.src)
-      .map(getImageId)
-      .map(async id => {
-        const image = await Image.findOne({ id })
-        const imageAuthor =
-          image && (await User.findOne({ id: image.author.id }))
-        if (
-          image &&
-          imageAuthor &&
-          imageAuthor.email &&
-          image.author.id !== submission.submittedBy.id
-        ) {
-          imageRepostedEmail(imageAuthor.email, imageAuthor.title, article)
-        }
-      })
+  submission.status = 'published'
+  submission = await submission.save()
   // Upload sitemap to S3
   uploadRSSAndSitemap(process.env.API_DOMAIN, true, null, process.env.S3_BUCKET)
   return submission
+}
+
+async function findCoImageAuthors (submission) {
+  return submission.content.raw.document.nodes
+    .filter(node => node.type === 'image')
+    .map(node => node.data.src)
+    .map(getImageId)
+    .map(async id => {
+      const image = await Image.findOne({ id })
+      const imageAuthor = image && (await User.findOne({ id: image.author.id }))
+      return image &&
+      imageAuthor &&
+      imageAuthor.email &&
+      imageAuthor.id !== submission.submittedBy.id
+        ? imageAuthor
+        : null
+    })
+    .filter(imageAuthor => imageAuthor)
 }
 
 async function reject (submission) {
@@ -237,11 +254,13 @@ async function reject (submission) {
 
 function summarize (textContent) {
   return trimByCharToSentence(
-    textContent.replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
-                .replace(/\s+$/, '') // remove any trailing spaces
-                .replace(/^[ \t]+/, '') // remove any leading spaces
-                .replace(/(\s{2})+/g, ' '), // remove any reoccuring (double) spaces
-    250)
+    textContent
+      .replace(/([.!?…])/g, '$1 ') // every common sentence ending always followed by a space
+      .replace(/\s+$/, '') // remove any trailing spaces
+      .replace(/^[ \t]+/, '') // remove any leading spaces
+      .replace(/(\s{2})+/g, ' '), // remove any reoccuring (double) spaces
+    250
+  )
 }
 
 function trimByCharToSentence (text = '', chars = 0) {
