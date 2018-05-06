@@ -170,7 +170,7 @@ async function publish (submission) {
     article.tag = submission.tag
     article.summary = submission.summary
     article.content = submission.content
-    article.date = { published: moment().unix() }
+    article.date = { created: article.date.created, published: article.date.published }
     article.status = 'published'
   } else {
     article = new Article({
