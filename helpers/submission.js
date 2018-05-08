@@ -213,7 +213,8 @@ async function publish (submission) {
       submissionPublishedEmail(author, article)
     }
     // Send an email to the image owner that isn't the article owner
-    findCoImageAuthors(submission).map(imageAuthor =>
+    const coImageAuthors = await findCoImageAuthors(submission)
+    coImageAuthors.map(imageAuthor =>
       imageRepostedEmail(imageAuthor.email, imageAuthor.title, article)
     )
   }
@@ -225,7 +226,7 @@ async function publish (submission) {
 }
 
 async function findCoImageAuthors (submission) {
-  return submission.content.raw.document.nodes
+  const coImageAuthorsPromise = submission.content.raw.document.nodes
     .filter(node => node.type === 'image')
     .map(node => node.data.src)
     .map(getImageId)
@@ -233,13 +234,14 @@ async function findCoImageAuthors (submission) {
       const image = await Image.findOne({ id })
       const imageAuthor = image && (await User.findOne({ id: image.author.id }))
       return image &&
-      imageAuthor &&
-      imageAuthor.email &&
-      imageAuthor.id !== submission.submittedBy.id
-        ? imageAuthor
-        : null
+            imageAuthor &&
+            imageAuthor.email &&
+            imageAuthor.id !== submission.submittedBy.id
+              ? imageAuthor
+              : null
     })
-    .filter(imageAuthor => imageAuthor)
+  const coImageAuthors = await Promise.all(coImageAuthorsPromise)
+  return coImageAuthors.filter(author => author)
 }
 
 async function reject (submission) {
