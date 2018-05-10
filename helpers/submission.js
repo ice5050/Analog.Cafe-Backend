@@ -248,7 +248,7 @@ async function reject (submission) {
   submission.status = 'rejected'
   submission = await submission.save()
   const author = await User.findOne({ id: submission.submittedBy.id })
-  if (author.email) {
+  if (author.email && !submission.articleId) {
     submissionRejectedEmail(author)
   }
   return submission
