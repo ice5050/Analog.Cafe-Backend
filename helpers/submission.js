@@ -238,7 +238,7 @@ async function publish(submission) {
       }
     });
   // Upload sitemap to S3
-  if (process.env.API_DOMAIN_PROD === process.env.API_PROD) {
+  if (process.env.API_DOMAIN_PROD === process.env.API_DOMAIN) {
     uploadRSSAndSitemap(
       process.env.API_DOMAIN,
       true,
