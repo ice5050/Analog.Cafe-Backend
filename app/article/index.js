@@ -413,12 +413,14 @@ articleApp.delete(
       return res.status(422).json({ message: 'Article can not be edited' })
     }
     res.status(200).json({ message: 'Article has been deleted' })
-    uploadRSSAndSitemap(
-      process.env.API_DOMAIN,
-      true,
-      null,
-      process.env.S3_BUCKET
-    )
+    if (process.env.API_DOMAIN_PROD === process.env.API_PROD) {
+      uploadRSSAndSitemap(
+        process.env.API_DOMAIN,
+        true,
+        null,
+        process.env.S3_BUCKET
+      )
+    }
   }
 )
 
