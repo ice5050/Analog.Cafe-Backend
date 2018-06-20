@@ -572,9 +572,7 @@ submissionApp.delete(
   '/submissions/:submissionId',
   authenticationMiddleware,
   async (req, res) => {
-    let submission = Submission.findOne({
-      id: req.params.submissionId
-    })
+    let submission = await Submission.findOne({ id: req.params.submissionId })
     if (req.user.role !== 'admin') {
       return res.status(401).json({ message: 'No permission to access' })
     }
