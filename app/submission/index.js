@@ -60,6 +60,7 @@ submissionApp.get(
           : { [`date.${str}`]: 'asc' })(req.query.sort)
 
     let queries = [Submission.find(), Submission.find()]
+    queries.map(q => q.find({ status: { $ne: 'deleted' } }))
     if (!['admin', 'editor'].includes(req.user.role)) {
       queries = queries.map(q => q.find({ 'submittedBy.id': req.user.id }))
     }
@@ -537,6 +538,56 @@ submissionApp.post(
     } else {
       res.status(422).json({ message: 'Submission can not be rejected' })
     }
+  }
+)
+
+/**
+  * @swagger
+  * /submissions/:submissionId:
+  *   delete:
+  *     description: Delete a submission
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: submission id.
+  *     responses:
+  *       200:
+  *         description: Deleted submission successfully.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be deleted.
+  */
+submissionApp.delete(
+  '/submissions/:submissionId',
+  authenticationMiddleware,
+  async (req, res) => {
+    let submission = await Submission.findOne({ id: req.params.submissionId })
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+
+    submission.status = 'deleted'
+
+    submission = await submission.save()
+    if (!submission) {
+      return res.status(422).json({ message: 'Submission can not be edited' })
+    }
+    res.status(200).json({ message: 'Submission has been deleted' })
   }
 )
 

@@ -3,7 +3,7 @@ const articleFeed = new RSS({
   title: 'Analog.Cafe',
   description:
     'A film photography publication. Photo essays, guides, editorials, reviews, and stories.',
-  feed_url: 'https://api.analog.cafe/rss',
+  feed_url: process.env.API_DOMAIN_PROD + '/rss',
   site_url: 'https://www.analog.cafe',
   favicon: 'https://www.analog.cafe/favicon.ico',
   image_url: 'https://www.analog.cafe/apple-touch-icon-180x180.png',

@@ -1,6 +1,6 @@
 {
   "name": "analog-cafe-server",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "(Loosely) Collaborative Blogging App by Analog.Cafe (Server)",
   "license": "MPL-2.0",
   "private": true,
