@@ -160,7 +160,10 @@ function setupPassport () {
         clientID: process.env.FACEBOOK_APP_ID,
         clientSecret: process.env.FACEBOOK_APP_SECRET,
         callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-        profileFields: ['id', 'displayName', 'photos', 'email']
+        profileFields: ['id', 'displayName', 'photos', 'email'],
+        profileURL: 'https://graph.facebook.com/v2.12/me',
+        authorizationURL: 'https://www.facebook.com/v2.12/dialog/oauth',
+        tokenURL: 'https://graph.facebook.com/v2.12/oauth/access_token'
       },
       async (accessToken, refreshToken, profile, cb) => {
         let user = await User.findOne({ facebookId: profile.id })
