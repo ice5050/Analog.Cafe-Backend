@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "husky": "^0.14.3",
+    "jest": "^23.3.0",
     "lint-staged": "^4.0.3",
     "nodemon": "^1.11.0",
     "prettier-standard": "^6.0.0",
@@ -68,9 +69,22 @@
     "db:clean": "node --harmony seeds/clean_db.js",
     "scheduler:publish": "node --harmony workers/publisher/index.js",
     "upload-sitemap-rss": "node --harmony upload_rss_sitemap_cmd.js --sitemap --rss",
-    "test": "snyk test",
+    "test": "jest",
+    "test:security": "snyk test",
     "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
+      "\\.(css|less)$": "identity-obj-proxy"
+    },
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/",
+      "/examples/",
+      "/graphics/"
+    ]
   },
   "lint-staged": {
     "{app,models,seeds}/**/*.js": [
