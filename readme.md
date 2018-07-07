@@ -1,4 +1,5 @@
 # Headless CMS API server
+[![Build Status](https://travis-ci.com/roast-cms/analog-cafe-server.svg?branch=develop)](https://travis-ci.com/roast-cms/analog-cafe-server)
 > 🥐 Built for [Analog.Cafe](https://github.com/dmitrizzle/Analog.Cafe)
 
 
