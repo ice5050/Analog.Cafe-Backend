@@ -392,6 +392,8 @@ submissionApp.put(
     const subtitle = header && header.subtitle
     const textContent = req.body.textContent
     const tag = req.body.tag
+    const status = req.body.status
+    const scheduledOrder = req.body.scheduledOrder
 
     submission = Object.assign(submission, {
       [title ? 'title' : undefined]: title,
@@ -404,6 +406,8 @@ submissionApp.put(
         ? summarize(textContent)
         : undefined,
       [content ? 'content' : undefined]: { raw: content },
+      [status ? 'status' : undefined]: req.body.status,
+      [scheduledOrder ? 'scheduledOrder' : undefined]: req.body.scheduledOrder,
       [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
     })
 
