@@ -58,11 +58,15 @@ submissionApp.get(
         str.match(/^-.*/g)
           ? { [`date.${str.substring(1)}`]: 'desc' }
           : { [`date.${str}`]: 'asc' })(req.query.sort)
+    const status = req.query.status
 
     let queries = [Submission.find(), Submission.find()]
     queries.map(q => q.find({ status: { $ne: 'deleted' } }))
     if (!['admin', 'editor'].includes(req.user.role)) {
       queries = queries.map(q => q.find({ 'submittedBy.id': req.user.id }))
+    }
+    if (status) {
+      queries = queries.map(q => q.find({ status: status }))
     }
     let [query, countQuery] = queries
 
