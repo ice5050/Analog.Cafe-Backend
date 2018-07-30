@@ -424,6 +424,69 @@ submissionApp.put(
 
 /**
   * @swagger
+  * /submissions/order/:submissionId:
+  *   put:
+  *     description: Update submission schedule order
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: Submission id.
+  *            - name: order
+  *              in: body
+  *              schema:
+  *                type: integer
+  *                required: true
+  *                description: Schedule order
+  *     responses:
+  *       200:
+  *         description: Updated submission schedule order.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be edited.
+  */
+submissionApp.put(
+  '/submissions/order/:submissionId',
+  authenticationMiddleware,
+  async (req, res) => {
+    let submission = await Submission.findOne({ id: req.params.submissionId })
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    if (
+      req.user.role !== 'admin' &&
+      req.user.id !== submission.submittedBy.id
+    ) {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!req.body.order) {
+      return res.status(401).json({ message: 'No schedule order' })
+    }
+
+    const order = req.body.order
+    submission.scheduledOrder = order
+    submission = await submission.save()
+    if (!submission) {
+      return res.status(422).json({ message: 'Submission can not be edited' })
+    }
+
+    res.json(submission.toObject())
+  }
+)
+
+/**
+  * @swagger
   * /submissions/:submissionId/approve:
   *   post:
   *     description: Approve submission
