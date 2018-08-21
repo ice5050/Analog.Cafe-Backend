@@ -254,9 +254,11 @@ async function publish (submission) {
     .map(node => node.data.src)
     .map(getImageId)
     .map(async id => {
-      const image = await Image.findOne({
-        id
-      })
+      const image = await Image.findOne({ id })
+      return image
+    })
+    .filter((image, index, self) => self.map(img => img.author.id).indexOf(image.author.id) === index)
+    .map(async image => {
       const imageAuthor =
         image &&
         (await User.findOne({
