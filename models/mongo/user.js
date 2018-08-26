@@ -11,7 +11,7 @@ const userSchema = new Schema({
   text: String,
   twitterId: String,
   facebookId: String,
-  email: String,
+  email: { type: String, unique: true, sparse: true },
   role: { type: String, default: 'member' },
   buttons: [
     {
