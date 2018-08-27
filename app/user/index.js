@@ -53,7 +53,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
 
   query
     .select(
-      'id title image text twitterId facebookId email role buttons suspend'
+      'id title image text twitterId twitterName facebookId facebookName email role buttons suspend'
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
