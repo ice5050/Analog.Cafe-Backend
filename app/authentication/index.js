@@ -142,11 +142,15 @@ function setupPassport () {
             (await profileImageURLToCloudinary(profileImageURL))
           user = await User.create({
             twitterId: profile.id,
+            twitterName: profile.displayName,
             id: username || name,
             title: name || username,
             image: uploadedImage && uploadedImage.public_id,
             text: profile._json.description
           })
+        } else {
+          user.twitterName = profile.displayName
+          user = await user.save()
         }
         cb(null, user)
       }
@@ -177,12 +181,16 @@ function setupPassport () {
             (await profileImageURLToCloudinary(profileImageURL))
           user = await User.create({
             facebookId: profile.id,
+            facebookName: profile.displayName,
             id: username,
             title: profile.displayName || username,
             email,
             image: uploadedImage && uploadedImage.public_id
           })
           welcomeEmail(user.email, user.title)
+        } else {
+          user.facebookName = profile.displayName
+          user = await user.save()
         }
         cb(null, user)
       }
