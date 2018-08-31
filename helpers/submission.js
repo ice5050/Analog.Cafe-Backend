@@ -46,7 +46,12 @@ function slugGenerator (str, id) {
 }
 
 function getImageId (imageUrl) {
-  return imageUrl.split('\\').pop().split('/').pop().replace(/\.[^/.]+$/, '')
+  return imageUrl
+    .split('\\')
+    .pop()
+    .split('/')
+    .pop()
+    .replace(/\.[^/.]+$/, '')
 }
 
 function addImageURLToContent (key, imageId, rawContent) {
@@ -82,7 +87,9 @@ async function uploadImgAsync (req, res, submissionId) {
   const uploadedImgs = req.files.images
   const keys = uploadedImgs ? Object.keys(uploadedImgs) : []
   const numberOfImages = keys.length
-  let submission = await Submission.findOne({ id: submissionId })
+  let submission = await Submission.findOne({
+    id: submissionId
+  })
   submission = await updateSubmissionAuthors(submission)
   const firstImage = getFirstImage(submission.content.raw)
   const isFirstImageSuggestion =
@@ -101,11 +108,15 @@ async function uploadImgAsync (req, res, submissionId) {
     const imgPath = uploadedImgs[k].path
     const ratio = getImageRatio(imgPath)
     const hash = shortid.generate()
-    const submission = await Submission.findOne({ id: submissionId })
+    const submission = await Submission.findOne({
+      id: submissionId
+    })
     const result = await cloudinary.v2.uploader.upload(imgPath, {
       public_id: `image-froth_${ratio}_${hash}`
     })
-    const duplicatedImage = await Image.findOne({ etag: result.etag })
+    const duplicatedImage = await Image.findOne({
+      etag: result.etag
+    })
     if (duplicatedImage) {
       await deleteImageFromCloudinary(result.public_id)
       addImageURLToContent(k, duplicatedImage.id, submission.content.raw)
@@ -114,7 +125,10 @@ async function uploadImgAsync (req, res, submissionId) {
     } else {
       const image = new Image({
         id: result.public_id,
-        author: { name: req.user.title, id: req.user.id },
+        author: {
+          name: req.user.title,
+          id: req.user.id
+        },
         etag: result.etag,
         fullConsent: req.body.isFullConsent
       })
@@ -138,7 +152,10 @@ async function uploadImgAsync (req, res, submissionId) {
 
 function sanitizeUsername (username) {
   if (!username) return null
-  return username.split('@')[0].toLowerCase().replace(/\W/g, '.')
+  return username
+    .split('@')[0]
+    .toLowerCase()
+    .replace(/\W/g, '.')
 }
 
 function rand5digit () {
@@ -220,8 +237,16 @@ async function publish (submission) {
   }
   submission.status = 'published'
   submission = await submission.save()
+
   // Upload sitemap to S3
-  uploadRSSAndSitemap(process.env.API_DOMAIN, true, null, process.env.S3_BUCKET)
+  if (process.env.API_DOMAIN_PROD === process.env.API_DOMAIN) {
+    uploadRSSAndSitemap(
+      process.env.API_DOMAIN,
+      true,
+      null,
+      process.env.S3_BUCKET
+    )
+  }
   return submission
 }
 
@@ -232,6 +257,10 @@ async function findCoImageAuthors (submission) {
     .map(getImageId)
     .map(async id => {
       const image = await Image.findOne({ id })
+      return image
+    })
+    .filter((image, index, self) => self.map(img => img.author.id).indexOf(image.author.id) === index)
+    .map(async image => {
       const imageAuthor = image && (await User.findOne({ id: image.author.id }))
       return image &&
             imageAuthor &&
@@ -240,6 +269,7 @@ async function findCoImageAuthors (submission) {
               ? imageAuthor
               : null
     })
+
   const coImageAuthors = await Promise.all(coImageAuthorsPromise)
   return coImageAuthors.filter(author => author)
 }

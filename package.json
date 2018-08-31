@@ -1,6 +1,6 @@
 {
   "name": "analog-cafe-server",
-  "version": "0.1.17",
+  "version": "0.1.19",
   "description": "(Loosely) Collaborative Blogging App by Analog.Cafe (Server)",
   "license": "MPL-2.0",
   "private": true,
@@ -21,7 +21,7 @@
     "cachegoose": "^4.0.1",
     "chance": "^1.0.10",
     "cloudinary": "^1.9.0",
-    "commander": "^2.11.0",
+    "commander": "^2.16.0",
     "compression": "^1.7.1",
     "connect-multiparty": "2.1.0",
     "connect-redis": "3.3.0",
@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "husky": "^0.14.3",
+    "jest": "^23.3.0",
     "lint-staged": "^4.0.3",
     "nodemon": "^1.11.0",
     "prettier-standard": "^6.0.0",
@@ -68,9 +69,22 @@
     "db:clean": "node --harmony seeds/clean_db.js",
     "scheduler:publish": "node --harmony workers/publisher/index.js",
     "upload-sitemap-rss": "node --harmony upload_rss_sitemap_cmd.js --sitemap --rss",
-    "test": "snyk test",
+    "test": "jest",
+    "test:security": "snyk test",
     "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
+      "\\.(css|less)$": "identity-obj-proxy"
+    },
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/",
+      "/examples/",
+      "/graphics/"
+    ]
   },
   "lint-staged": {
     "{app,models,seeds}/**/*.js": [

@@ -32,7 +32,7 @@ const submissionSchema = new Schema(
     },
     articleId: String,
     tag: String, // set after scheduling
-    // Status: pending, scheduled, rejected, published
+    // Status: pending, scheduled, rejected, published, deleted
     // scheduled also means the submission has been approved
     status: { type: String, default: 'pending' },
     scheduledOrder: Number,

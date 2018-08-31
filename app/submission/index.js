@@ -58,10 +58,15 @@ submissionApp.get(
         str.match(/^-.*/g)
           ? { [`date.${str.substring(1)}`]: 'desc' }
           : { [`date.${str}`]: 'asc' })(req.query.sort)
+    const status = req.query.status
 
     let queries = [Submission.find(), Submission.find()]
+    queries.map(q => q.find({ status: { $ne: 'deleted' } }))
     if (!['admin', 'editor'].includes(req.user.role)) {
       queries = queries.map(q => q.find({ 'submittedBy.id': req.user.id }))
+    }
+    if (status) {
+      queries = queries.map(q => q.find({ status: status }))
     }
     let [query, countQuery] = queries
 
@@ -387,6 +392,8 @@ submissionApp.put(
     const subtitle = header && header.subtitle
     const textContent = req.body.textContent
     const tag = req.body.tag
+    const status = req.body.status
+    const scheduledOrder = req.body.scheduledOrder
 
     submission = Object.assign(submission, {
       [title ? 'title' : undefined]: title,
@@ -399,6 +406,8 @@ submissionApp.put(
         ? summarize(textContent)
         : undefined,
       [content ? 'content' : undefined]: { raw: content },
+      [status ? 'status' : undefined]: req.body.status,
+      [scheduledOrder ? 'scheduledOrder' : undefined]: req.body.scheduledOrder,
       [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
     })
 
@@ -409,6 +418,69 @@ submissionApp.put(
 
     redisClient.set(`${submission.id}_upload_progress`, '0')
     uploadImgAsync(req, res, submission.id)
+    res.json(submission.toObject())
+  }
+)
+
+/**
+  * @swagger
+  * /submissions/order/:submissionId:
+  *   put:
+  *     description: Update submission schedule order
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: Submission id.
+  *            - name: order
+  *              in: body
+  *              schema:
+  *                type: integer
+  *                required: true
+  *                description: Schedule order
+  *     responses:
+  *       200:
+  *         description: Updated submission schedule order.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be edited.
+  */
+submissionApp.put(
+  '/submissions/order/:submissionId',
+  authenticationMiddleware,
+  async (req, res) => {
+    let submission = await Submission.findOne({ id: req.params.submissionId })
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    if (
+      req.user.role !== 'admin' &&
+      req.user.id !== submission.submittedBy.id
+    ) {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!req.body.order) {
+      return res.status(401).json({ message: 'No schedule order' })
+    }
+
+    const order = req.body.order
+    submission.scheduledOrder = order
+    submission = await submission.save()
+    if (!submission) {
+      return res.status(422).json({ message: 'Submission can not be edited' })
+    }
+
     res.json(submission.toObject())
   }
 )
@@ -537,6 +609,56 @@ submissionApp.post(
     } else {
       res.status(422).json({ message: 'Submission can not be rejected' })
     }
+  }
+)
+
+/**
+  * @swagger
+  * /submissions/:submissionId:
+  *   delete:
+  *     description: Delete a submission
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: submission id.
+  *     responses:
+  *       200:
+  *         description: Deleted submission successfully.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be deleted.
+  */
+submissionApp.delete(
+  '/submissions/:submissionId',
+  authenticationMiddleware,
+  async (req, res) => {
+    let submission = await Submission.findOne({ id: req.params.submissionId })
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+
+    submission.status = 'deleted'
+
+    submission = await submission.save()
+    if (!submission) {
+      return res.status(422).json({ message: 'Submission can not be edited' })
+    }
+    res.status(200).json({ message: 'Submission has been deleted' })
   }
 )
 

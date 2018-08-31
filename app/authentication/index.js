@@ -142,11 +142,15 @@ function setupPassport () {
             (await profileImageURLToCloudinary(profileImageURL))
           user = await User.create({
             twitterId: profile.id,
+            twitterName: profile.displayName,
             id: username || name,
             title: name || username,
             image: uploadedImage && uploadedImage.public_id,
             text: profile._json.description
           })
+        } else {
+          user.twitterName = profile.displayName
+          user = await user.save()
         }
         cb(null, user)
       }
@@ -160,7 +164,10 @@ function setupPassport () {
         clientID: process.env.FACEBOOK_APP_ID,
         clientSecret: process.env.FACEBOOK_APP_SECRET,
         callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-        profileFields: ['id', 'displayName', 'photos', 'email']
+        profileFields: ['id', 'displayName', 'photos', 'email'],
+        profileURL: 'https://graph.facebook.com/v2.12/me',
+        authorizationURL: 'https://www.facebook.com/v2.12/dialog/oauth',
+        tokenURL: 'https://graph.facebook.com/v2.12/oauth/access_token'
       },
       async (accessToken, refreshToken, profile, cb) => {
         let user = await User.findOne({ facebookId: profile.id })
@@ -174,12 +181,16 @@ function setupPassport () {
             (await profileImageURLToCloudinary(profileImageURL))
           user = await User.create({
             facebookId: profile.id,
+            facebookName: profile.displayName,
             id: username,
             title: profile.displayName || username,
             email,
             image: uploadedImage && uploadedImage.public_id
           })
           welcomeEmail(user.email, user.title)
+        } else {
+          user.facebookName = profile.displayName
+          user = await user.save()
         }
         cb(null, user)
       }

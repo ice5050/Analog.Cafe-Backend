@@ -171,7 +171,10 @@ articleApp.get('/rss', async (req, res) => {
       author: authorNameList(
         a.authors.map(author => author.name.split(' ')[0])
       ),
-      date: moment.unix(a.date.published).toDate().toString(),
+      date: moment
+        .unix(a.date.published)
+        .toDate()
+        .toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -416,12 +419,14 @@ articleApp.delete(
       return res.status(422).json({ message: 'Article can not be edited' })
     }
     res.status(200).json({ message: 'Article has been deleted' })
-    uploadRSSAndSitemap(
-      process.env.API_DOMAIN,
-      true,
-      null,
-      process.env.S3_BUCKET
-    )
+    if (process.env.API_DOMAIN_PROD === process.env.API_DOMAIN) {
+      uploadRSSAndSitemap(
+        process.env.API_DOMAIN,
+        true,
+        null,
+        process.env.S3_BUCKET
+      )
+    }
   }
 )
 
