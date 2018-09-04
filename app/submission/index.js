@@ -474,14 +474,24 @@ submissionApp.put(
       return res.status(401).json({ message: 'No schedule order' })
     }
 
-    const order = req.body.order
-    submission.scheduledOrder = order
+    const oldOrder = submission.scheduledOrder
+    const newOrder = req.body.order
 
-    await Submission.update(
-      { scheduledOrder: { $gte: order } },
-      { $inc: { scheduledOrder: 1 } },
-      { multi: true }
-    )
+    submission.scheduledOrder = newOrder
+
+    if (oldOrder < newOrder) {
+      await Submission.update(
+        { scheduledOrder: { $gt: oldOrder, $lte: newOrder } },
+        { $inc: { scheduledOrder: -1 } },
+        { multi: true }
+      )
+    } else {
+      await Submission.update(
+        { scheduledOrder: { $gte: newOrder, $lt: oldOrder } },
+        { $inc: { scheduledOrder: 1 } },
+        { multi: true }
+      )
+    }
 
     submission = await submission.save()
     if (!submission) {
