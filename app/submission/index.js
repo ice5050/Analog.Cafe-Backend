@@ -476,6 +476,13 @@ submissionApp.put(
 
     const order = req.body.order
     submission.scheduledOrder = order
+
+    await Submission.update(
+      { scheduledOrder: { $gte: order } },
+      { $inc: { scheduledOrder: 1 } },
+      { multi: true }
+    )
+
     submission = await submission.save()
     if (!submission) {
       return res.status(422).json({ message: 'Submission can not be edited' })
