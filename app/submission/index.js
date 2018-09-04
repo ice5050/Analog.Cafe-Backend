@@ -504,6 +504,71 @@ submissionApp.put(
 
 /**
   * @swagger
+  * /submissions/order/:submissionId:
+  *   delete:
+  *     description: Remove submission from publishing queue
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: Submission id.
+  *     responses:
+  *       200:
+  *         description: Removed the submission from the queue.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be edited.
+  */
+submissionApp.delete(
+  '/submissions/order/:submissionId',
+  authenticationMiddleware,
+  async (req, res) => {
+    let submission = await Submission.findOne({ id: req.params.submissionId })
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    if (
+      req.user.role !== 'admin' &&
+      req.user.id !== submission.submittedBy.id
+    ) {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!req.body.order) {
+      return res.status(401).json({ message: 'No schedule order' })
+    }
+
+    const order = submission.scheduledOrder
+
+    await Submission.update(
+      { scheduledOrder: { $gt: order } },
+      { $inc: { scheduledOrder: -1 } },
+      { multi: true }
+    )
+
+    submission.scheduledOrder = null
+    submission.status = 'pending'
+    submission = await submission.save()
+    if (!submission) {
+      return res.status(422).json({ message: 'Submission can not be edited' })
+    }
+
+    res.json(submission.toObject())
+  }
+)
+
+/**
+  * @swagger
   * /submissions/:submissionId/approve:
   *   post:
   *     description: Approve submission
