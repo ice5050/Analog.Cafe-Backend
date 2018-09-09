@@ -440,12 +440,12 @@ submissionApp.put(
   *                type: string
   *                required: true
   *                description: Submission id.
-  *            - name: order
+  *            - name: scheduledOrder
   *              in: body
   *              schema:
   *                type: integer
   *                required: true
-  *                description: Schedule order
+  *                description: Schedule order.
   *     responses:
   *       200:
   *         description: Updated submission schedule order.
@@ -470,12 +470,12 @@ submissionApp.put(
     ) {
       return res.status(401).json({ message: 'No permission to access' })
     }
-    if (!req.body.order) {
+    if (!req.body.scheduledOrder) {
       return res.status(401).json({ message: 'No schedule order' })
     }
 
     const oldOrder = submission.scheduledOrder
-    const newOrder = req.body.order
+    const newOrder = req.body.scheduledOrder
 
     submission.scheduledOrder = newOrder
 
@@ -544,14 +544,14 @@ submissionApp.delete(
     ) {
       return res.status(401).json({ message: 'No permission to access' })
     }
-    if (!req.body.order) {
+    if (!req.body.scheduledOrder) {
       return res.status(401).json({ message: 'No schedule order' })
     }
 
-    const order = submission.scheduledOrder
+    const scheduledOrder = submission.scheduledOrder
 
     await Submission.update(
-      { scheduledOrder: { $gt: order } },
+      { scheduledOrder: { $gt: scheduledOrder } },
       { $inc: { scheduledOrder: -1 } },
       { multi: true }
     )
@@ -586,15 +586,16 @@ submissionApp.delete(
   *                required: true
   *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
   *            - name: scheduledOrder
-  *              in: query
+  *              in: body
   *              schema:
   *                type: integer
   *                required: true
-  *                description: Scheduling order
+  *                description: Scheduling order, NOTE a value of 0 will publish the submission immediately, bypassing the queue
   *            - name: tag
-  *              in: query
+  *              in: body
   *              schema:
   *                type: string
+  *                example: "photo-essay"
   *                description: Tag of the submission
   *     responses:
   *       200:
