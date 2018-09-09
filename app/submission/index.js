@@ -590,7 +590,7 @@ submissionApp.delete(
   *              schema:
   *                type: integer
   *                required: true
-  *                description: Scheduling order, NOTE a value of 0 will publish the submission immediately, bypassing the queue
+  *                description: Scheduling order, NOTE a value of 0 will publish the submission immediately, bypassing the queue; value of 1 would place submission AT THE FRONT of the queue
   *            - name: tag
   *              in: body
   *              schema:
