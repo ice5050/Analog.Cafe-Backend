@@ -249,15 +249,19 @@ async function publish (submission) {
     submissionPublishedEmail(author, article)
   }
   // Send an email to the image owner that isn't the article owner
-  submission.content.raw.document.nodes
+  // (one email per author)
+  const submissionImages = await Promise.all(submission.content.raw.document.nodes
     .filter(node => node.type === 'image')
     .map(node => node.data.src)
     .map(getImageId)
     .map(async id => {
-      const image = await Image.findOne({ id })
-      return image
-    })
-    .filter((image, index, self) => self.map(img => img.author.id).indexOf(image.author.id) === index)
+        const image = await Image.findOne({ id })
+        return image
+    }))
+    submissionImages.filter( (image, index, self) =>
+      self.map(img => img.author.id)
+        .indexOf(image.author.id) === index
+    )
     .map(async image => {
       const imageAuthor =
         image &&
