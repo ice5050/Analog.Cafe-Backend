@@ -1,8 +1,7 @@
-const express = require('express')
 const count = require('word-count')
+const express = require('express')
 const multipart = require('connect-multiparty')
-const Submission = require('../../models/mongo/submission')
-const redisClient = require('../../helpers/redis')
+
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
   parseContent,
@@ -15,6 +14,9 @@ const {
   reject,
   summarize
 } = require('../../helpers/submission')
+const Submission = require('../../models/mongo/submission')
+const User = require('../../models/mongo/user')
+const redisClient = require('../../helpers/redis')
 
 const submissionApp = express()
 const multipartMiddleware = multipart()
@@ -623,6 +625,10 @@ submissionApp.post(
         .status(422)
         .json({ message: 'Only pending submission can be approved' })
     }
+
+    const author = await User.findOne({ id: submission.submittedBy.id })
+    if (author.role !== 'admin' && author.role !== 'editor') { author.role = 'contributor' }
+    await author.save()
 
     submission.status = 'scheduled'
     submission.scheduledOrder = req.body.scheduledOrder
