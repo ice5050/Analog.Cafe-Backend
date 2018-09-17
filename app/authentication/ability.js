@@ -72,4 +72,8 @@ function checkUserPermission (req, res, next) {
     res.status(401).json({ message: 'You have no access.' })
   }
 }
-module.exports = checkUserPermission
+module.exports = {
+  cleanUrl,
+  isUserHasPermission,
+  checkUserPermission
+}
