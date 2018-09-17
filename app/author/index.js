@@ -24,6 +24,7 @@ authorApp.get('/authors', async (req, res) => {
 
   query
     .select('id title image text role buttons')
+    .sort({ updatedAt: 'desc' })
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     .cache(300)
