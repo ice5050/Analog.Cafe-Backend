@@ -121,7 +121,9 @@ async function uploadImgAsync (req, res, submissionId) {
       await deleteImageFromCloudinary(result.public_id)
       addImageURLToContent(k, duplicatedImage.id, submission.content.raw)
       // If it's the first image, use it as the submission's poster
-      if (i === 0 && !isFirstImageSuggestion) { submission.poster = duplicatedImage.id }
+      if (i === 0 && !isFirstImageSuggestion) {
+        submission.poster = duplicatedImage.id
+      }
     } else {
       const image = new Image({
         id: result.public_id,
@@ -144,7 +146,8 @@ async function uploadImgAsync (req, res, submissionId) {
       `${submissionId}_upload_progress`,
       ((Math.round(progress * numberOfImages / 100) + 1) *
         100 /
-        numberOfImages).toFixed(2)
+        numberOfImages
+      ).toFixed(2)
     )
   }
   return submission
@@ -252,22 +255,31 @@ async function publish (submission) {
 
 async function findCoImageAuthors (submission) {
   const coImageAuthorsPromise = submission.content.raw.document.nodes
-    .filter(node => node.type === 'image')
-    .map(node => node.data.src)
-    .map(getImageId)
-    .map(async id => {
-      const image = await Image.findOne({ id })
-      return image
-    })
-    .filter((image, index, self) => self.map(img => img.author.id).indexOf(image.author.id) === index)
+  // Send an email to the image owner that isn't the article owner
+  // (one email per author)
+  const submissionImages = await Promise.all(
+    submission.content.raw.document.nodes
+      .filter(node => node.type === 'image')
+      .map(node => node.data.src)
+      .map(getImageId)
+      .map(async id => {
+        const image = await Image.findOne({ id })
+        return image
+      })
+  )
+  submissionImages
+    .filter(
+      (image, index, self) =>
+        self.map(img => img.author.id).indexOf(image.author.id) === index
+    )
     .map(async image => {
       const imageAuthor = image && (await User.findOne({ id: image.author.id }))
       return image &&
-            imageAuthor &&
-            imageAuthor.email &&
-            imageAuthor.id !== submission.submittedBy.id
-              ? imageAuthor
-              : null
+        imageAuthor &&
+        imageAuthor.email &&
+        imageAuthor.id !== submission.submittedBy.id
+        ? imageAuthor
+        : null
     })
 
   const coImageAuthors = await Promise.all(coImageAuthorsPromise)

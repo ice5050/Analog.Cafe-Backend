@@ -1,8 +1,7 @@
-const express = require('express')
 const count = require('word-count')
+const express = require('express')
 const multipart = require('connect-multiparty')
-const Submission = require('../../models/mongo/submission')
-const redisClient = require('../../helpers/redis')
+
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
   parseContent,
@@ -15,6 +14,9 @@ const {
   reject,
   summarize
 } = require('../../helpers/submission')
+const Submission = require('../../models/mongo/submission')
+const User = require('../../models/mongo/user')
+const redisClient = require('../../helpers/redis')
 
 const submissionApp = express()
 const multipartMiddleware = multipart()
@@ -440,12 +442,12 @@ submissionApp.put(
   *                type: string
   *                required: true
   *                description: Submission id.
-  *            - name: order
+  *            - name: scheduledOrder
   *              in: body
   *              schema:
   *                type: integer
   *                required: true
-  *                description: Schedule order
+  *                description: Schedule order.
   *     responses:
   *       200:
   *         description: Updated submission schedule order.
@@ -470,12 +472,94 @@ submissionApp.put(
     ) {
       return res.status(401).json({ message: 'No permission to access' })
     }
-    if (!req.body.order) {
+    if (!req.body.scheduledOrder) {
       return res.status(401).json({ message: 'No schedule order' })
     }
 
-    const order = req.body.order
-    submission.scheduledOrder = order
+    const oldOrder = submission.scheduledOrder
+    const newOrder = req.body.scheduledOrder
+
+    submission.scheduledOrder = newOrder
+
+    if (oldOrder < newOrder) {
+      await Submission.update(
+        { scheduledOrder: { $gt: oldOrder, $lte: newOrder } },
+        { $inc: { scheduledOrder: -1 } },
+        { multi: true }
+      )
+    } else {
+      await Submission.update(
+        { scheduledOrder: { $gte: newOrder, $lt: oldOrder } },
+        { $inc: { scheduledOrder: 1 } },
+        { multi: true }
+      )
+    }
+
+    submission = await submission.save()
+    if (!submission) {
+      return res.status(422).json({ message: 'Submission can not be edited' })
+    }
+
+    res.json(submission.toObject())
+  }
+)
+
+/**
+  * @swagger
+  * /submissions/order/:submissionId:
+  *   delete:
+  *     description: Remove submission from publishing queue
+  *     parameters:
+  *            - name: Authorization
+  *              in: header
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+  *            - name: submissionId
+  *              in: path
+  *              schema:
+  *                type: string
+  *                required: true
+  *                description: Submission id.
+  *     responses:
+  *       200:
+  *         description: Removed the submission from the queue.
+  *       401:
+  *         description: No permission to access.
+  *       404:
+  *         description: Submission not found.
+  *       422:
+  *         description: Submission can not be edited.
+  */
+submissionApp.delete(
+  '/submissions/order/:submissionId',
+  authenticationMiddleware,
+  async (req, res) => {
+    let submission = await Submission.findOne({ id: req.params.submissionId })
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    if (
+      req.user.role !== 'admin' &&
+      req.user.id !== submission.submittedBy.id
+    ) {
+      return res.status(401).json({ message: 'No permission to access' })
+    }
+    if (!req.body.scheduledOrder) {
+      return res.status(401).json({ message: 'No schedule order' })
+    }
+
+    const scheduledOrder = submission.scheduledOrder
+
+    await Submission.update(
+      { scheduledOrder: { $gt: scheduledOrder } },
+      { $inc: { scheduledOrder: -1 } },
+      { multi: true }
+    )
+
+    submission.scheduledOrder = null
+    submission.status = 'pending'
     submission = await submission.save()
     if (!submission) {
       return res.status(422).json({ message: 'Submission can not be edited' })
@@ -504,15 +588,16 @@ submissionApp.put(
   *                required: true
   *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
   *            - name: scheduledOrder
-  *              in: query
+  *              in: body
   *              schema:
   *                type: integer
   *                required: true
-  *                description: Scheduling order
+  *                description: Scheduling order, NOTE a value of 0 will publish the submission immediately, bypassing the queue; value of 1 would place submission AT THE FRONT of the queue
   *            - name: tag
-  *              in: query
+  *              in: body
   *              schema:
   *                type: string
+  *                example: "photo-essay"
   *                description: Tag of the submission
   *     responses:
   *       200:
@@ -540,6 +625,12 @@ submissionApp.post(
         .status(422)
         .json({ message: 'Only pending submission can be approved' })
     }
+
+    const author = await User.findOne({ id: submission.submittedBy.id })
+    if (author.role !== 'admin' && author.role !== 'editor') {
+      author.role = 'contributor'
+    }
+    await author.save()
 
     submission.status = 'scheduled'
     submission.scheduledOrder = req.body.scheduledOrder
