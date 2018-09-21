@@ -627,7 +627,9 @@ submissionApp.post(
     }
 
     const author = await User.findOne({ id: submission.submittedBy.id })
-    if (author.role !== 'admin' && author.role !== 'editor') { author.role = 'contributor' }
+    if (author.role !== 'admin' && author.role !== 'editor') {
+      author.role = 'contributor'
+    }
     await author.save()
 
     submission.status = 'scheduled'

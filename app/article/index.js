@@ -171,7 +171,10 @@ articleApp.get('/rss', async (req, res) => {
       author: authorNameList(
         a.authors.map(author => author.name.split(' ')[0])
       ),
-      date: moment.unix(a.date.published).toDate().toString(),
+      date: moment
+        .unix(a.date.published)
+        .toDate()
+        .toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -341,23 +344,26 @@ articleApp.put(
     const textContent = req.body.textContent
     const tag = req.body.tag
 
-    const submission = await Submission.create({
-      ...article.toObject(),
-      _id: null,
-      date: {},
-      articleId: article.id,
-      title: header.title,
-      subtitle: header.subtitle,
-      stats: {
-        images: rawImageCount(content),
-        words: count(textContent)
-      },
-      summary: summarize(textContent),
-      content: { raw: content },
-      status: req.body.status || 'pending',
-      tag: tag || article.tag
-    })
+    let submission = await Submission.findOne({ articleId: article.id })
+    if (!submission) {
+      submission = new Submission({
+        ...article.toObject(),
+        articleId: article.id
+      })
+      submission = await submission.save()
+    }
+    submission.title = header.title
+    submission.subtitle = header.subtitle
+    submission.stats = {
+      images: rawImageCount(content),
+      words: count(textContent)
+    }
+    submission.summary = summarize(textContent)
+    submission.content = { raw: content }
+    submission.status = req.body.status || 'pending'
+    submission.tag = tag || article.tag
 
+    submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
     uploadImgAsync(req, res, submission.id)
     res.json(submission.toObject())
@@ -396,7 +402,7 @@ articleApp.delete(
   '/articles/:articleId',
   authenticationMiddleware,
   async (req, res) => {
-    let article = Article.findOne({
+    let article = await Article.findOne({
       id: req.params.articleId
     })
     if (req.user.role !== 'admin') {
