@@ -77,11 +77,7 @@ function getFirstImage (rawContent) {
 }
 
 async function findExistingAuthors (srcs) {
-  const imageOwners = await Image.find({
-    id: {
-      $in: srcs
-    }
-  })
+  const imageOwners = await Image.find({ id: { $in: srcs } })
     .distinct('author')
     .exec()
   return imageOwners
@@ -125,7 +121,9 @@ async function uploadImgAsync (req, res, submissionId) {
       await deleteImageFromCloudinary(result.public_id)
       addImageURLToContent(k, duplicatedImage.id, submission.content.raw)
       // If it's the first image, use it as the submission's poster
-      if (i === 0 && !isFirstImageSuggestion) { submission.poster = duplicatedImage.id }
+      if (i === 0 && !isFirstImageSuggestion) {
+        submission.poster = duplicatedImage.id
+      }
     } else {
       const image = new Image({
         id: result.public_id,
@@ -182,44 +180,37 @@ async function updateSubmissionAuthors (submission) {
     imageNodesFromSubmission(submission).map(node => node.data.src)
   )
   submission.authors = [
-    {
-      ...submission.submittedBy.toObject(),
-      authorship: 'article'
-    },
+    { ...submission.submittedBy.toObject(), authorship: 'article' },
     ...existingAuthors
       .filter(a => a.id !== submission.submittedBy.id)
-      .map(a => ({
-        ...a,
-        authorship: 'photography'
-      }))
+      .map(a => ({ ...a, authorship: 'photography' }))
   ]
   await submission.save()
   return submission
 }
 
 async function publish (submission) {
+  const author = await User.findOne({ id: submission.submittedBy.id })
   let article
   if (submission.articleId) {
-    article = Article.findOne({
-      id: submission.articleId
-    })
-    article = {
-      ...article.toObject(),
-      title: submission.title,
-      subtitle: submission.subtitle,
-      stats: submission.toObject().stats,
-      submittedBy: submission.toObject().submittedBy,
-      authors: submission.authors,
-      poster: submission.poster,
-      tag: submission.tag,
-      summary: submission.summary,
-      content: submission.content,
-      date: {
-        published: moment().unix()
-      },
-      status: 'published'
+    article = await Article.findOne({ id: submission.articleId })
+    article.title = submission.title
+    article.subtitle = submission.subtitle
+    article.stats = submission.toObject().stats
+    article.submittedBy = submission.toObject().submittedBy
+    article.authors = submission.authors
+    article.poster = submission.poster
+    article.tag = submission.tag
+    article.summary = submission.summary
+    article.content = submission.content
+    article.date = {
+      created: article.date.created,
+      published: article.date.published
     }
+    article.status = 'published'
+    article = await article.save()
   } else {
+    submission.articleId = submission.id
     article = new Article({
       id: submission.id,
       slug: submission.slug,
@@ -237,46 +228,19 @@ async function publish (submission) {
       },
       status: 'published'
     })
-    submission.articleId = submission.id
+    article = await article.save()
+    if (author.email) {
+      submissionPublishedEmail(author, article)
+    }
+    // Send an email to the image owner that isn't the article owner
+    const coImageAuthors = await findCoImageAuthors(submission)
+    coImageAuthors.map(imageAuthor =>
+      imageRepostedEmail(imageAuthor.email, imageAuthor.title, article)
+    )
   }
   submission.status = 'published'
-  article = await article.save()
   submission = await submission.save()
-  const author = await User.findOne({
-    id: submission.submittedBy.id
-  })
-  if (author.email) {
-    submissionPublishedEmail(author, article)
-  }
-  // Send an email to the image owner that isn't the article owner
-  // (one email per author)
-  const submissionImages = await Promise.all(submission.content.raw.document.nodes
-    .filter(node => node.type === 'image')
-    .map(node => node.data.src)
-    .map(getImageId)
-    .map(async id => {
-        const image = await Image.findOne({ id })
-        return image
-    }))
-    submissionImages.filter( (image, index, self) =>
-      self.map(img => img.author.id)
-        .indexOf(image.author.id) === index
-    )
-    .map(async image => {
-      const imageAuthor =
-        image &&
-        (await User.findOne({
-          id: image.author.id
-        }))
-      if (
-        image &&
-        imageAuthor &&
-        imageAuthor.email &&
-        image.author.id !== submission.submittedBy.id
-      ) {
-        imageRepostedEmail(imageAuthor.email, imageAuthor.title, article)
-      }
-    })
+
   // Upload sitemap to S3
   if (process.env.API_DOMAIN_PROD === process.env.API_DOMAIN) {
     uploadRSSAndSitemap(
@@ -289,13 +253,44 @@ async function publish (submission) {
   return submission
 }
 
+async function findCoImageAuthors (submission) {
+  const coImageAuthorsPromise = submission.content.raw.document.nodes
+  // Send an email to the image owner that isn't the article owner
+  // (one email per author)
+  const submissionImages = await Promise.all(
+    submission.content.raw.document.nodes
+      .filter(node => node.type === 'image')
+      .map(node => node.data.src)
+      .map(getImageId)
+      .map(async id => {
+        const image = await Image.findOne({ id })
+        return image
+      })
+  )
+  submissionImages
+    .filter(
+      (image, index, self) =>
+        self.map(img => img.author.id).indexOf(image.author.id) === index
+    )
+    .map(async image => {
+      const imageAuthor = image && (await User.findOne({ id: image.author.id }))
+      return image &&
+        imageAuthor &&
+        imageAuthor.email &&
+        imageAuthor.id !== submission.submittedBy.id
+        ? imageAuthor
+        : null
+    })
+
+  const coImageAuthors = await Promise.all(coImageAuthorsPromise)
+  return coImageAuthors.filter(author => author)
+}
+
 async function reject (submission) {
   submission.status = 'rejected'
   submission = await submission.save()
-  const author = await User.findOne({
-    id: submission.submittedBy.id
-  })
-  if (author.email) {
+  const author = await User.findOne({ id: submission.submittedBy.id })
+  if (author.email && !submission.articleId) {
     submissionRejectedEmail(author)
   }
   return submission
