@@ -199,14 +199,18 @@ articleApp.get('/rss', async (req, res) => {
  *         description: Article not found.
  */
 articleApp.get('/articles/:articleSlug', async (req, res) => {
-  const article = await Article.findOne({ slug: req.params.articleSlug })
+  const article = await Article.findOne({
+    slug: req.params.articleSlug,
+    status: 'published'
+  })
   if (!article) {
     return res.status(404).json({
       message: 'Article not found'
     })
   }
   const nextArticle = await Article.findOne({
-    'date.published': { $lt: article.date.published }
+    'date.published': { $lt: article.date.published },
+    status: 'published'
   })
     .sort({ 'date.published': 'desc' })
     .exec()
