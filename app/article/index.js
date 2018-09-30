@@ -171,10 +171,7 @@ articleApp.get('/rss', async (req, res) => {
       author: authorNameList(
         a.authors.map(author => author.name.split(' ')[0])
       ),
-      date: moment
-        .unix(a.date.published)
-        .toDate()
-        .toString(),
+      date: moment.unix(a.date.published).toDate().toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -374,7 +371,7 @@ articleApp.put(
   * @swagger
   * /articles/:articleId:
   *   delete:
-  *     description: Delete article
+  *     description: Unpublish article
   *     parameters:
   *            - name: Authorization
   *              in: header
@@ -405,6 +402,15 @@ articleApp.delete(
     let article = await Article.findOne({
       id: req.params.articleId
     })
+    let submission = await Submission.findOne({ articleId: article.id })
+    if (!submission) {
+      submission = new Submission({
+        ...article.toObject(),
+        articleId: article.id
+      })
+      submission = await submission.save()
+    }
+
     if (req.user.role !== 'admin') {
       return res.status(401).json({ message: 'No permission to access' })
     }
@@ -412,13 +418,22 @@ articleApp.delete(
       return res.status(404).json({ message: 'Article not found' })
     }
 
-    article.status = 'deleted'
+    article.status = 'unpublished'
+    submission.status = 'unpublished'
 
     article = await article.save()
     if (!article) {
       return res.status(422).json({ message: 'Article can not be edited' })
     }
-    res.status(200).json({ message: 'Article has been deleted' })
+
+    submission = await submission.save()
+    if (!submission) {
+      return res
+        .status(422)
+        .json({ message: 'Linked submission record can not be edited' })
+    }
+
+    res.status(200).json({ message: 'Article has been unpublished' })
     if (process.env.API_DOMAIN_PROD === process.env.API_DOMAIN) {
       uploadRSSAndSitemap(
         process.env.API_DOMAIN,
