@@ -39,6 +39,7 @@
     "mongoose-ts": "0.1.0",
     "passport": "^0.3.2",
     "passport-facebook": "^2.1.1",
+    "passport-facebook-token": "^3.3.0",
     "passport-jwt": "2.2.1",
     "passport-twitter": "^1.0.4",
     "redis": "^2.8.0",

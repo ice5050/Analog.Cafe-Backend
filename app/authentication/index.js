@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken')
 const passportJWT = require('passport-jwt')
 const TwitterStrategy = require('passport-twitter').Strategy
 const FacebookStrategy = require('passport-facebook').Strategy
+const FacebookTokenStrategy = require('passport-facebook-token')
 const User = require('../../models/mongo/user.js')
 const ExtractJwt = passportJWT.ExtractJwt
 const JwtStrategy = passportJWT.Strategy
@@ -101,6 +102,35 @@ authApp.get(
 
 /**
  * @swagger
+ * /auth/facebook/token:
+ *   get:
+ *     description: Get Analog JWT Token by Facebook OAuth Token.
+ *     parameters:
+ *            - name: access_token
+ *              in: query
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: facebook access token
+ *     responses:
+ *       200:
+ *         description: Generate token successfully
+ */
+authApp.get(
+  '/auth/facebook/token',
+  passport.authenticate('facebook-token'),
+  (req, res) => {
+    const user = req.user
+    const payload = { id: user.id }
+    const token = jwt.sign(payload, jwtOptions.secretOrKey, {
+      expiresIn: TOKEN_EXPIRES_IN
+    })
+    res.json({ token })
+  }
+)
+
+/**
+ * @swagger
  * /auth/user:
  *   get:
  *     description: Get user object
@@ -168,6 +198,40 @@ function setupPassport () {
         profileURL: 'https://graph.facebook.com/v2.12/me',
         authorizationURL: 'https://www.facebook.com/v2.12/dialog/oauth',
         tokenURL: 'https://graph.facebook.com/v2.12/oauth/access_token'
+      },
+      async (accessToken, refreshToken, profile, cb) => {
+        let user = await User.findOne({ facebookId: profile.id })
+        const email = profile.emails[0] && profile.emails[0].value
+        const username =
+          sanitizeUsername(profile.displayName) || sanitizeUsername(email)
+        const profileImageURL = profile.photos[0] && profile.photos[0].value
+        if (!user) {
+          const uploadedImage =
+            profileImageURL &&
+            (await profileImageURLToCloudinary(profileImageURL))
+          user = await User.create({
+            facebookId: profile.id,
+            facebookName: profile.displayName,
+            id: username,
+            title: profile.displayName || username,
+            email,
+            image: uploadedImage && uploadedImage.public_id
+          })
+          welcomeEmail(user.email, user.title)
+        } else {
+          user.facebookName = profile.displayName
+          user = await user.save()
+        }
+        cb(null, user)
+      }
+    )
+  )
+
+  passport.use(
+    new FacebookTokenStrategy(
+      {
+        clientID: process.env.FACEBOOK_APP_ID,
+        clientSecret: process.env.FACEBOOK_APP_SECRET
       },
       async (accessToken, refreshToken, profile, cb) => {
         let user = await User.findOne({ facebookId: profile.id })
