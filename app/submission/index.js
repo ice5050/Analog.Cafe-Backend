@@ -14,6 +14,7 @@ const {
   reject,
   summarize
 } = require('../../helpers/submission')
+const { canEdit } = require('../../helpers/user')
 const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user')
 const redisClient = require('../../helpers/redis')
@@ -64,7 +65,7 @@ submissionApp.get(
 
     let queries = [Submission.find(), Submission.find()]
     queries.map(q => q.find({ status: { $ne: 'deleted' } }))
-    if (!['admin', 'editor'].includes(req.user.role)) {
+    if (!canEdit(req.user)) {
       queries = queries.map(q => q.find({ 'submittedBy.id': req.user.id }))
     }
     if (status) {
@@ -377,8 +378,9 @@ submissionApp.put(
       return res.status(404).json({ message: 'Submission not found' })
     }
     if (
-      req.user.role !== 'admin' &&
-      req.user.id !== submission.submittedBy.id
+      !canEdit(req.user) &&
+      (req.user.role !== 'admin' &&
+        (req.body.status && req.body.status !== submission.status)) // not admin and change submission status
     ) {
       return res.status(401).json({ message: 'No permission to access' })
     }
@@ -466,10 +468,7 @@ submissionApp.put(
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
     }
-    if (
-      req.user.role !== 'admin' &&
-      req.user.id !== submission.submittedBy.id
-    ) {
+    if (!canEdit(req.user)) {
       return res.status(401).json({ message: 'No permission to access' })
     }
     if (!req.body.scheduledOrder) {
@@ -540,10 +539,7 @@ submissionApp.delete(
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
     }
-    if (
-      req.user.role !== 'admin' &&
-      req.user.id !== submission.submittedBy.id
-    ) {
+    if (!canEdit(req.user)) {
       return res.status(401).json({ message: 'No permission to access' })
     }
     if (!req.body.scheduledOrder) {
@@ -613,7 +609,10 @@ submissionApp.post(
   '/submissions/:submissionId/approve',
   authenticationMiddleware,
   async (req, res) => {
-    if (req.user.role !== 'admin') {
+    if (
+      !canEdit(req.user) ||
+      (req.user.role === 'editor' && Number(req.body.scheduledOrder) === 0)
+    ) {
       return res.status(401).json({ message: 'No permission to access' })
     }
     let submission = await Submission.findOne({ id: req.params.submissionId })
@@ -624,11 +623,12 @@ submissionApp.post(
       submission.status !== 'pending' &&
       submission.status !== 'unpublished'
     ) {
-      return res
-        .status(422)
-        .json({
-          message: 'Only pending or unpublished submission can be approved'
-        })
+      return res.status(422).json({
+        message: 'Only pending or unpublished submission can be approved'
+      })
+    }
+    if (!req.body.scheduledOrder) {
+      return res.status(401).json({ message: 'No schedule order' })
     }
 
     const author = await User.findOne({ id: submission.submittedBy.id })
@@ -686,7 +686,7 @@ submissionApp.post(
   '/submissions/:submissionId/reject',
   authenticationMiddleware,
   async (req, res) => {
-    if (req.user.role !== 'admin') {
+    if (!canEdit(req.user)) {
       return res.status(401).json({ message: 'No permission to access' })
     }
     let submission = await Submission.findOne({ id: req.params.submissionId })
@@ -741,7 +741,7 @@ submissionApp.delete(
   authenticationMiddleware,
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
-    if (req.user.role !== 'admin') {
+    if (!canEdit(req.user)) {
       return res.status(401).json({ message: 'No permission to access' })
     }
     if (!submission) {

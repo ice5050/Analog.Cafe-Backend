@@ -10,7 +10,12 @@ function parseButtons (buttonsJSON) {
   return buttonsJSON
 }
 
+function canEdit (user) {
+  return (user.role === 'admin') || (user.role === 'editor')
+}
+
 module.exports = {
   toShowingObject,
-  parseButtons
+  parseButtons,
+  canEdit
 }

@@ -15,6 +15,7 @@ const {
   uploadImgAsync,
   summarize
 } = require('../../helpers/submission')
+const { canEdit } = require('../../helpers/user')
 const { imageFroth } = require('../../helpers/image_froth')
 const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
 const multipartMiddleware = multipart()
@@ -171,7 +172,10 @@ articleApp.get('/rss', async (req, res) => {
       author: authorNameList(
         a.authors.map(author => author.name.split(' ')[0])
       ),
-      date: moment.unix(a.date.published).toDate().toString(),
+      date: moment
+        .unix(a.date.published)
+        .toDate()
+        .toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -336,7 +340,13 @@ articleApp.put(
     if (!article) {
       return res.status(404).json({ message: 'Article not found' })
     }
-    if (req.user.role !== 'admin' && req.user.id !== article.submittedBy.id) {
+
+    if (
+      !canEdit(req.user) &&
+      req.user.id !== article.submittedBy.id &&
+      (req.user.role !== 'admin' &&
+        (req.body.status && req.body.status !== article.status)) // not admin and change article status
+    ) {
       return res.status(401).json({ message: 'No permission to access' })
     }
 
