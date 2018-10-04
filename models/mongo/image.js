@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const connection = require('./index.js')
+const cachegoose = require('cachegoose')
 
 const Schema = mongoose.Schema
 
@@ -17,7 +18,7 @@ const imageSchema = new Schema({
 })
 
 // Timestamp
-imageSchema.pre('save', function (next) {
+imageSchema.pre('save', next => {
   var now = Number(new Date())
   if (!this.createdAt) {
     this.createdAt = now
@@ -26,6 +27,10 @@ imageSchema.pre('save', function (next) {
     this.updatedAt = now
   }
   next()
+})
+
+imageSchema.post('save', img => {
+  cachegoose.clearCache(`image-${img.id}`)
 })
 
 const Image = connection.model('Image', imageSchema)
