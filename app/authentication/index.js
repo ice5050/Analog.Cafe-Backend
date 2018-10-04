@@ -319,7 +319,7 @@ authApp.get('/auth/email/verify', async (req, res) => {
 
 /**
  * @swagger
- * /refresh_token:
+ * /auth/refresh:
  *   post:
  *     description: Refresh token
  *     parameters:
@@ -333,7 +333,7 @@ authApp.get('/auth/email/verify', async (req, res) => {
  *       200:
  *         description: Renew the token.
  */
-authApp.post('/refresh_token', authenticationMiddleware, async (req, res) => {
+authApp.post('/auth/refresh', authenticationMiddleware, async (req, res) => {
   const user = req.user
   const payload = { id: user.id }
   const token = jwt.sign(payload, jwtOptions.secretOrKey, {
