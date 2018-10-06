@@ -295,7 +295,7 @@ authApp.post('/auth/email', async (req, res) => {
  *              description: Verify code that generate at /auth/email
  *     responses:
  *       200:
- *         description: Successfull active user account.
+ *         description: Successfully active user account.
  */
 authApp.get('/auth/email/verify', async (req, res) => {
   const verifyCode = req.query.code
@@ -315,6 +315,31 @@ authApp.get('/auth/email/verify', async (req, res) => {
     expiresIn: TOKEN_EXPIRES_IN
   })
   res.redirect(process.env.ANALOG_FRONTEND_URL + '?token=' + token)
+})
+
+/**
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     description: Refresh token
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *     responses:
+ *       200:
+ *         description: Renew the token.
+ */
+authApp.post('/auth/refresh', authenticationMiddleware, async (req, res) => {
+  const user = req.user
+  const payload = { id: user.id }
+  const token = jwt.sign(payload, jwtOptions.secretOrKey, {
+    expiresIn: TOKEN_EXPIRES_IN
+  })
+  res.json({ token })
 })
 
 module.exports = authApp

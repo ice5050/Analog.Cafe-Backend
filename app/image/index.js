@@ -25,7 +25,10 @@ const { imageFroth } = require('../../helpers/image_froth')
  *         description: Image not found.
  */
 imageApp.get('/images/:imageId', async (req, res) => {
-  const image = await Image.findOne({ id: req.params.imageId })
+  const image = await Image.findOne({ id: req.params.imageId }).cache(
+    300,
+    `image-${req.params.imageId}`
+  )
   if (!image) {
     return res.status(404).json({ message: 'Image not found' })
   }
