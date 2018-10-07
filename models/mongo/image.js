@@ -18,7 +18,7 @@ const imageSchema = new Schema({
 })
 
 // Timestamp
-imageSchema.pre('save', next => {
+imageSchema.pre('save', function (next) {
   var now = Number(new Date())
   if (!this.createdAt) {
     this.createdAt = now
