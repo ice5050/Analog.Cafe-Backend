@@ -14,14 +14,13 @@ const sitemapApp = express()
  */
 sitemapApp.get('/sitemap.xml', async (req, res) => {
   let articleRootUrl = '/zine/'
-  let articles = await Article.find()
-    .select('slug')
-    .exec()
+  let articles = await Article.find().select('slug').exec()
 
   const articleUrls = [
     { url: '/' },
     { url: '/photo-essays' },
-    { url: '/articles' },
+    { url: '/film-photography' },
+    { url: '/editorial' },
     ...articles.map(a => ({ url: articleRootUrl + a.slug }))
   ]
 
