@@ -63,7 +63,16 @@ submissionApp.get(
     const status = req.query.status
 
     let queries = [Submission.find(), Submission.find()]
-    queries.map(q => q.find({ status: { $ne: 'deleted' } }))
+    queries.map(q =>
+      q.find({
+        status: {
+          $nin: [
+            'deleted',
+            ['admin', 'editor'].includes(req.user.role) ? 'rejected' : undefined
+          ]
+        }
+      })
+    )
     if (!['admin', 'editor'].includes(req.user.role)) {
       queries = queries.map(q => q.find({ 'submittedBy.id': req.user.id }))
     }
@@ -624,11 +633,9 @@ submissionApp.post(
       submission.status !== 'pending' &&
       submission.status !== 'unpublished'
     ) {
-      return res
-        .status(422)
-        .json({
-          message: 'Only pending or unpublished submission can be approved'
-        })
+      return res.status(422).json({
+        message: 'Only pending or unpublished submission can be approved'
+      })
     }
 
     const author = await User.findOne({ id: submission.submittedBy.id })
