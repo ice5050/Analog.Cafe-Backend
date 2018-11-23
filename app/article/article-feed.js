@@ -1,7 +1,7 @@
 const RSS = require('rss')
 const articleFeed = new RSS({
   title: 'Analog.Cafe',
-  description: 'Art, Places, Film Cameras',
+  description: 'Photo Essays & Film Photography',
   feed_url: process.env.API_DOMAIN_PROD + '/rss',
   site_url: 'https://www.analog.cafe',
   favicon: 'https://www.analog.cafe/favicon.ico',
