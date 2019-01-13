@@ -12,7 +12,7 @@ function sendMail (data) {
     templateId: data.templateId,
     substitutions: data.substitutions
   }
-  sgMail.send(msg)
+  return data.to ? sgMail.send(msg) : null
 }
 
 module.exports = {
