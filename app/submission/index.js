@@ -1,6 +1,7 @@
 const count = require('word-count')
 const express = require('express')
 const multipart = require('connect-multiparty')
+const moment = require('moment')
 
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
@@ -406,6 +407,16 @@ submissionApp.put(
     const status = req.body.status
     const scheduledOrder = req.body.scheduledOrder
 
+    const date = moment().unix()
+    const edit = req.body.editedBy
+      ? {
+        ...parseContent(req.body.editedBy),
+        date
+      }
+      : { id: 'unknown', name: 'Unknown', date }
+    const pastEdits = submission.edits || []
+    const edits = [...pastEdits, edit]
+
     submission = Object.assign(submission, {
       [title ? 'title' : undefined]: title,
       [subtitle ? 'subtitle' : undefined]: subtitle,
@@ -419,7 +430,8 @@ submissionApp.put(
       [content ? 'content' : undefined]: { raw: content },
       [status ? 'status' : undefined]: req.body.status,
       [scheduledOrder ? 'scheduledOrder' : undefined]: req.body.scheduledOrder,
-      [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
+      [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined,
+      [edits ? 'edits' : undefined]: edits
     })
 
     submission = await submission.save()

@@ -25,6 +25,14 @@ const submissionSchema = new Schema(
         authorship: String
       }
     ],
+    edits: [
+      {
+        _id: false,
+        id: String,
+        name: String,
+        date: Number
+      }
+    ],
     poster: String,
     date: {
       created: String,
