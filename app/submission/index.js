@@ -1,6 +1,7 @@
 const count = require('word-count')
 const express = require('express')
 const multipart = require('connect-multiparty')
+const moment = require('moment')
 
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
@@ -386,16 +387,16 @@ submissionApp.put(
       return res.status(404).json({ message: 'Submission not found' })
     }
     if (
-      req.user.role !== 'admin' &&
-      req.user.id !== submission.submittedBy.id
+      req.user.id !== submission.submittedBy.id &&
+      req.user.role !== 'admin'
     ) {
-      return res.status(401).json({ message: 'No permission to access' })
+      return res.status(401).json({ message: 'No permission to edit' })
     }
-    if (req.user.role !== 'admin' && submission.status === 'pending') {
-      return res
-        .status(401)
-        .json({ message: 'No permission to edit pending submission' })
-    }
+    // if (req.user.role !== 'admin' && submission.status === 'pending') {
+    //   return res
+    //     .status(401)
+    //     .json({ message: 'No permission to edit pending submission' })
+    // }
 
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
@@ -405,6 +406,16 @@ submissionApp.put(
     const tag = req.body.tag
     const status = req.body.status
     const scheduledOrder = req.body.scheduledOrder
+
+    const date = moment().unix()
+    const edit = req.body.editedBy
+      ? {
+        ...parseContent(req.body.editedBy),
+        date
+      }
+      : { id: 'unknown', name: 'Unknown', date }
+    const pastEdits = submission.edits || []
+    const edits = [...pastEdits, edit]
 
     submission = Object.assign(submission, {
       [title ? 'title' : undefined]: title,
@@ -419,7 +430,8 @@ submissionApp.put(
       [content ? 'content' : undefined]: { raw: content },
       [status ? 'status' : undefined]: req.body.status,
       [scheduledOrder ? 'scheduledOrder' : undefined]: req.body.scheduledOrder,
-      [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined
+      [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined,
+      [edits ? 'edits' : undefined]: edits
     })
 
     submission = await submission.save()
@@ -748,7 +760,10 @@ submissionApp.delete(
   authenticationMiddleware,
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
-    if (req.user.role !== 'admin') {
+    if (
+      req.user.id !== submission.submittedBy.id &&
+      req.user.role !== 'admin'
+    ) {
       return res.status(401).json({ message: 'No permission to access' })
     }
     if (!submission) {
