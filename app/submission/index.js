@@ -387,16 +387,16 @@ submissionApp.put(
       return res.status(404).json({ message: 'Submission not found' })
     }
     if (
-      req.user.role !== 'admin' &&
-      req.user.id !== submission.submittedBy.id
+      req.user.id !== submission.submittedBy.id &&
+      req.user.role !== 'admin'
     ) {
-      return res.status(401).json({ message: 'No permission to access' })
+      return res.status(401).json({ message: 'No permission to edit' })
     }
-    if (req.user.role !== 'admin' && submission.status === 'pending') {
-      return res
-        .status(401)
-        .json({ message: 'No permission to edit pending submission' })
-    }
+    // if (req.user.role !== 'admin' && submission.status === 'pending') {
+    //   return res
+    //     .status(401)
+    //     .json({ message: 'No permission to edit pending submission' })
+    // }
 
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
@@ -760,7 +760,10 @@ submissionApp.delete(
   authenticationMiddleware,
   async (req, res) => {
     let submission = await Submission.findOne({ id: req.params.submissionId })
-    if (req.user.role !== 'admin') {
+    if (
+      req.user.id !== submission.submittedBy.id &&
+      req.user.role !== 'admin'
+    ) {
       return res.status(401).json({ message: 'No permission to access' })
     }
     if (!submission) {
