@@ -161,7 +161,13 @@ articleApp.get('/rss', async (req, res) => {
     }
 
     articleFeed.item({
-      title: a.title + (a.subtitle ? ` (${a.subtitle})` : ''),
+      title:
+        a.title +
+        (a.subtitle
+          ? `${!a.title[a.title.length - 1].match(/[.,!?:…*ʔっ)]/g)
+              ? ':'
+              : ''} ${a.subtitle}`
+          : ''),
       url: url,
       guid: url,
       description:

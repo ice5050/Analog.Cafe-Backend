@@ -1,6 +1,7 @@
 const express = require('express')
 const sm = require('sitemap')
 const Article = require('../../models/mongo/article')
+const User = require('../../models/mongo/user')
 const sitemapApp = express()
 
 /**
@@ -16,11 +17,23 @@ sitemapApp.get('/sitemap.xml', async (req, res) => {
   let articleRootUrl = '/zine/'
   let articles = await Article.find().select('slug').exec()
 
+  const condition = {
+    $or: [{ role: 'contributor' }, { role: 'admin' }, { role: 'editor' }]
+  }
+  let authorRootUrl = '/author/'
+  let authors = await User.find(condition).select('id').exec()
+
   const articleUrls = [
     { url: '/' },
+    { url: '/about' },
+    { url: '/submit' },
+    { url: '/subscribe' },
+    { url: '/solo-projects' },
+    { url: '/collaborations' },
     { url: '/photo-essays' },
     { url: '/film-photography' },
-    { url: '/editorial' },
+    { url: '/editorials' },
+    ...authors.map(u => ({ url: authorRootUrl + u.id })),
     ...articles.map(a => ({ url: articleRootUrl + a.slug }))
   ]
 
