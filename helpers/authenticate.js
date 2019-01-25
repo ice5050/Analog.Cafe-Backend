@@ -7,7 +7,7 @@ function authenticationMiddleware (req, res, next) {
     } else if (err && err.name === 'JsonWebTokenError') {
       res.status(401).json({ message: err.name })
     } else if (err) {
-      next(err)
+      res.status(401).json({ message: "TokenError" })
     } else {
       req.user = user
       next()
