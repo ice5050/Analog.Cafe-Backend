@@ -15,7 +15,9 @@ const sitemapApp = express()
  */
 sitemapApp.get('/sitemap.xml', async (req, res) => {
   let articleRootUrl = '/zine/'
-  let articles = await Article.find().select('slug').exec()
+  let articles = await Article.find({ status: 'published' })
+    .select('slug')
+    .exec()
 
   const condition = {
     $or: [{ role: 'contributor' }, { role: 'admin' }, { role: 'editor' }]
