@@ -126,12 +126,19 @@ function setupPassport () {
       {
         consumerKey: process.env.TWITTER_APP_KEY,
         consumerSecret: process.env.TWITTER_APP_SECRET,
-        callbackURL: process.env.TWITTER_CALLBACK_URL
+        callbackURL: process.env.TWITTER_CALLBACK_URL,
+        userProfileURL:
+          'https://api.twitter.com/1.1/account/verify_credentials.json?include_email=true'
       },
       async (token, tokenSecret, profile, cb) => {
         let user = await User.findOne({ twitterId: profile.id })
+        const email =
+          profile.emails && profile.emails[0] && profile.emails[0].value
         const username = sanitizeUsername(profile.username)
         const name = sanitizeUsername(profile.displayName)
+
+        console.log(profile)
+
         const profileImageURL =
           profile._json &&
           profile._json.profile_image_url &&
@@ -145,10 +152,12 @@ function setupPassport () {
             twitterName: profile.displayName,
             id: username || name,
             title: name || username,
+            email,
             image: uploadedImage && uploadedImage.public_id,
             text: profile._json.description
           })
         } else {
+          user.email = email
           user.twitterName = profile.displayName
           user = await user.save()
         }
