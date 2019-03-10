@@ -135,10 +135,7 @@ function setupPassport () {
         const email =
           profile.emails && profile.emails[0] && profile.emails[0].value
         const username = sanitizeUsername(profile.username)
-        const name = sanitizeUsername(profile.displayName)
-
-        console.log(profile)
-
+        const name = profile.displayName
         const profileImageURL =
           profile._json &&
           profile._json.profile_image_url &&
@@ -150,12 +147,13 @@ function setupPassport () {
           user = await User.create({
             twitterId: profile.id,
             twitterName: profile.displayName,
-            id: username || name,
+            id: username || sanitizeUsername(name),
             title: name || username,
             email,
             image: uploadedImage && uploadedImage.public_id,
             text: profile._json.description
           })
+          welcomeEmail(user.email, user.title)
         } else {
           user.email = email
           user.twitterName = profile.displayName
