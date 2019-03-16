@@ -22,7 +22,7 @@ sitemapApp.get('/sitemap.xml', async (req, res) => {
   const condition = {
     $or: [{ role: 'contributor' }, { role: 'admin' }, { role: 'editor' }]
   }
-  let authorRootUrl = '/author/'
+  let authorRootUrl = '/is/'
   let authors = await User.find(condition).select('id').exec()
 
   const articleUrls = [

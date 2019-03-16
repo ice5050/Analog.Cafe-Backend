@@ -1,4 +1,5 @@
 const passport = require('passport')
+const {randomString} = require('./submission')
 
 function authenticationMiddleware (req, res, next) {
   passport.authenticate('jwt', { session: false }, (_, user, err) => {
@@ -17,7 +18,7 @@ function authenticationMiddleware (req, res, next) {
 
 function sanitizeUsername (username) {
   if (!username) return null
-  return username.split('@')[0].toLowerCase().replace(/\W/g, '.')
+  return username.split('@')[0].toLowerCase().replace(/\W/g, '.') + "." + randomString()
 }
 
 function rand5digit () {
