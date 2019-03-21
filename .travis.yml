@@ -4,11 +4,6 @@ node_js:
 cache:
   directories:
     - node_modules
-script:
-  - redis-server
-  - npm test
-
-
 jobs:
   include:
     - stage: test
