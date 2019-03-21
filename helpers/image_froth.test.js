@@ -1,3 +1,4 @@
+
 const { imageFroth } = require("./image_froth");
 
 test("Successfully generate image data via imageFroth from slug", () => {

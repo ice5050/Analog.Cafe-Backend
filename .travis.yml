@@ -6,10 +6,7 @@ cache:
     - node_modules
 jobs:
   include:
-    - stage: "redis & tests"
-      before_script:
-      # Forcing localhost in hosts file
-      - sudo sed -i '1s/^/127.0.0.1 localhost\n/' /etc/hosts
-      
+    - stage: "redis, mongod, tests"
       script: redis-server
-      script: npm test
+      script: mongod
+      script: npm test --detectOpenHandles

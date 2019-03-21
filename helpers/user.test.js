@@ -1,5 +1,5 @@
-const { parseButtons } = require("./user");
 
+const { parseButtons } = require("./user");
 const buttonsString =
   '[{"to":"/author/bailey-tovar","text":"More on Analog.Cafe","branded":true},{"to":"https://www.instagram.com/bai_latte/","text":"Follow on Instagram"}]';
 const buttonsObject = [
