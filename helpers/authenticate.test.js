@@ -1,3 +1,4 @@
+
 const { sanitizeUsername, getProfileImageURL } = require("./authenticate");
 
 test("Convert case-sensitive emails to lowercase usernames", ()=> {

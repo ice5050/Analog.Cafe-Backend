@@ -4,5 +4,10 @@ node_js:
 cache:
   directories:
     - node_modules
-script:
-  - npm test
+services:
+  - redis-server
+  - mongodb
+
+jobs:
+  include:
+      script: npm test -- --forceExit
