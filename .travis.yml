@@ -7,3 +7,10 @@ cache:
 script:
   - redis-server
   - npm test
+
+
+jobs:
+  include:
+    - stage: test
+      script: redis-server
+      script: npm test
