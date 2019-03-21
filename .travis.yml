@@ -6,6 +6,7 @@ cache:
     - node_modules
 jobs:
   include:
-    - stage: test
-    - script: redis-server
-    - script: npm test
+    - stage: "redis"
+      script: redis-server
+    - stage: "test"
+      script: npm test
