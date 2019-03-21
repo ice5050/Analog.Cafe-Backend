@@ -10,4 +10,4 @@ services:
 
 jobs:
   include:
-      script: npm test --detectOpenHandles
+      script: npm test -- --forceExit
