@@ -4,9 +4,10 @@ node_js:
 cache:
   directories:
     - node_modules
-before_script:
-    - redis-server
-    - mongod
+services:
+  - redis-server
+  - mongodb
+
 jobs:
   include:
       script: npm test --detectOpenHandles
