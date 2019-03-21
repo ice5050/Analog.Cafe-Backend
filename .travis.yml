@@ -6,7 +6,10 @@ cache:
     - node_modules
 jobs:
   include:
-    - stage: "redis"
+    - stage: "redis & tests"
+      before_script:
+      # Forcing localhost in hosts file
+      - sudo sed -i '1s/^/127.0.0.1 localhost\n/' /etc/hosts
+      
       script: redis-server
-    - stage: "test"
       script: npm test
