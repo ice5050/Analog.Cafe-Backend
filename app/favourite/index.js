@@ -15,9 +15,16 @@ favouriteApp.get('/favourites', authenticationMiddleware, async (req, res) => {
 
   // TODO: import ability to sort by tags, authors, etc from Article app
 
-  const favouritesDoc = (await Favourite.findOne({
+  let favouritesDoc = (await Favourite.findOne({
     'user.id': req.user.id
   })) || { favourites: [] }
+
+  favouritesDoc.favourites.sort((a, b) => {
+    if (a.createdAt < b.createdAt) return 1
+    if (a.createdAt > b.createdAt) return -1
+    return 0
+  })
+
   const favouritesList = favouritesDoc.favourites
   const favouriteIds = favouritesList.map(item => item.id)
 
@@ -38,7 +45,6 @@ favouriteApp.get('/favourites', authenticationMiddleware, async (req, res) => {
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
-    .sort({ 'date.published': 'desc' })
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
@@ -63,53 +69,72 @@ favouriteApp.put('/favourite', authenticationMiddleware, async (req, res) => {
     createdAt: moment().unix()
   }
 
-  let favourite = await Favourite.findOne({ 'user.id': req.user.id })
-  if (!favourite) {
-    favourite = new Favourite({
+  let myFavouriteList = await Favourite.findOne({ 'user.id': req.user.id })
+  if (!myFavouriteList) {
+    myFavouriteList = new Favourite({
       user,
       favourites: []
     })
-    favourite = await favourite.save()
+    myFavouriteList = await myFavouriteList.save()
   }
 
-  const savedFavourites = favourite.favourites || []
+  const savedFavourites = myFavouriteList.favourites || []
   if (
     savedFavourites.filter(favourite => favourite.id === favouriteItem.id)
       .length < 1
   ) {
-    favourite.favourites = [...savedFavourites, favouriteItem]
-    favourite = await favourite.save()
+    myFavouriteList.favourites = [...savedFavourites, favouriteItem]
+    myFavouriteList = await myFavouriteList.save()
   }
-  res.json(favourite.toObject())
+  res.json(myFavouriteList.toObject())
+})
+
+favouriteApp.get('/favourite', authenticationMiddleware, async (req, res) => {
+  const articleId = req.query.article
+
+  let myFavouriteList = await Favourite.findOne({ 'user.id': req.user.id })
+  if (!myFavouriteList) {
+    return res.status(404).json({
+      message: 'No favourites found for this user'
+    })
+  }
+
+  const savedFavourites = myFavouriteList.favourites
+  const favourite = savedFavourites.filter(
+    favourite => favourite.id === articleId
+  )
+  if (favourite.length < 1) {
+    return res.json({
+      id: articleId,
+      slug: '',
+      user: 0
+    })
+  }
+  return res.json({
+    id: articleId,
+    slug: favourite[0].slug,
+    user: favourite.length
+  })
 })
 
 favouriteApp.delete(
   '/favourite/:favouriteId',
   authenticationMiddleware,
   async (req, res) => {
-    let favourite = await Favourite.findOne({ 'user.id': req.user.id })
-    if (!favourite) {
+    let myFavouriteList = await Favourite.findOne({ 'user.id': req.user.id })
+    if (!myFavouriteList) {
       return res.status(404).json({
         message: 'No Favourites found for this user'
       })
     }
 
-    const savedFavourites = favourite.favourites
-    if (
-      savedFavourites.filter(
-        favourite => favourite.id === req.params.favouriteId
-      ).length < 1
-    ) {
-      return res.status(404).json({
-        message: 'This item is not in the favourites list for this user'
-      })
-    }
+    const savedFavourites = myFavouriteList.favourites
 
-    favourite.favourites = savedFavourites.filter(
+    myFavouriteList.favourites = savedFavourites.filter(
       favourite => favourite.id !== req.params.favouriteId
     )
-    favourite = await favourite.save()
-    res.json(favourite.toObject())
+    myFavouriteList = await myFavouriteList.save()
+    res.json(myFavouriteList.toObject())
   }
 )
 
