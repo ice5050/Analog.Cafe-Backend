@@ -19,12 +19,6 @@ favouriteApp.get('/favourites', authenticationMiddleware, async (req, res) => {
     'user.id': req.user.id
   })) || { favourites: [] }
 
-  favouritesDoc.favourites.sort((a, b) => {
-    if (a.createdAt < b.createdAt) return 1
-    if (a.createdAt > b.createdAt) return -1
-    return 0
-  })
-
   const favouritesList = favouritesDoc.favourites
   const favouriteIds = favouritesList.map(item => item.id)
 
@@ -45,6 +39,7 @@ favouriteApp.get('/favourites', authenticationMiddleware, async (req, res) => {
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
+    .sort({ 'date.published': 'desc' })
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
