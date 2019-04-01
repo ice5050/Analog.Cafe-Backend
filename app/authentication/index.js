@@ -1,5 +1,7 @@
 const express = require('express')
 const passport = require('passport')
+const Promise = require('bluebird')
+const request = Promise.promisify(require('request'))
 const cloudinary = require('cloudinary')
 const shortid = require('shortid')
 const jwt = require('jsonwebtoken')
@@ -27,6 +29,29 @@ const TOKEN_EXPIRES_IN = '3d'
 
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
+
+async function registerWithMailChimp (data) {
+  const clientServerOptions = {
+    uri: 'https://us4.api.mailchimp.com/3.0/lists/f43e54afe2/members',
+    body: JSON.stringify(data),
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization:
+        'Basic cG9zdG1hbjo0Y2ZiZjAxZGQ4ZWIxYWEwZTA5YjYyMTNlYjZiNzlkYy11czQ='
+    }
+  }
+  return new Promise((resolve, reject) => {
+    request(clientServerOptions, function (error, response) {
+      if (error) {
+        // TODO: handle MC API errors
+        resolve(error)
+      } else {
+        resolve(response)
+      }
+    })
+  })
+}
 
 setupPassport()
 
@@ -154,6 +179,17 @@ function setupPassport () {
             text: profile._json.description
           })
           welcomeEmail(user.email, user.title)
+
+          // send email to mailchimp
+          await registerWithMailChimp({
+            email_address: email,
+            status: 'subscribed',
+            merge_fields: {
+              SOURCE: 'Analog.Cafe Account',
+              NAME: name || username,
+              ANALOGID: username || sanitizeUsername(name)
+            }
+          })
         } else {
           user.email = email
           user.twitterName = profile.displayName
@@ -195,6 +231,17 @@ function setupPassport () {
             image: uploadedImage && uploadedImage.public_id
           })
           welcomeEmail(user.email, user.title)
+
+          // send email to mailchimp
+          await registerWithMailChimp({
+            email_address: email,
+            status: 'subscribed',
+            merge_fields: {
+              SOURCE: 'Analog.Cafe Account',
+              NAME: profile.displayName || username,
+              ANALOGID: username
+            }
+          })
         } else {
           user.facebookName = profile.displayName
           user = await user.save()
@@ -267,7 +314,19 @@ authApp.post('/auth/email', async (req, res) => {
     const name = sanitizeUsername(email)
     const username = `${name}-${randomString()}`
     user = await User.create({ id: username, email, title: name })
+
     welcomeEmail(user.email, user.title)
+
+    // send email to mailchimp
+    await registerWithMailChimp({
+      email_address: email,
+      status: 'subscribed',
+      merge_fields: {
+        SOURCE: 'Analog.Cafe Account',
+        NAME: name,
+        ANALOGID: username
+      }
+    })
   }
   const dateTimeNow = new Date()
   const limitSendEmail = new Date(
