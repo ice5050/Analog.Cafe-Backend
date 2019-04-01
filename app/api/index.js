@@ -23,6 +23,7 @@ var options = {
     './app/setting/index.js',
     './app/sitemap/index.js',
     './app/submission/index.js',
+    './app/favorite/index.js',
     './app/user/index.js'
   ]
 }

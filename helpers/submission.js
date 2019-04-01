@@ -42,7 +42,7 @@ function randomString (length) {
 }
 
 function slugGenerator (str, id) {
-  return slugify(str).toLowerCase() + '-' + (id || randomString(4))
+  return slugify(str).toLowerCase().replace(/[^0-9a-z\-]/gi, '') + '-' + (id || randomString(4))
 }
 
 function getImageId (imageUrl) {
