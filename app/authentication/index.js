@@ -159,6 +159,12 @@ function setupPassport () {
         let user = await User.findOne({ twitterId: profile.id })
         const email =
           profile.emails && profile.emails[0] && profile.emails[0].value
+
+        // attempt to get a user by email
+        if (!user) {
+          user = await User.findOne({ email })
+        }
+
         const username = sanitizeUsername(profile.username)
         const name = profile.displayName
         const profileImageURL =
@@ -215,6 +221,12 @@ function setupPassport () {
       async (accessToken, refreshToken, profile, cb) => {
         let user = await User.findOne({ facebookId: profile.id })
         const email = profile.emails[0] && profile.emails[0].value
+
+        // attempt to get a user by email
+        if (!user) {
+          user = await User.findOne({ email })
+        }
+
         const username =
           sanitizeUsername(profile.displayName) || sanitizeUsername(email)
         const profileImageURL = profile.photos[0] && profile.photos[0].value
