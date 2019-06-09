@@ -79,7 +79,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   if (authorId) {
     author = await User.findOne({ id: authorId }).exec()
     if (!author) {
-      res.status(404).json({ message: 'Author not found' })
+      return res.status(404).json({ message: 'Author not found' })
     }
     queries.map(q => q.find({ authors: { $elemMatch: { id: authorId } } }))
   }
@@ -214,14 +214,53 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
       message: 'Article not found'
     })
   }
+
+  // get full data on all included authors
+  const authorIdQueries = article.authors.map(author => {
+    return { id: author.id }
+  })
+  const authorObjects = await User.find({ $or: authorIdQueries })
+
+  // complete article author objects with extended data on authors
+  const completeAuthorObjects = authorObjects.map(author => {
+    const { id, title, image, text, buttons, role } = author
+    const authorship = article.authors.filter(author => author.id === id)[0]
+      .authorship
+    return { id, title, image, text, buttons, role, authorship }
+  })
+
+  // include authors who are not in the database in author list
+  const missingAuthorObjects = article.authors.filter(author => {
+    isComplete =
+      typeof completeAuthorObjects.filter(
+        completeAuthor => author.id === completeAuthor.id
+      )[0] !== 'undefined'
+    return !isComplete
+  })
+  const missingAuthorObjectsNormalizedVarNames = missingAuthorObjects.map(
+    author => {
+      return {
+        id: author.id,
+        title: author.name || author.title,
+        authorship: author.authorship
+      }
+    }
+  )
+
+  // find next article info
   const nextArticle = await Article.findOne({
     'date.published': { $lt: article.date.published },
     status: 'published'
   })
     .sort({ 'date.published': 'desc' })
     .exec()
+
   res.json({
     ...article.toObject(),
+    authors: [
+      ...completeAuthorObjects,
+      ...missingAuthorObjectsNormalizedVarNames
+    ],
     next: {
       slug: (nextArticle && nextArticle.slug) || undefined,
       title: (nextArticle && nextArticle.title) || undefined,
