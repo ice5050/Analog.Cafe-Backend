@@ -79,7 +79,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   if (authorId) {
     author = await User.findOne({ id: authorId }).exec()
     if (!author) {
-      res.status(404).json({ message: 'Author not found' })
+      return res.status(404).json({ message: 'Author not found' })
     }
     queries.map(q => q.find({ authors: { $elemMatch: { id: authorId } } }))
   }
@@ -229,6 +229,24 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     return { id, title, image, text, buttons, role, authorship }
   })
 
+  // include authors who are not in the database in author list
+  const missingAuthorObjects = article.authors.filter(author => {
+    isComplete =
+      typeof completeAuthorObjects.filter(
+        completeAuthor => author.id === completeAuthor.id
+      )[0] !== 'undefined'
+    return !isComplete
+  })
+  const missingAuthorObjectsNormalizedVarNames = missingAuthorObjects.map(
+    author => {
+      return {
+        id: author.id,
+        title: author.name || author.title,
+        authorship: author.authorship
+      }
+    }
+  )
+
   // find next article info
   const nextArticle = await Article.findOne({
     'date.published': { $lt: article.date.published },
@@ -239,7 +257,10 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
 
   res.json({
     ...article.toObject(),
-    authors: completeAuthorObjects,
+    authors: [
+      ...completeAuthorObjects,
+      ...missingAuthorObjectsNormalizedVarNames
+    ],
     next: {
       slug: (nextArticle && nextArticle.slug) || undefined,
       title: (nextArticle && nextArticle.title) || undefined,

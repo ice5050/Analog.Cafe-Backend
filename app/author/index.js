@@ -63,6 +63,9 @@ authorApp.get('/authors', async (req, res) => {
  *         description: Author not found.
  */
 authorApp.get('/authors/:author', async (req, res) => {
+  if (!req.params.author) {
+    return res.status(404).json({ message: 'Author not found' })
+  }
   const author = await User.findOne({ id: req.params.author })
   if (!author) {
     return res.status(404).json({ message: 'Author not found' })
