@@ -214,14 +214,32 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
       message: 'Article not found'
     })
   }
+
+  // get full data on all included authors
+  const authorIdQueries = article.authors.map(author => {
+    return { id: author.id }
+  })
+  const authorObjects = await User.find({ $or: authorIdQueries })
+
+  // complete article author objects with extended data on authors
+  const completeAuthorObjects = authorObjects.map(author => {
+    const { id, title, image, text, buttons, role } = author
+    const authorship = article.authors.filter(author => author.id === id)[0]
+      .authorship
+    return { id, title, image, text, buttons, role, authorship }
+  })
+
+  // find next article info
   const nextArticle = await Article.findOne({
     'date.published': { $lt: article.date.published },
     status: 'published'
   })
     .sort({ 'date.published': 'desc' })
     .exec()
+
   res.json({
     ...article.toObject(),
+    authors: completeAuthorObjects,
     next: {
       slug: (nextArticle && nextArticle.slug) || undefined,
       title: (nextArticle && nextArticle.title) || undefined,
