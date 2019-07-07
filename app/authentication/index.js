@@ -25,7 +25,7 @@ const { randomString } = require('../../helpers/submission')
 const { toShowingObject } = require('../../helpers/user')
 const CODE_EXPIRED = 10 // after send verify email, code will expired (minute)
 const LIMIT_EMAIL_SENDING = 1 // cannot send verify email again until (minute)
-const TOKEN_EXPIRES_IN = '3d'
+const TOKEN_EXPIRES_IN = '365d'
 
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
