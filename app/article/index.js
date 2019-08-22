@@ -77,9 +77,17 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     queries.map(q => q.where('tag').in(tags))
   }
 
+  // by default we're sorting by date published
   let sortBy = 'date.published'
+
+  // if featured value in parameters, fin all articles with `featured` tag that exists and not false
   if (featured) {
-    queries.map(q => q.find({ featured: { $exists: true, $ne: null } }))
+    queries.map(q =>
+      q.find({ featured: { $exists: true, $ne: null, $ne: false } })
+    )
+
+    // featured items are sorted by date featured
+    // `featured` field should have unix date
     sortBy = 'featured'
   }
 
@@ -105,7 +113,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
-    .sort({ 'sortBy': 'desc' })
+    .sort({ sortBy: 'desc' })
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
