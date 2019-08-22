@@ -33,7 +33,7 @@ const articleSchema = new Schema(
       updated: String
     },
     tag: String,
-    // Status: published, deleted
+    featured: String,
     status: { type: String, default: 'published' },
     summary: String,
     content: Schema.Types.Mixed
