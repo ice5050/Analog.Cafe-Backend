@@ -83,7 +83,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   // if featured value in parameters, fin all articles with `featured` tag that exists and not false
   if (featured) {
     queries.map(q =>
-      q.find({ featured: { $exists: true, $ne: null, $ne: false } })
+      q.find({ featured: { $exists: true, $ne: null, $ne: '0' } })
     )
 
     // featured items are sorted by date featured
