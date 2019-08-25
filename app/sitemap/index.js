@@ -35,7 +35,7 @@ sitemapApp.get('/sitemap.xml', async (req, res) => {
     { url: '/photo-essays' },
     { url: '/film-photography' },
     { url: '/editorials' },
-    { url: '/features' },
+    { url: '/apps-and-downloads' },
     ...authors.map(u => ({ url: authorRootUrl + u.id })),
     ...articles.map(a => ({ url: articleRootUrl + a.slug }))
   ]

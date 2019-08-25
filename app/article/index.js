@@ -64,10 +64,11 @@ const articleApp = express()
  *   $ref: '#/paths/~1list
  */
 articleApp.get(['/articles', '/list'], async (req, res) => {
+  const featured = req.query.featured
   const tags = (req.query.tag && req.query.tag.split(':')) || []
   const authorId = req.query.author
   const page = req.query.page || 1
-  const itemsPerPage = req.query['items-per-page'] || 10
+  const itemsPerPage = parseInt(req.query['items-per-page']) || 10
   const authorshipType = req.query.authorship
 
   let queries = [Article.find(), Article.find()]
@@ -75,6 +76,21 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   if (tags && tags.length !== 0) {
     queries.map(q => q.where('tag').in(tags))
   }
+
+  // by default we're sorting by date published
+  let sortBy = 'date.published'
+
+  // if featured value in parameters, fin all articles with `featured` tag that exists and not false
+  if (featured) {
+    queries.map(q =>
+      q.find({ featured: { $exists: true, $ne: null, $ne: '0' } })
+    )
+
+    // featured items are sorted by date featured
+    // `featured` field should have unix date
+    sortBy = 'featured'
+  }
+
   let author
   if (authorId) {
     author = await User.findOne({ id: authorId }).exec()
@@ -93,11 +109,11 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   query
     .select(
-      'id slug title subtitle stats submittedBy authors poster tag status summary date'
+      'id slug title subtitle stats submittedBy authors poster tag featured status summary date'
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
-    .sort({ 'date.published': 'desc' })
+    .sort({ [sortBy]: 'desc' })
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
@@ -106,6 +122,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     status: 'ok',
     filter: {
       tags: tags,
+      featured: featured,
       author: authorId
         ? { id: authorId, name: (author && author.title) || '' }
         : undefined
