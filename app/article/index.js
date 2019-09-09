@@ -293,7 +293,7 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   * @swagger
   * /articles/:articleId:
   *   put:
-  *     description: Update article (create new submission for the article)
+  *     description: Prep article for update - data needs to be uploaded this way into the submission (sets submission status to pending, which will need to be approved again)
   *     parameters:
   *            - name: Authorization
   *              in: header
