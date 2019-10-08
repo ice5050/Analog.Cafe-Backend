@@ -113,7 +113,9 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
-    .sort({ [sortBy]: 'desc' })
+    // features are sorted asc, with lowest numbers at the top,
+    // if sorted by date, descending (highest numbers at the top)
+    .sort({ [sortBy]: featured ? 'asc' : 'desc' })
 
   const articles = await query.exec()
   const count = await countQuery.count().exec()
