@@ -108,7 +108,10 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     .select(
       'id slug title subtitle stats submittedBy authors poster tag status summary date'
     )
-    .limit(itemsPerPage)
+    // for features, we'd like to sort through all categories, which will yield
+    // a max number of entries equal to all features in all categories;
+    // we have five categories, hence * 5
+    .limit(features ? itemsPerPage * 5 : itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     // features are sorted asc, with lowest numbers at the top,
     // if sorted by date, descending (highest numbers at the top)
