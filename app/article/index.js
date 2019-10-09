@@ -111,6 +111,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     // for features, we'd like to sort through all categories, which will yield
     // a max number of entries equal to all features in all categories;
     // we have five categories, hence * 5
+    // this limit will be restored below
     .limit(features ? itemsPerPage * 5 : itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     // features are sorted asc, with lowest numbers at the top,
@@ -130,6 +131,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
         return matchingArticle
       })
       .filter(item => item) // remove null items
+      .slice(0, itemsPerPage) // restoring limit of max items featured
   }
 
   res.json({
