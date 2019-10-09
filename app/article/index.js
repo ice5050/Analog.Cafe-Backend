@@ -2,6 +2,7 @@ const express = require('express')
 const count = require('word-count')
 const moment = require('moment')
 const Article = require('../../models/mongo/article')
+const Features = require('../../models/mongo/features')
 const User = require('../../models/mongo/user.js')
 const multipart = require('connect-multiparty')
 const articleFeed = require('./article-feed')
@@ -64,7 +65,6 @@ const articleApp = express()
  *   $ref: '#/paths/~1list
  */
 articleApp.get(['/articles', '/list'], async (req, res) => {
-  const featured = req.query.featured
   const tags = (req.query.tag && req.query.tag.split(':')) || []
   const authorId = req.query.author
   const page = req.query.page || 1
@@ -80,17 +80,6 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   // by default we're sorting by date published
   let sortBy = 'date.published'
 
-  // if featured value in parameters, fin all articles with `featured` tag that exists and not false
-  if (featured) {
-    queries.map(q =>
-      q.find({ featured: { $exists: true, $ne: null, $ne: '0' } })
-    )
-
-    // featured items are sorted by date featured
-    // `featured` field should have unix date
-    sortBy = 'featured'
-  }
-
   let author
   if (authorId) {
     author = await User.findOne({ id: authorId }).exec()
@@ -105,26 +94,45 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     )
   }
 
-  let [query, countQuery] = queries
+  // get feature array from database
+  let features
+  if (req.query.featured) {
+    features = await Features.findOne({ id: 'features' }).exec()
+    if (features) {
+      queries.map(q => q.find({ id: { $in: features.feature } }))
+    }
+  }
 
+  let [query, countQuery] = queries
   query
     .select(
-      'id slug title subtitle stats submittedBy authors poster tag featured status summary date'
+      'id slug title subtitle stats submittedBy authors poster tag status summary date'
     )
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     // features are sorted asc, with lowest numbers at the top,
     // if sorted by date, descending (highest numbers at the top)
-    .sort({ [sortBy]: featured ? 'asc' : 'desc' })
+    .sort({ [sortBy]: 'desc' })
 
-  const articles = await query.exec()
+  // run it
+  let articles = await query.exec()
   const count = await countQuery.count().exec()
+
+  // if this is a features list, it needs to be sorted based on feature array stored in DB
+  if (features && features.feature) {
+    articles = features.feature
+      .map(id => {
+        const matchingArticle = articles.filter(article => article.id === id)[0]
+        if (!matchingArticle) return
+        return matchingArticle
+      })
+      .filter(item => item) // remove null items
+  }
 
   res.json({
     status: 'ok',
     filter: {
       tags: tags,
-      featured: featured,
       author: authorId
         ? { id: authorId, name: (author && author.title) || '' }
         : undefined
