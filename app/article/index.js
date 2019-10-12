@@ -192,8 +192,8 @@ articleApp.get('/rss', async (req, res) => {
       return compiledNameList
     }
 
-    // do not add downloads to RSS list
-    if (a.tag === 'download') return
+    // do not add links/downloads to RSS list
+    if (a.tag === 'link') return
 
     articleFeed.item({
       title:
