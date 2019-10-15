@@ -285,6 +285,7 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
   // find next article info
   const nextArticle = await Article.findOne({
     'date.published': { $lt: article.date.published },
+    tag: { $ne: 'link' }, // links are skipped
     status: 'published'
   })
     .sort({ 'date.published': 'desc' })
