@@ -43,7 +43,8 @@ app.use(
   require('./sitemap'),
   require('./submission'),
   require('./favourite'),
-  require('./user')
+  require('./user'),
+  require('./ad')
 )
 
 module.exports = app
