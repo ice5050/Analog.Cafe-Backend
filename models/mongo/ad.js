@@ -8,7 +8,7 @@ const adSchema = new Schema(
     link: String,
     title: String,
     description: String,
-    image: String,
+    poster: String,
     actin: String,
     value: Number,
     tags: [String],
