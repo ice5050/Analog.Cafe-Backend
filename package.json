@@ -70,10 +70,7 @@
     "db:clean": "node --harmony seeds/clean_db.js",
     "scheduler:publish": "node --harmony workers/publisher/index.js",
     "upload-sitemap-rss": "node --harmony upload_rss_sitemap_cmd.js --sitemap --rss",
-    "test": "jest",
-    "test:security": "snyk test",
-    "snyk-protect": "snyk protect",
-    "prepare": "npm run snyk-protect"
+    "test": "jest"
   },
   "jest": {
     "moduleNameMapper": {
@@ -92,6 +89,5 @@
       "prettier-standard",
       "git add"
     ]
-  },
-  "snyk": true
+  }
 }
