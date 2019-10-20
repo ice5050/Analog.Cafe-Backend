@@ -14,26 +14,27 @@
   },
   "dependencies": {
     "@roast-cms/image-froth": "^0.1.0",
-    "@sendgrid/mail": "6.1.3",
+    "@sendgrid/mail": "^6.4.0",
     "aws-sdk": "^2.327.0",
-    "bluebird": "^3.5.0",
+    "bluebird": "^3.7.1",
     "body-parser": "1.18.2",
     "cachegoose": "^4.0.1",
     "chance": "^1.0.10",
-    "cloudinary": "^1.11.0",
+    "cloudinary": "^1.16.0",
     "commander": "^2.16.0",
     "compression": "^1.7.1",
     "connect-multiparty": "2.1.0",
     "connect-redis": "3.3.0",
     "cors": "^2.8.4",
     "dotenv": "^4.0.0",
-    "express": "4.16.0",
-    "express-session": "1.15.6",
+    "eslint": "^6.5.1",
+    "express": "^4.17.1",
+    "express-session": "^1.17.0",
     "feed": "^1.1.0",
     "image-size": "^0.6.1",
     "jsonwebtoken": "8.0.0",
     "moment": "2.19.3",
-    "mongodb": "^3.0.2",
+    "mongodb": "^3.3.3",
     "mongoose": "4.11.14",
     "mongoose-timestamp-date-unix": "^0.6.2",
     "mongoose-ts": "0.1.0",
@@ -41,23 +42,23 @@
     "passport-facebook": "^2.1.1",
     "passport-jwt": "2.2.1",
     "passport-twitter": "^1.0.4",
+    "prettier": "^1.18.2",
     "redis": "^2.8.0",
     "rss": "^1.2.2",
     "shortid": "^2.2.8",
     "sib-api-v3-sdk": "3.0.2",
     "sitemap": "^1.13.0",
     "slugify": "^1.2.1",
-    "snyk": "^1.100.0",
     "swagger-jsdoc": "1.9.7",
     "swagger-ui-express": "^2.0.14",
     "url-pattern": "^1.0.3",
     "word-count": "^0.2.2"
   },
   "devDependencies": {
-    "husky": "^0.14.3",
-    "jest": "^23.3.0",
-    "lint-staged": "^4.0.3",
-    "nodemon": "^1.18.4",
+    "husky": "^3.0.9",
+    "jest": "^24.9.0",
+    "lint-staged": "^9.4.2",
+    "nodemon": "^1.19.4",
     "prettier-standard": "^6.0.0",
     "standard": "^10.0.2"
   },
@@ -69,10 +70,7 @@
     "db:clean": "node --harmony seeds/clean_db.js",
     "scheduler:publish": "node --harmony workers/publisher/index.js",
     "upload-sitemap-rss": "node --harmony upload_rss_sitemap_cmd.js --sitemap --rss",
-    "test": "jest",
-    "test:security": "snyk test",
-    "snyk-protect": "snyk protect",
-    "prepare": "npm run snyk-protect"
+    "test": "jest"
   },
   "jest": {
     "moduleNameMapper": {
@@ -91,6 +89,5 @@
       "prettier-standard",
       "git add"
     ]
-  },
-  "snyk": true
+  }
 }
