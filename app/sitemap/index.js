@@ -14,7 +14,7 @@ const sitemapApp = express()
  *         description: Return sitemap xml.
  */
 sitemapApp.get('/sitemap.xml', async (req, res) => {
-  let articleRootUrl = '/zine/'
+  let articleRootUrl = '/r/'
   let articles = await Article.find({ status: 'published' })
     .select('slug')
     .exec()
@@ -22,8 +22,10 @@ sitemapApp.get('/sitemap.xml', async (req, res) => {
   const condition = {
     $or: [{ role: 'contributor' }, { role: 'admin' }, { role: 'editor' }]
   }
-  let authorRootUrl = '/is/'
-  let authors = await User.find(condition).select('id').exec()
+  let authorRootUrl = '/u/'
+  let authors = await User.find(condition)
+    .select('id')
+    .exec()
 
   const articleUrls = [
     { url: '/' },
