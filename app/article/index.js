@@ -72,8 +72,6 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   const itemsPerPage = parseInt(req.query['items-per-page']) || 10
   const authorshipType = req.query.authorship
 
-  console.log(collection)
-
   let queries = [Article.find(), Article.find()]
 
   // only published articles
@@ -112,8 +110,11 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   let features
   if (req.query.featured) {
     features = await Features.findOne({ id: 'features' }).exec()
-    if (features) {
-      queries.map(q => q.find({ id: { $in: features.feature } }))
+
+    // features which are article ids get mapped to articles:
+    const featuredArticleIds = features.feature.map(feature => feature.id)
+    if (featuredArticleIds) {
+      queries.map(q => q.find({ id: { $in: featuredArticleIds } }))
     }
   }
 
@@ -139,8 +140,21 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   // if this is a features list, it needs to be sorted based on feature array stored in DB
   if (features && features.feature) {
     articles = features.feature
-      .map(id => {
-        const matchingArticle = articles.filter(article => article.id === id)[0]
+      .map(feature => {
+        // create collection poster
+        if (feature.collection) {
+          return {
+            poster: feature.poster,
+            title: feature.title,
+            url: feature.tag + '/' + feature.collection,
+            collection: feature.collection
+          }
+        }
+
+        // literal article search by id
+        const matchingArticle = articles.filter(
+          article => article.id === feature.id
+        )[0]
         if (!matchingArticle) return
         return matchingArticle
       })
