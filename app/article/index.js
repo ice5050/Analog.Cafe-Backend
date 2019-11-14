@@ -67,18 +67,28 @@ const articleApp = express()
 articleApp.get(['/articles', '/list'], async (req, res) => {
   const tags = (req.query.tag && req.query.tag.split(':')) || []
   const authorId = req.query.author
-  const collections =
-    (req.query.collections && req.query.collections.split(':')) || []
+  const collection = req.query.collection
   const page = req.query.page || 1
   const itemsPerPage = parseInt(req.query['items-per-page']) || 10
   const authorshipType = req.query.authorship
 
-  console.log(collections)
+  console.log(collection)
 
   let queries = [Article.find(), Article.find()]
+
+  // only published articles
   queries.map(q => q.find({ status: 'published' }))
+
+  // filter down to tag
   if (tags && tags.length !== 0) {
     queries.map(q => q.where('tag').in(tags))
+  }
+
+  // filter down to collection
+  if (collection) {
+    queries.map(q =>
+      q.find({ [`collections.${collection}`]: { $exists: true } })
+    )
   }
 
   // by default we're sorting by date published
