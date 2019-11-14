@@ -67,9 +67,13 @@ const articleApp = express()
 articleApp.get(['/articles', '/list'], async (req, res) => {
   const tags = (req.query.tag && req.query.tag.split(':')) || []
   const authorId = req.query.author
+  const collections =
+    (req.query.collections && req.query.collections.split(':')) || []
   const page = req.query.page || 1
   const itemsPerPage = parseInt(req.query['items-per-page']) || 10
   const authorshipType = req.query.authorship
+
+  console.log(collections)
 
   let queries = [Article.find(), Article.find()]
   queries.map(q => q.find({ status: 'published' }))
@@ -199,9 +203,9 @@ articleApp.get('/rss', async (req, res) => {
       title:
         a.title +
         (a.subtitle
-          ? `${!a.title[a.title.length - 1].match(/[.,!?:…*ʔっ)]/g)
-              ? ':'
-              : ''} ${a.subtitle}`
+          ? `${
+            !a.title[a.title.length - 1].match(/[.,!?:…*ʔっ)]/g) ? ':' : ''
+          } ${a.subtitle}`
           : ''),
       url: url,
       guid: url,
@@ -212,7 +216,10 @@ articleApp.get('/rss', async (req, res) => {
       author: authorNameList(
         a.authors.map(author => author.name.split(' ')[0])
       ),
-      date: moment.unix(a.date.published).toDate().toString(),
+      date: moment
+        .unix(a.date.published)
+        .toDate()
+        .toString(),
       categories: [a.tag],
       enclosure: { url: image && image.src }
     })
@@ -309,105 +316,105 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
 })
 
 /**
-  * @swagger
-  * /articles/:articleId:
-  *   put:
-  *     description: Prep article for update - data needs to be uploaded this way into the submission (sets submission status to pending, which will need to be approved again)
-  *     parameters:
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name: articleId
-  *              in: path
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: Article id.
-  *            - name: status
-  *              in: query
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: Submission status.
-  *            - name: tag
-  *              in: query
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: Submission tag.
-  *            - name: header
-  *              in: query
-  *              schema:
-  *                type: object
-  *                properties:
-  *                  title:
-  *                    type: string
-  *                    required: true
-  *                  subtitle:
-  *                    type: string
-  *              required: true
-  *              description: Article header
-  *            - name: content.
-  *              in: query
-  *              schema:
-  *                type: object
-  *                properties:
-  *                  kind:
-  *                    type: string
-  *                  document:
-  *                    type: object
-  *                    properties:
-  *                      kind:
-  *                        type: string
-  *                      nodes:
-  *                        type: array
-  *                        items:
-  *                          type: object
-  *                          properties:
-  *                            type:
-  *                              type: string
-  *                            isVoid:
-  *                              type: boolean
-  *                            kind:
-  *                              type: string
-  *                            data:
-  *                              type: object
-  *                              properties:
-  *                                src:
-  *                                  type: string
-  *                            nodes:
-  *                              type: array
-  *                              items:
-  *                                type: object
-  *                                properties:
-  *                                  kind:
-  *                                    type: string
-  *                                  ranges:
-  *                                    type: array
-  *                                    items:
-  *                                      type: object
-  *                                      properties:
-  *                                        text:
-  *                                          type: string
-  *                                          description: Article subtitle
-  *                                        kind:
-  *                                          type: string
-  *                                        marks:
-  *                                          type: array
-  *              description:  Submission body
-  *     responses:
-  *       200:
-  *         description: Created submission for the article.
-  *       401:
-  *         description: No permission to access.
-  *       404:
-  *         description: Article not found.
-  *       422:
-  *         description: Article can not be edited.
-  */
+ * @swagger
+ * /articles/:articleId:
+ *   put:
+ *     description: Prep article for update - data needs to be uploaded this way into the submission (sets submission status to pending, which will need to be approved again)
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: articleId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: Article id.
+ *            - name: status
+ *              in: query
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: Submission status.
+ *            - name: tag
+ *              in: query
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: Submission tag.
+ *            - name: header
+ *              in: query
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  title:
+ *                    type: string
+ *                    required: true
+ *                  subtitle:
+ *                    type: string
+ *              required: true
+ *              description: Article header
+ *            - name: content.
+ *              in: query
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  kind:
+ *                    type: string
+ *                  document:
+ *                    type: object
+ *                    properties:
+ *                      kind:
+ *                        type: string
+ *                      nodes:
+ *                        type: array
+ *                        items:
+ *                          type: object
+ *                          properties:
+ *                            type:
+ *                              type: string
+ *                            isVoid:
+ *                              type: boolean
+ *                            kind:
+ *                              type: string
+ *                            data:
+ *                              type: object
+ *                              properties:
+ *                                src:
+ *                                  type: string
+ *                            nodes:
+ *                              type: array
+ *                              items:
+ *                                type: object
+ *                                properties:
+ *                                  kind:
+ *                                    type: string
+ *                                  ranges:
+ *                                    type: array
+ *                                    items:
+ *                                      type: object
+ *                                      properties:
+ *                                        text:
+ *                                          type: string
+ *                                          description: Article subtitle
+ *                                        kind:
+ *                                          type: string
+ *                                        marks:
+ *                                          type: array
+ *              description:  Submission body
+ *     responses:
+ *       200:
+ *         description: Created submission for the article.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Article not found.
+ *       422:
+ *         description: Article can not be edited.
+ */
 articleApp.put(
   '/articles/:articleId',
   multipartMiddleware,
@@ -453,33 +460,33 @@ articleApp.put(
 )
 
 /**
-  * @swagger
-  * /articles/:articleId:
-  *   delete:
-  *     description: Unpublish article
-  *     parameters:
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name: articleId
-  *              in: path
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: article id.
-  *     responses:
-  *       200:
-  *         description: Deleted article.
-  *       401:
-  *         description: No permission to access.
-  *       404:
-  *         description: Article not found.
-  *       422:
-  *         description: Article can not be deleted.
-  */
+ * @swagger
+ * /articles/:articleId:
+ *   delete:
+ *     description: Unpublish article
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: articleId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: article id.
+ *     responses:
+ *       200:
+ *         description: Deleted article.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Article not found.
+ *       422:
+ *         description: Article can not be deleted.
+ */
 articleApp.delete(
   '/articles/:articleId',
   authenticationMiddleware,
