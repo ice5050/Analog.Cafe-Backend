@@ -77,20 +77,25 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   // only published articles
   queries.map(q => q.find({ status: 'published' }))
 
+  // by default we're sorting by date published
+  let sortBy = 'date.published'
+  let sortOrder = 'desc'
+
   // filter down to tag
   if (tags && tags.length !== 0) {
     queries.map(q => q.where('tag').in(tags))
   }
 
   // filter down to collection
-  if (collection) {
+  if (collection && !req.query.featured) {
     queries.map(q =>
       q.find({ [`collections.${collection}`]: { $exists: true } })
     )
-  }
 
-  // by default we're sorting by date published
-  let sortBy = 'date.published'
+    // as.title required for all collection items to be ordered
+    sortBy = `collections.${collection}.as.title`
+    sortOrder = 'asc'
+  }
 
   let author
   if (authorId) {
@@ -121,7 +126,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   let [query, countQuery] = queries
   query
     .select(
-      'id slug title subtitle stats submittedBy authors poster tag status summary date'
+      'id slug title subtitle stats submittedBy authors poster tag status summary date collections'
     )
     // for features, we'd like to sort through all categories, which will yield
     // a max number of entries equal to all features in all categories;
@@ -131,7 +136,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     .skip(itemsPerPage * (page - 1))
     // features are sorted asc, with lowest numbers at the top,
     // if sorted by date, descending (highest numbers at the top)
-    .sort({ [sortBy]: 'desc' })
+    .sort({ [sortBy]: sortOrder })
 
   // run it
   let articles = await query.exec()
@@ -142,7 +147,12 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     articles = features.feature
       .map(feature => {
         // create collection poster
+
         if (feature.collection) {
+          // filter out collections within tags
+          if (tags && tags.length !== 0) {
+            if (!tags.includes(feature.tag)) return
+          }
           return {
             poster: feature.poster,
             title: feature.title,
@@ -165,7 +175,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   res.json({
     status: 'ok',
     filter: {
-      tags: tags,
+      tags,
       author: authorId
         ? { id: authorId, name: (author && author.title) || '' }
         : undefined
