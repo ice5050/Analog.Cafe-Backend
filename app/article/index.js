@@ -67,18 +67,35 @@ const articleApp = express()
 articleApp.get(['/articles', '/list'], async (req, res) => {
   const tags = (req.query.tag && req.query.tag.split(':')) || []
   const authorId = req.query.author
+  const collection = req.query.collection
   const page = req.query.page || 1
   const itemsPerPage = parseInt(req.query['items-per-page']) || 10
   const authorshipType = req.query.authorship
 
   let queries = [Article.find(), Article.find()]
+
+  // only published articles
   queries.map(q => q.find({ status: 'published' }))
+
+  // by default we're sorting by date published
+  let sortBy = 'date.published'
+  let sortOrder = 'desc'
+
+  // filter down to tag
   if (tags && tags.length !== 0) {
     queries.map(q => q.where('tag').in(tags))
   }
 
-  // by default we're sorting by date published
-  let sortBy = 'date.published'
+  // filter down to collection
+  if (collection && !req.query.featured) {
+    queries.map(q =>
+      q.find({ [`collections.${collection}`]: { $exists: true } })
+    )
+
+    // as.title required for all collection items to be ordered
+    sortBy = `collections.${collection}.as.title`
+    sortOrder = 'asc'
+  }
 
   let author
   if (authorId) {
@@ -98,15 +115,18 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   let features
   if (req.query.featured) {
     features = await Features.findOne({ id: 'features' }).exec()
-    if (features) {
-      queries.map(q => q.find({ id: { $in: features.feature } }))
+
+    // features which are article ids get mapped to articles:
+    const featuredArticleIds = features.feature.map(feature => feature.id)
+    if (featuredArticleIds) {
+      queries.map(q => q.find({ id: { $in: featuredArticleIds } }))
     }
   }
 
   let [query, countQuery] = queries
   query
     .select(
-      'id slug title subtitle stats submittedBy authors poster tag status summary date'
+      'id slug title subtitle stats submittedBy authors poster tag status summary date collections'
     )
     // for features, we'd like to sort through all categories, which will yield
     // a max number of entries equal to all features in all categories;
@@ -116,7 +136,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     .skip(itemsPerPage * (page - 1))
     // features are sorted asc, with lowest numbers at the top,
     // if sorted by date, descending (highest numbers at the top)
-    .sort({ [sortBy]: 'desc' })
+    .sort({ [sortBy]: sortOrder })
 
   // run it
   let articles = await query.exec()
@@ -125,8 +145,28 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   // if this is a features list, it needs to be sorted based on feature array stored in DB
   if (features && features.feature) {
     articles = features.feature
-      .map(id => {
-        const matchingArticle = articles.filter(article => article.id === id)[0]
+      .map(feature => {
+        // create collection poster
+
+        if (feature.collection) {
+          // filter out collections within tags
+          if (tags && tags.length !== 0) {
+            if (!tags.includes(feature.tag)) return
+          }
+          return {
+            poster: feature.poster,
+            title: feature.title,
+            description: feature.description,
+            url: feature.tag + '/' + feature.collection,
+            collection: feature.collection,
+            tag: feature.tag
+          }
+        }
+
+        // literal article search by id
+        const matchingArticle = articles.filter(
+          article => article.id === feature.id
+        )[0]
         if (!matchingArticle) return
         return matchingArticle
       })
@@ -137,7 +177,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   res.json({
     status: 'ok',
     filter: {
-      tags: tags,
+      tags,
       author: authorId
         ? { id: authorId, name: (author && author.title) || '' }
         : undefined

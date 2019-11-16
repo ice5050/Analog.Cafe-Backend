@@ -4,7 +4,7 @@ const connection = require('./index.js')
 const Schema = mongoose.Schema
 
 const featuresSchema = new Schema({
-  feature: Array
+  feature: Object
 })
 
 const Features = connection.model('Features', featuresSchema)
