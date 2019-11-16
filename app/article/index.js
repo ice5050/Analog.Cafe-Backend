@@ -156,6 +156,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
           return {
             poster: feature.poster,
             title: feature.title,
+            description: feature.description,
             url: feature.tag + '/' + feature.collection,
             collection: feature.collection,
             tag: feature.tag
