@@ -151,7 +151,11 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
         if (feature.collection) {
           // filter out collections within tags
           if (tags && tags.length !== 0) {
-            if (!tags.includes(feature.tag)) return
+            if (
+              !tags.includes(feature.tag) &&
+              // check plural nameing as well
+              !tags.includes(feature.tag.substring(0, feature.tag.length - 1))
+            ) { return }
           }
           return {
             poster: feature.poster,
