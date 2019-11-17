@@ -82,7 +82,8 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   let sortOrder = 'desc'
 
   // filter down to tag
-  if (tags && tags.length !== 0) {
+  // skip filtering featured articles
+  if (tags && tags.length !== 0 && !req.query.featured) {
     queries.map(q => q.where('tag').in(tags))
   }
 
@@ -150,13 +151,13 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
         if (feature.collection) {
           // filter out collections within tags
-          if (tags && tags.length !== 0) {
-            if (
-              !tags.includes(feature.tag) &&
-              // check plural nameing as well
-              !tags.includes(feature.tag.substring(0, feature.tag.length - 1))
-            ) { return }
-          }
+          // if (tags && tags.length !== 0) {
+          //   if (
+          //     !tags.includes(feature.tag) &&
+          //     // check plural nameing as well
+          //     !tags.includes(feature.tag.substring(0, feature.tag.length - 1))
+          //   ) { return }
+          // }
           return {
             poster: feature.poster,
             title: feature.title,
