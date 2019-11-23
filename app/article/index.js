@@ -221,12 +221,6 @@ articleApp.get('/rss', async (req, res) => {
 
     // smarter name joiner with punctuation
     const authorNameList = authors => {
-      // don't list unknown authorship
-      const listedAuthors = authors.filter(
-        author =>
-          author.id && author.id !== 'unknown' && author.id !== 'not-listed'
-      )
-
       let compiledNameList = ''
       if (authors.length === 1) {
         compiledNameList = authors[0]
@@ -262,7 +256,9 @@ articleApp.get('/rss', async (req, res) => {
           : '') + `<p>${a.summary}</p>`,
       author: authorNameList(
         a.authors.map(author => {
-          if (author.id !== 'unknown' && author.id !== 'not-listed') { return author.name.split(' ')[0] }
+          if (author && author.id !== 'unknown' && author.id !== 'not-listed') {
+            return author.name.split(' ')[0]
+          }
         })
       ),
       date: moment
