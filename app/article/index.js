@@ -255,11 +255,12 @@ articleApp.get('/rss', async (req, res) => {
           ? `<p><img src="${image.src}" alt="" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
           : '') + `<p>${a.summary}</p>`,
       author: authorNameList(
-        a.authors.map(author => {
-          if (author && author.id !== 'unknown' && author.id !== 'not-listed') {
-            return author.name.split(' ')[0]
-          }
-        })
+        a.authors
+          .filter(
+            author =>
+              author && author.id !== 'unknown' && author.id !== 'not-listed'
+          )
+          .map(author => author.name.split(' ')[0])
       ),
       date: moment
         .unix(a.date.published)
