@@ -222,26 +222,23 @@ articleApp.get('/rss', async (req, res) => {
     // smarter name joiner with punctuation
     const authorNameList = authors => {
       // don't list unknown authorship
-      const listedAuthors = authors
-        ? authors.filter(
-          author =>
-            author.id && author.id !== 'unknown' && author.id !== 'not-listed'
-        )
-        : []
+      const listedAuthors = authors.filter(
+        author =>
+          author.id && author.id !== 'unknown' && author.id !== 'not-listed'
+      )
+
       let compiledNameList = ''
-      if (listedAuthors.length === 1) {
-        compiledNameList = listedAuthors[0]
-      } else if (listedAuthors.length === 2) {
+      if (authors.length === 1) {
+        compiledNameList = authors[0]
+      } else if (authors.length === 2) {
         // joins all with "and" but no commas
         // example: "bob and sam"
-        compiledNameList = listedAuthors.join(' and ')
-      } else if (listedAuthors.length > 2) {
+        compiledNameList = authors.join(' and ')
+      } else if (authors.length > 2) {
         // joins all with commas, but last one gets ", and" (oxford comma!)
         // example: "bob, joe, and sam"
         compiledNameList =
-          listedAuthors.slice(0, -1).join(', ') +
-          ', and ' +
-          listedAuthors.slice(-1)
+          authors.slice(0, -1).join(', ') + ', and ' + authors.slice(-1)
       }
       return compiledNameList
     }
@@ -264,7 +261,12 @@ articleApp.get('/rss', async (req, res) => {
           ? `<p><img src="${image.src}" alt="" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
           : '') + `<p>${a.summary}</p>`,
       author: authorNameList(
-        a.authors.map(author => author.name.split(' ')[0])
+        a.authors.map(
+          author =>
+            author.id !== 'unknown' &&
+            author.id !== 'not-listed' &&
+            author.name.split(' ')[0]
+        )
       ),
       date: moment
         .unix(a.date.published)
