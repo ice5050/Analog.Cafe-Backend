@@ -221,18 +221,27 @@ articleApp.get('/rss', async (req, res) => {
 
     // smarter name joiner with punctuation
     const authorNameList = authors => {
+      // don't list unknown authorship
+      const listedAuthors = authors
+        ? authors.filter(
+          author =>
+            author.id && author.id !== 'unknown' && author.id !== 'not-listed'
+        )
+        : []
       let compiledNameList = ''
-      if (authors.length === 1) {
-        compiledNameList = authors[0]
-      } else if (authors.length === 2) {
+      if (listedAuthors.length === 1) {
+        compiledNameList = listedAuthors[0]
+      } else if (listedAuthors.length === 2) {
         // joins all with "and" but no commas
         // example: "bob and sam"
-        compiledNameList = authors.join(' and ')
-      } else if (authors.length > 2) {
+        compiledNameList = listedAuthors.join(' and ')
+      } else if (listedAuthors.length > 2) {
         // joins all with commas, but last one gets ", and" (oxford comma!)
         // example: "bob, joe, and sam"
         compiledNameList =
-          authors.slice(0, -1).join(', ') + ', and ' + authors.slice(-1)
+          listedAuthors.slice(0, -1).join(', ') +
+          ', and ' +
+          listedAuthors.slice(-1)
       }
       return compiledNameList
     }
