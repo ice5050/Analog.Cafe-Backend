@@ -23,32 +23,32 @@ const submissionApp = express()
 const multipartMiddleware = multipart()
 
 /**
-  * @swagger
-  * /submissions:
-  *   get:
-  *     description: Get all submissions
-  *     parameters:
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *              description:  Submission body
-  *            - name: page
-  *              in: query
-  *              schema:
-  *                type: integer
-  *              description: Current page number.
-  *            - name: items-per-page
-  *              in: query
-  *              schema:
-  *                type: integer
-  *              description: Number of items per one page.
-  *     responses:
-  *       200:
-  *         description: Return submissions.
-  */
+ * @swagger
+ * /submissions:
+ *   get:
+ *     description: Get all submissions
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *              description:  Submission body
+ *            - name: page
+ *              in: query
+ *              schema:
+ *                type: integer
+ *              description: Current page number.
+ *            - name: items-per-page
+ *              in: query
+ *              schema:
+ *                type: integer
+ *              description: Number of items per one page.
+ *     responses:
+ *       200:
+ *         description: Return submissions.
+ */
 submissionApp.get(
   '/submissions',
   authenticationMiddleware,
@@ -96,7 +96,7 @@ submissionApp.get(
     }
 
     const submissions = await query.exec()
-    const count = await countQuery.count().exec()
+    const count = await countQuery.countDocuments().exec()
 
     res.json({
       status: 'ok',
@@ -118,25 +118,25 @@ submissionApp.get(
 )
 
 /**
-  * @swagger
-  * /submissions/:submissionSlug:
-  *   get:
-  *     description: Get submission by slug
-  *     parameters:
-  *            - name: submissionSlug
-  *              in: path
-  *              schema:
-  *                type: string
-  *                required: true
-  *              description: Submission slug.
-  *     responses:
-  *       200:
-  *         description: Return a submission.
-  *       401:
-  *         description: No permission to access.
-  *       404:
-  *         description: Submission not found.
-  */
+ * @swagger
+ * /submissions/:submissionSlug:
+ *   get:
+ *     description: Get submission by slug
+ *     parameters:
+ *            - name: submissionSlug
+ *              in: path
+ *              schema:
+ *                type: string
+ *                required: true
+ *              description: Submission slug.
+ *     responses:
+ *       200:
+ *         description: Return a submission.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Submission not found.
+ */
 submissionApp.get(
   '/submissions/:submissionSlug',
   authenticationMiddleware,
@@ -160,21 +160,21 @@ submissionApp.get(
 )
 
 /**
-  * @swagger
-  * /submissions/status/:submissionId:
-  *   get:
-  *     description: Get submission upload status
-  *     parameters:
-  *            - name: submissionId
-  *              in: path
-  *              schema:
-  *                type: string
-  *                required: true
-  *              description: Submission id.
-  *     responses:
-  *       200:
-  *         description: Return a submission upload status.
-  */
+ * @swagger
+ * /submissions/status/:submissionId:
+ *   get:
+ *     description: Get submission upload status
+ *     parameters:
+ *            - name: submissionId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                required: true
+ *              description: Submission id.
+ *     responses:
+ *       200:
+ *         description: Return a submission upload status.
+ */
 submissionApp.get('/submissions/status/:submissionId', async (req, res) => {
   const submissionId = req.params.submissionId
   const progress = await redisClient.getAsync(`${submissionId}_upload_progress`)
@@ -182,81 +182,81 @@ submissionApp.get('/submissions/status/:submissionId', async (req, res) => {
 })
 
 /**
-  * @swagger
-  * /submissions:
-  *   post:
-  *     description: Create submission
-  *     parameters:
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name: header
-  *              in: query
-  *              schema:
-  *                type: object
-  *                properties:
-  *                  title:
-  *                    type: string
-  *                    required: true
-  *                  subtitle:
-  *                    type: string
-  *              required: true
-  *              description: Article header
-  *            - name: content.
-  *              in: query
-  *              schema:
-  *                type: object
-  *                properties:
-  *                  kind:
-  *                    type: string
-  *                  document:
-  *                    type: object
-  *                    properties:
-  *                      kind:
-  *                        type: string
-  *                      nodes:
-  *                        type: array
-  *                        items:
-  *                          type: object
-  *                          properties:
-  *                            type:
-  *                              type: string
-  *                            isVoid:
-  *                              type: boolean
-  *                            kind:
-  *                              type: string
-  *                            data:
-  *                              type: object
-  *                              properties:
-  *                                src:
-  *                                  type: string
-  *                            nodes:
-  *                              type: array
-  *                              items:
-  *                                type: object
-  *                                properties:
-  *                                  kind:
-  *                                    type: string
-  *                                  ranges:
-  *                                    type: array
-  *                                    items:
-  *                                      type: object
-  *                                      properties:
-  *                                        text:
-  *                                          type: string
-  *                                          description: Article subtitle
-  *                                        kind:
-  *                                          type: string
-  *                                        marks:
-  *                                          type: array
-  *              description:  Submission body
-  *     responses:
-  *       200:
-  *         description: Created submission.
-  */
+ * @swagger
+ * /submissions:
+ *   post:
+ *     description: Create submission
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: header
+ *              in: query
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  title:
+ *                    type: string
+ *                    required: true
+ *                  subtitle:
+ *                    type: string
+ *              required: true
+ *              description: Article header
+ *            - name: content.
+ *              in: query
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  kind:
+ *                    type: string
+ *                  document:
+ *                    type: object
+ *                    properties:
+ *                      kind:
+ *                        type: string
+ *                      nodes:
+ *                        type: array
+ *                        items:
+ *                          type: object
+ *                          properties:
+ *                            type:
+ *                              type: string
+ *                            isVoid:
+ *                              type: boolean
+ *                            kind:
+ *                              type: string
+ *                            data:
+ *                              type: object
+ *                              properties:
+ *                                src:
+ *                                  type: string
+ *                            nodes:
+ *                              type: array
+ *                              items:
+ *                                type: object
+ *                                properties:
+ *                                  kind:
+ *                                    type: string
+ *                                  ranges:
+ *                                    type: array
+ *                                    items:
+ *                                      type: object
+ *                                      properties:
+ *                                        text:
+ *                                          type: string
+ *                                          description: Article subtitle
+ *                                        kind:
+ *                                          type: string
+ *                                        marks:
+ *                                          type: array
+ *              description:  Submission body
+ *     responses:
+ *       200:
+ *         description: Created submission.
+ */
 submissionApp.post(
   '/submissions',
   multipartMiddleware,
@@ -290,93 +290,93 @@ submissionApp.post(
 )
 
 /**
-  * @swagger
-  * /submissions/:submissionId:
-  *   put:
-  *     description: Update submission
-  *     parameters:
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name: submissionId
-  *              in: path
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: Submission id.
-  *            - name: header
-  *              in: query
-  *              schema:
-  *                type: object
-  *                properties:
-  *                  title:
-  *                    type: string
-  *                    required: true
-  *                  subtitle:
-  *                    type: string
-  *              required: true
-  *              description: Article header
-  *            - name: content.
-  *              in: query
-  *              schema:
-  *                type: object
-  *                properties:
-  *                  kind:
-  *                    type: string
-  *                  document:
-  *                    type: object
-  *                    properties:
-  *                      kind:
-  *                        type: string
-  *                      nodes:
-  *                        type: array
-  *                        items:
-  *                          type: object
-  *                          properties:
-  *                            type:
-  *                              type: string
-  *                            isVoid:
-  *                              type: boolean
-  *                            kind:
-  *                              type: string
-  *                            data:
-  *                              type: object
-  *                              properties:
-  *                                src:
-  *                                  type: string
-  *                            nodes:
-  *                              type: array
-  *                              items:
-  *                                type: object
-  *                                properties:
-  *                                  kind:
-  *                                    type: string
-  *                                  ranges:
-  *                                    type: array
-  *                                    items:
-  *                                      type: object
-  *                                      properties:
-  *                                        text:
-  *                                          type: string
-  *                                          description: Article subtitle
-  *                                        kind:
-  *                                          type: string
-  *                                        marks:
-  *                                          type: array
-  *              description:  Submission body
-  *     responses:
-  *       200:
-  *         description: Created submission.
-  *       401:
-  *         description: No permission to access.
-  *       404:
-  *         description: Submission not found.
-  *       422:
-  *         description: Submission can not be edited.
-  */
+ * @swagger
+ * /submissions/:submissionId:
+ *   put:
+ *     description: Update submission
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: submissionId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: Submission id.
+ *            - name: header
+ *              in: query
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  title:
+ *                    type: string
+ *                    required: true
+ *                  subtitle:
+ *                    type: string
+ *              required: true
+ *              description: Article header
+ *            - name: content.
+ *              in: query
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  kind:
+ *                    type: string
+ *                  document:
+ *                    type: object
+ *                    properties:
+ *                      kind:
+ *                        type: string
+ *                      nodes:
+ *                        type: array
+ *                        items:
+ *                          type: object
+ *                          properties:
+ *                            type:
+ *                              type: string
+ *                            isVoid:
+ *                              type: boolean
+ *                            kind:
+ *                              type: string
+ *                            data:
+ *                              type: object
+ *                              properties:
+ *                                src:
+ *                                  type: string
+ *                            nodes:
+ *                              type: array
+ *                              items:
+ *                                type: object
+ *                                properties:
+ *                                  kind:
+ *                                    type: string
+ *                                  ranges:
+ *                                    type: array
+ *                                    items:
+ *                                      type: object
+ *                                      properties:
+ *                                        text:
+ *                                          type: string
+ *                                          description: Article subtitle
+ *                                        kind:
+ *                                          type: string
+ *                                        marks:
+ *                                          type: array
+ *              description:  Submission body
+ *     responses:
+ *       200:
+ *         description: Created submission.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Submission not found.
+ *       422:
+ *         description: Submission can not be edited.
+ */
 submissionApp.put(
   '/submissions/:submissionId',
   multipartMiddleware,
@@ -446,39 +446,39 @@ submissionApp.put(
 )
 
 /**
-  * @swagger
-  * /submissions/order/:submissionId:
-  *   put:
-  *     description: Update submission schedule order
-  *     parameters:
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name: submissionId
-  *              in: path
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: Submission id.
-  *            - name: scheduledOrder
-  *              in: body
-  *              schema:
-  *                type: integer
-  *                required: true
-  *                description: Schedule order.
-  *     responses:
-  *       200:
-  *         description: Updated submission schedule order.
-  *       401:
-  *         description: No permission to access.
-  *       404:
-  *         description: Submission not found.
-  *       422:
-  *         description: Submission can not be edited.
-  */
+ * @swagger
+ * /submissions/order/:submissionId:
+ *   put:
+ *     description: Update submission schedule order
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: submissionId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: Submission id.
+ *            - name: scheduledOrder
+ *              in: body
+ *              schema:
+ *                type: integer
+ *                required: true
+ *                description: Schedule order.
+ *     responses:
+ *       200:
+ *         description: Updated submission schedule order.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Submission not found.
+ *       422:
+ *         description: Submission can not be edited.
+ */
 submissionApp.put(
   '/submissions/order/:submissionId',
   authenticationMiddleware,
@@ -526,33 +526,33 @@ submissionApp.put(
 )
 
 /**
-  * @swagger
-  * /submissions/order/:submissionId:
-  *   delete:
-  *     description: Remove submission from publishing queue
-  *     parameters:
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name: submissionId
-  *              in: path
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: Submission id.
-  *     responses:
-  *       200:
-  *         description: Removed the submission from the queue.
-  *       401:
-  *         description: No permission to access.
-  *       404:
-  *         description: Submission not found.
-  *       422:
-  *         description: Submission can not be edited.
-  */
+ * @swagger
+ * /submissions/order/:submissionId:
+ *   delete:
+ *     description: Remove submission from publishing queue
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: submissionId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: Submission id.
+ *     responses:
+ *       200:
+ *         description: Removed the submission from the queue.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Submission not found.
+ *       422:
+ *         description: Submission can not be edited.
+ */
 submissionApp.delete(
   '/submissions/order/:submissionId',
   authenticationMiddleware,
@@ -591,45 +591,45 @@ submissionApp.delete(
 )
 
 /**
-  * @swagger
-  * /submissions/:submissionId/approve:
-  *   post:
-  *     description: Approve submission
-  *     parameters:
-  *            - name: submissionId
-  *              in: path
-  *              schema:
-  *                type: string
-  *                required: true
-  *              description: Submission id.
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name: scheduledOrder
-  *              in: body
-  *              schema:
-  *                type: integer
-  *                required: true
-  *                description: Scheduling order, NOTE a value of 0 will publish the submission immediately, bypassing the queue; value of 1 would place submission AT THE FRONT of the queue
-  *            - name: tag
-  *              in: body
-  *              schema:
-  *                type: string
-  *                example: "photo-essay"
-  *                description: Tag of the submission
-  *     responses:
-  *       200:
-  *         description: Return a approved submission.
-  *       401:
-  *         description: No permission to access.
-  *       404:
-  *         description: Submission not found.
-  *       422:
-  *         description: Submission can not be approved.
-  */
+ * @swagger
+ * /submissions/:submissionId/approve:
+ *   post:
+ *     description: Approve submission
+ *     parameters:
+ *            - name: submissionId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                required: true
+ *              description: Submission id.
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: scheduledOrder
+ *              in: body
+ *              schema:
+ *                type: integer
+ *                required: true
+ *                description: Scheduling order, NOTE a value of 0 will publish the submission immediately, bypassing the queue; value of 1 would place submission AT THE FRONT of the queue
+ *            - name: tag
+ *              in: body
+ *              schema:
+ *                type: string
+ *                example: "photo-essay"
+ *                description: Tag of the submission
+ *     responses:
+ *       200:
+ *         description: Return a approved submission.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Submission not found.
+ *       422:
+ *         description: Submission can not be approved.
+ */
 submissionApp.post(
   '/submissions/:submissionId/approve',
   authenticationMiddleware,
@@ -673,34 +673,34 @@ submissionApp.post(
 )
 
 /**
-  * @swagger
-  * /submissions/:submissionId/reject:
-  *   post:
-  *     description: Reject submission
-  *     parameters:
-  *            - name: submissionId
-  *              in: path
-  *              schema:
-  *                type: string
-  *                required: true
-  *              description: Submission id.
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *              description:  Submission body
-  *     responses:
-  *       200:
-  *         description: Return a rejected submission.
-  *       401:
-  *         description: No permission to access.
-  *       404:
-  *         description: Submission not found.
-  *       422:
-  *         description: Submission can not be rejected.
-  */
+ * @swagger
+ * /submissions/:submissionId/reject:
+ *   post:
+ *     description: Reject submission
+ *     parameters:
+ *            - name: submissionId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                required: true
+ *              description: Submission id.
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *              description:  Submission body
+ *     responses:
+ *       200:
+ *         description: Return a rejected submission.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Submission not found.
+ *       422:
+ *         description: Submission can not be rejected.
+ */
 submissionApp.post(
   '/submissions/:submissionId/reject',
   authenticationMiddleware,
@@ -728,33 +728,33 @@ submissionApp.post(
 )
 
 /**
-  * @swagger
-  * /submissions/:submissionId:
-  *   delete:
-  *     description: Delete a submission
-  *     parameters:
-  *            - name: Authorization
-  *              in: header
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
-  *            - name: submissionId
-  *              in: path
-  *              schema:
-  *                type: string
-  *                required: true
-  *                description: submission id.
-  *     responses:
-  *       200:
-  *         description: Deleted submission successfully.
-  *       401:
-  *         description: No permission to access.
-  *       404:
-  *         description: Submission not found.
-  *       422:
-  *         description: Submission can not be deleted.
-  */
+ * @swagger
+ * /submissions/:submissionId:
+ *   delete:
+ *     description: Delete a submission
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: submissionId
+ *              in: path
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: submission id.
+ *     responses:
+ *       200:
+ *         description: Deleted submission successfully.
+ *       401:
+ *         description: No permission to access.
+ *       404:
+ *         description: Submission not found.
+ *       422:
+ *         description: Submission can not be deleted.
+ */
 submissionApp.delete(
   '/submissions/:submissionId',
   authenticationMiddleware,

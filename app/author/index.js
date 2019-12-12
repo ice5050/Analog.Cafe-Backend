@@ -30,7 +30,7 @@ authorApp.get('/authors', async (req, res) => {
     .cache(300)
 
   const users = await query.exec()
-  const count = await countQuery.count().exec()
+  const count = await countQuery.countDocuments().exec()
 
   res.json({
     status: 'ok',
