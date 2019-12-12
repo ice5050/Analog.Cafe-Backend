@@ -128,7 +128,7 @@ imageApp.put(
     }
     const imageAuthor = await User.findOne({ id: image.author.id })
     const numberOfFeaturedImages = await Image.find({ featured: true })
-      .count()
+      .countDocuments()
       .exec()
     if (!image) {
       return res.status(404).json({ message: 'Image not found' })
@@ -252,7 +252,7 @@ imageApp.get('/images', async (req, res) => {
     .cache(300)
 
   const images = await query.exec()
-  const count = await countQuery.count().exec()
+  const count = await countQuery.countDocuments().exec()
 
   res.json({
     status: 'ok',

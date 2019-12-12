@@ -42,7 +42,7 @@ favouriteApp.get('/favourites', authenticationMiddleware, async (req, res) => {
     .sort({ 'date.published': 'desc' })
 
   const articles = await query.exec()
-  const count = await countQuery.count().exec()
+  const count = await countQuery.countDocuments().exec()
 
   res.json({
     status: 'ok',

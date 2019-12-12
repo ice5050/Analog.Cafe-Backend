@@ -141,7 +141,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   // run it
   let articles = await query.exec()
-  const count = await countQuery.count().exec()
+  const count = await countQuery.countDocuments().exec()
 
   // if this is a features list, it needs to be sorted based on feature array stored in DB
   if (features && features.feature) {
