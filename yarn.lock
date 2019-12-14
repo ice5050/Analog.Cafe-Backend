@@ -1850,6 +1850,13 @@ ecc-jsbn@~0.1.1:
   dependencies:
     jsbn "~0.1.0"
 
+ecdsa-sig-formatter@1.0.11:
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/ecdsa-sig-formatter/-/ecdsa-sig-formatter-1.0.11.tgz#ae0f0fa2d85045ef14a817daa3ce9acd0489e5bf"
+  integrity sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==
+  dependencies:
+    safe-buffer "^5.0.1"
+
 ecdsa-sig-formatter@1.0.9:
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/ecdsa-sig-formatter/-/ecdsa-sig-formatter-1.0.9.tgz#4bc926274ec3b5abb5016e7e1d60921ac262b2a1"
@@ -3013,10 +3020,6 @@ has@^1.0.1:
   dependencies:
     function-bind "^1.0.2"
 
-hoek@2.x.x:
-  version "2.16.3"
-  resolved "https://registry.yarnpkg.com/hoek/-/hoek-2.16.3.tgz#20bb7403d3cea398e91dc4710a8ff1b8274a25ed"
-
 hosted-git-info@^2.1.4:
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-2.5.0.tgz#6d60e34b3abbc8313062c3b798ef8d901a07af3c"
@@ -3598,10 +3601,6 @@ isarray@1.0.0, isarray@^1.0.0, isarray@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/isarray/-/isarray-1.0.0.tgz#bb935d48582cba168c06834957a54a3e07124f11"
 
-isemail@1.x.x:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/isemail/-/isemail-1.2.0.tgz#be03df8cc3e29de4d2c5df6501263f1fa4595e9a"
-
 isexe@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/isexe/-/isexe-2.0.0.tgz#e8fbf374dc556ff8947a10dcb0572d633f2cfa10"
@@ -4026,15 +4025,6 @@ jmespath@0.15.0:
   resolved "https://registry.yarnpkg.com/jmespath/-/jmespath-0.15.0.tgz#a3f222a9aae9f966f5d27c796510e28091764217"
   integrity sha1-o/Iiqarp+Wb10nx5ZRDigJF2Qhc=
 
-joi@^6.10.1:
-  version "6.10.1"
-  resolved "https://registry.yarnpkg.com/joi/-/joi-6.10.1.tgz#4d50c318079122000fe5f16af1ff8e1917b77e06"
-  dependencies:
-    hoek "2.x.x"
-    isemail "1.x.x"
-    moment "2.x.x"
-    topo "1.x.x"
-
 js-tokens@^3.0.0, js-tokens@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-3.0.2.tgz#9866df395102130e38f7f996bceb65443209c25b"
@@ -4167,15 +4157,21 @@ jsonwebtoken@8.0.0:
     ms "^2.0.0"
     xtend "^4.0.1"
 
-jsonwebtoken@^7.0.0:
-  version "7.4.3"
-  resolved "https://registry.yarnpkg.com/jsonwebtoken/-/jsonwebtoken-7.4.3.tgz#77f5021de058b605a1783fa1283e99812e645638"
+jsonwebtoken@^8.2.0:
+  version "8.5.1"
+  resolved "https://registry.yarnpkg.com/jsonwebtoken/-/jsonwebtoken-8.5.1.tgz#00e71e0b8df54c2121a1f26137df2280673bcc0d"
+  integrity sha512-XjwVfRS6jTMsqYs0EsuJ4LGxXV14zQybNd4L2r0UvbVnSF9Af8x7p5MzbJ90Ioz/9TI41/hTCvznF/loiSzn8w==
   dependencies:
-    joi "^6.10.1"
-    jws "^3.1.4"
+    jws "^3.2.2"
+    lodash.includes "^4.3.0"
+    lodash.isboolean "^3.0.3"
+    lodash.isinteger "^4.0.4"
+    lodash.isnumber "^3.0.3"
+    lodash.isplainobject "^4.0.6"
+    lodash.isstring "^4.0.1"
     lodash.once "^4.0.0"
-    ms "^2.0.0"
-    xtend "^4.0.1"
+    ms "^2.1.1"
+    semver "^5.6.0"
 
 jsosort@0.0.0:
   version "0.0.0"
@@ -4204,12 +4200,29 @@ jwa@^1.1.4:
     ecdsa-sig-formatter "1.0.9"
     safe-buffer "^5.0.1"
 
+jwa@^1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/jwa/-/jwa-1.4.1.tgz#743c32985cb9e98655530d53641b66c8645b039a"
+  integrity sha512-qiLX/xhEEFKUAJ6FiBMbes3w9ATzyk5W7Hvzpa/SLYdxNtng+gcurvrI7TbACjIXlsJyr05/S1oUhZrc63evQA==
+  dependencies:
+    buffer-equal-constant-time "1.0.1"
+    ecdsa-sig-formatter "1.0.11"
+    safe-buffer "^5.0.1"
+
 jws@^3.1.4:
   version "3.1.4"
   resolved "https://registry.yarnpkg.com/jws/-/jws-3.1.4.tgz#f9e8b9338e8a847277d6444b1464f61880e050a2"
   dependencies:
     base64url "^2.0.0"
     jwa "^1.1.4"
+    safe-buffer "^5.0.1"
+
+jws@^3.2.2:
+  version "3.2.2"
+  resolved "https://registry.yarnpkg.com/jws/-/jws-3.2.2.tgz#001099f3639468c9414000e99995fa52fb478304"
+  integrity sha512-YHlZCB6lMTllWDtSPHz/ZXTsi8S00usEV6v1tjq8tOUZzw7DpSDWVXjXDre6ed1w/pd495ODpHZYSdkRTsa0HA==
+  dependencies:
+    jwa "^1.4.1"
     safe-buffer "^5.0.1"
 
 kareem@2.3.1:
@@ -4754,10 +4767,6 @@ mkdirp@^0.5.0, mkdirp@^0.5.1:
 moment@2.19.3:
   version "2.19.3"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.19.3.tgz#bdb99d270d6d7fda78cc0fbace855e27fe7da69f"
-
-moment@2.x.x:
-  version "2.20.0"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.20.0.tgz#53396358994dd3a551e966a66af715ecb6c30ad0"
 
 mongodb@3.3.5:
   version "3.3.5"
@@ -5377,17 +5386,19 @@ pascalcase@^0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/pascalcase/-/pascalcase-0.1.1.tgz#b363e55e8006ca6fe21784d2db22bd15d7917f14"
 
-passport-facebook@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/passport-facebook/-/passport-facebook-2.1.1.tgz#c39d0b52ae4d59163245a4e21a7b9b6321303311"
+passport-facebook@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/passport-facebook/-/passport-facebook-3.0.0.tgz#b16f7314128be55d020a2b75f574c194bd6d9805"
+  integrity sha512-K/qNzuFsFISYAyC1Nma4qgY/12V3RSLFdFVsPKXiKZt434wOvthFW1p7zKa1iQihQMRhaWorVE1o3Vi1o+ZgeQ==
   dependencies:
     passport-oauth2 "1.x.x"
 
-passport-jwt@2.2.1:
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/passport-jwt/-/passport-jwt-2.2.1.tgz#0e004c94071319d673d9d9bcfd1574a868011527"
+passport-jwt@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/passport-jwt/-/passport-jwt-4.0.0.tgz#7f0be7ba942e28b9f5d22c2ebbb8ce96ef7cf065"
+  integrity sha512-BwC0n2GP/1hMVjR4QpnvqA61TxenUMlmfNjYNgK0ZAs0HK4SOQkHcSv4L328blNTLtHq7DbmvyNJiH+bn6C5Mg==
   dependencies:
-    jsonwebtoken "^7.0.0"
+    jsonwebtoken "^8.2.0"
     passport-strategy "^1.0.0"
 
 passport-oauth1@1.x.x:
@@ -5418,9 +5429,10 @@ passport-twitter@^1.0.4:
     passport-oauth1 "1.x.x"
     xtraverse "0.1.x"
 
-passport@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/passport/-/passport-0.3.2.tgz#9dd009f915e8fe095b0124a01b8f82da07510102"
+passport@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/passport/-/passport-0.4.1.tgz#941446a21cb92fc688d97a0861c38ce9f738f270"
+  integrity sha512-IxXgZZs8d7uFSt3eqNjM9NQ3g3uQCW5avD8mRNoXV99Yig50vjuaez6dQK2qC0kVWPRTujxY0dWgGfT09adjYg==
   dependencies:
     passport-strategy "1.x.x"
     pause "0.0.1"
@@ -7006,12 +7018,6 @@ toidentifier@1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/toidentifier/-/toidentifier-1.0.0.tgz#7e1be3470f1e77948bc43d94a3c8f4d7752ba553"
   integrity sha512-yaOH/Pk/VEhBWWTlhI+qXxDFXlejDGcQipMlyxda9nthulaxLZUNcUqFxokp0vcYnvteJln5FNQDRrxj3YcbVw==
-
-topo@1.x.x:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/topo/-/topo-1.1.0.tgz#e9d751615d1bb87dc865db182fa1ca0a5ef536d5"
-  dependencies:
-    hoek "2.x.x"
 
 touch@^3.1.0:
   version "3.1.0"

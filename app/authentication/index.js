@@ -27,7 +27,7 @@ const CODE_EXPIRED = 10 // after send verify email, code will expired (minute)
 const LIMIT_EMAIL_SENDING = 1 // cannot send verify email again until (minute)
 const TOKEN_EXPIRES_IN = '365d'
 
-jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader()
+jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt')
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
 
 async function registerWithMailChimp (data) {
@@ -289,9 +289,10 @@ function setupPassport () {
 async function profileImageURLToCloudinary (profileImageURL) {
   let uploadedImage
   uploadedImage = await cloudinary.v2.uploader.upload(profileImageURL)
-  const ratio = (uploadedImage.width / uploadedImage.height * 1000000).toFixed(
-    0
-  )
+  const ratio = (
+    (uploadedImage.width / uploadedImage.height) *
+    1000000
+  ).toFixed(0)
   const hash = shortid.generate()
   uploadedImage = await cloudinary.v2.uploader.rename(
     uploadedImage.public_id,
