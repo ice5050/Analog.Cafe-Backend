@@ -60,8 +60,8 @@
     "jest": "^24.9.0",
     "lint-staged": "^9.4.2",
     "nodemon": "^2.0.2",
-    "prettier-standard": "^6.0.0",
-    "standard": "^10.0.2"
+    "prettier-standard": "^16.1.0",
+    "standard": "^14.3.1"
   },
   "scripts": {
     "precommit": "lint-staged",
