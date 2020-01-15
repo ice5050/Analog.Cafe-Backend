@@ -83,7 +83,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   // filter down to tag
   // skip filtering featured articles
-  if (tags && tags.length !== 0 && !req.query.featured) {
+  if (tags && tags.length !== 0 && !req.query.featured && !collection) {
     queries.map(q => q.where('tag').in(tags))
   }
 
@@ -163,8 +163,8 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
             title: feature.title,
             description: feature.description,
             url: feature.tag + '/' + feature.collection,
-            collection: feature.collection
-            // tag: feature.tag // filter articles that match tag
+            collection: feature.collection,
+            tag: feature.tag
           }
         }
 
