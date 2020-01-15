@@ -163,8 +163,8 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
             title: feature.title,
             description: feature.description,
             url: feature.tag + '/' + feature.collection,
-            collection: feature.collection,
-            tag: feature.tag
+            collection: feature.collection
+            // tag: feature.tag // filter articles that match tag
           }
         }
 
