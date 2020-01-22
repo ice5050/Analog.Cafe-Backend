@@ -11,7 +11,10 @@ adApp.get('/ads', async (req, res) => {
     return res.status(404).json({ message: '`location` param required' })
   }
 
-  const ads = await Ad.find({ location }).exec()
+  const ads = await Ad.find({ location })
+    .limit(100)
+    .sort({ 'price.usd': 'desc' })
+    .exec()
   const items = ads.map(ad => {
     return {
       ...ad.toObject(),
