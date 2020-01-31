@@ -1,5 +1,7 @@
 const express = require('express')
 const shortid = require('shortid')
+const fetch = require('isomorphic-unfetch')
+
 const User = require('../../models/mongo/user')
 const Image = require('../../models/mongo/image')
 const Submission = require('../../models/mongo/submission')
@@ -275,5 +277,52 @@ userApp.put(
     res.json({ status: 'ok' })
   }
 )
+
+/**
+ * @swagger
+ * /admin/cache:
+ *   delete:
+ *     description: Clear CloudFlare cache
+ *     parameters:
+ *            - name: Authorization
+ *              in: header
+ *              schema:
+ *                type: string
+ *                required: true
+ *                description: JWT access token for verification user ex. "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFraXlhaGlrIiwiaWF0IjoxNTA3MDE5NzY3fQ.MyAieVFDGAECA3yH5p2t-gLGZVjTfoc15KJyzZ6p37c"
+ *            - name: files
+ *              in: body
+ *              schema:
+ *                type: array
+ *              description: Array of urls to be purged from cache
+ *     responses:
+ *       200:
+ *         description: Return edited user.
+ *       401:
+ *         description: No permission to access.
+ */
+userApp.delete('/admin/cache', authenticationMiddleware, async (req, res) => {
+  // if (req.user.role !== 'admin') {
+  //   return res.status(401).json({ message: 'No permission to access' })
+  // }
+
+  await fetch(
+    `https://api.cloudflare.com/client/v4/zones/${process.env.CLOUDFLARE_ZONE}/purge_cache`,
+    {
+      method: 'DELETE',
+      headers: {
+        'X-Auth-Key': process.env.CLOUDFLARE_API_KEY,
+        'X-Auth-Email': process.env.CLOUDFLARE_EMAIL,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ files: req.body.files })
+    }
+  )
+    .then(r => r.json())
+    .then(response => {
+      const { success, errors, messages } = response
+      res.json({ status: 'ok', success, errors, messages })
+    })
+})
 
 module.exports = userApp
