@@ -302,9 +302,9 @@ userApp.put(
  *         description: No permission to access.
  */
 userApp.delete('/admin/cache', authenticationMiddleware, async (req, res) => {
-  // if (req.user.role !== 'admin') {
-  //   return res.status(401).json({ message: 'No permission to access' })
-  // }
+  if (req.user.role !== 'admin') {
+    return res.status(401).json({ message: 'No permission to access' })
+  }
 
   await fetch(
     `https://api.cloudflare.com/client/v4/zones/${process.env.CLOUDFLARE_ZONE}/purge_cache`,
