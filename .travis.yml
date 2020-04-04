@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - 8
+  - 10
 cache:
   directories:
     - node_modules
@@ -10,4 +10,4 @@ services:
 
 jobs:
   include:
-      script: npm test -- --forceExit
+    script: npm test -- --forceExit
