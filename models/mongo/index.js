@@ -13,8 +13,6 @@ mongoose.set('useCreateIndex', true)
 mongoose.set('useUnifiedTopology', true)
 mongoose.set('useNewUrlParser', true)
 
-const connection = mongoose.createConnection(
-  process.env.MONGODB_URI || 'mongodb://localhost:27017/analogCafeDev'
-)
+const connection = mongoose.createConnection(process.env.DATABASE_URI)
 
 module.exports = connection
