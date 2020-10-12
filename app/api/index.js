@@ -15,6 +15,7 @@ var swaggerDefinition = {
 var options = {
   swaggerDefinition: swaggerDefinition,
   apis: [
+    './app/emails/index.js',
     './app/ad/index.js',
     './app/article/index.js',
     './app/authentication/index.js',
