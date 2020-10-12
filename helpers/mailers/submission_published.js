@@ -9,7 +9,7 @@ const { sendMail } = require("../mailer");
 function submissionPublishedEmail(author, article) {
   sendMail({
     to: author.email,
-    from: { email: "info@analog.cafe", name: "Analog.Cafe" },
+    from: { email: "d@analog.cafe", name: "Dmitri form Analog.Cafe" },
     subject: "Your submission has been published!",
     templateId: "3395e29a-4ef7-48ae-9056-c6c037ff2461",
     substitutions: {
