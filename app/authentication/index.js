@@ -45,7 +45,6 @@ async function subscribeToSendgrid (contacts) {
   }
   return new Promise((resolve, reject) => {
     request(clientServerOptions, function (error, response) {
-      console.log(clientServerOptions, error, response.body)
       if (error) {
         resolve(error)
       } else {
