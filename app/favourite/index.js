@@ -5,7 +5,6 @@ const moment = require('moment')
 const Favourite = require('../../models/mongo/favourite')
 const Article = require('../../models/mongo/article')
 const User = require('../../models/mongo/user')
-const redisClient = require('../../helpers/redis')
 
 const favouriteApp = express()
 

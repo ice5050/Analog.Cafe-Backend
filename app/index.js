@@ -42,6 +42,7 @@ app.use(
   require('./collaboration'),
   require('./sitemap'),
   require('./submission'),
+  require('./emails'),
   require('./favourite'),
   require('./user'),
   require('./ad')

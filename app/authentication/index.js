@@ -30,28 +30,8 @@ const TOKEN_EXPIRES_IN = '365d'
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt')
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
 
-async function registerWithMailChimp (data) {
-  const clientServerOptions = {
-    uri: 'https://us4.api.mailchimp.com/3.0/lists/f43e54afe2/members',
-    body: JSON.stringify(data),
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization:
-        'Basic cG9zdG1hbjo0Y2ZiZjAxZGQ4ZWIxYWEwZTA5YjYyMTNlYjZiNzlkYy11czQ='
-    }
-  }
-  return new Promise((resolve, reject) => {
-    request(clientServerOptions, function (error, response) {
-      if (error) {
-        // TODO: handle MC API errors
-        resolve(error)
-      } else {
-        resolve(response)
-      }
-    })
-  })
-}
+const { subscribeToSendgridList } = require('../../helpers/email_list_manager')
+const NEWBIE_DEFAULT_LIST_GROUP = 'letters'
 
 setupPassport()
 
@@ -186,16 +166,18 @@ function setupPassport () {
           })
           welcomeEmail(user.email, user.title)
 
-          // send email to mailchimp
-          await registerWithMailChimp({
-            email_address: email,
-            status: 'subscribed',
-            merge_fields: {
-              SOURCE: 'Analog.Cafe Account',
-              NAME: name || username,
-              ANALOGID: username || sanitizeUsername(name)
-            }
-          })
+          // subscribe to default email list
+          NEWBIE_DEFAULT_LIST_GROUP &&
+            (await subscribeToSendgridList(
+              {
+                email,
+                unique_name: name,
+                custom_fields: {
+                  w2_T: username || sanitizeUsername(name)
+                }
+              },
+              NEWBIE_DEFAULT_LIST_GROUP
+            ))
         } else {
           user.email = email
           user.twitterName = profile.displayName
@@ -227,7 +209,7 @@ function setupPassport () {
           user = await User.findOne({ email })
         }
 
-        const username =
+        const id =
           sanitizeUsername(profile.displayName) || sanitizeUsername(email)
         const profileImageURL = profile.photos[0] && profile.photos[0].value
         if (!user) {
@@ -237,23 +219,25 @@ function setupPassport () {
           user = await User.create({
             facebookId: profile.id,
             facebookName: profile.displayName,
-            id: username,
-            title: profile.displayName || username,
+            id,
+            title: profile.displayName || id,
             email,
             image: uploadedImage && uploadedImage.public_id
           })
           welcomeEmail(user.email, user.title)
 
-          // send email to mailchimp
-          await registerWithMailChimp({
-            email_address: email,
-            status: 'subscribed',
-            merge_fields: {
-              SOURCE: 'Analog.Cafe Account',
-              NAME: profile.displayName || username,
-              ANALOGID: username
-            }
-          })
+          // subscribe to default email list
+          NEWBIE_DEFAULT_LIST_GROUP &&
+            (await subscribeToSendgridList(
+              {
+                email,
+                unique_name: profile.displayName,
+                custom_fields: {
+                  w2_T: id
+                }
+              },
+              NEWBIE_DEFAULT_LIST_GROUP
+            ))
         } else {
           user.facebookName = profile.displayName
           user = await user.save()
@@ -324,22 +308,28 @@ authApp.post('/auth/email', async (req, res) => {
 
   let user = await User.findOne({ email })
   if (!user) {
-    const name = sanitizeUsername(email)
-    const username = `${name}-${randomString()}`
-    user = await User.create({ id: username, email, title: name })
+    const name = email
+      .split('@')[0]
+      .split('+')[0]
+      .replace(/[^a-z0-9\_\-\.]/gi, '')
+
+    const id = sanitizeUsername(name)
+    user = await User.create({ id, email, title: name })
 
     welcomeEmail(user.email, user.title)
 
-    // send email to mailchimp
-    await registerWithMailChimp({
-      email_address: email,
-      status: 'subscribed',
-      merge_fields: {
-        SOURCE: 'Analog.Cafe Account',
-        NAME: name,
-        ANALOGID: username
-      }
-    })
+    // subscribe to default email list
+    NEWBIE_DEFAULT_LIST_GROUP &&
+      (await subscribeToSendgridList(
+        {
+          email,
+          unique_name: name,
+          custom_fields: {
+            w2_T: id
+          }
+        },
+        NEWBIE_DEFAULT_LIST_GROUP
+      ))
   }
   const dateTimeNow = new Date()
   const limitSendEmail = new Date(
