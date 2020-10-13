@@ -78,9 +78,7 @@ async function unsubscribeFromSendgridList(email, list_group) {
     // didn't receive a coherent response
   }
 
-  return {
-    status: unsubscribeJob ? "ok" : "error"
-  };
+  return unsubscribeJob ? "ok" : "error";
 }
 
 module.exports = {

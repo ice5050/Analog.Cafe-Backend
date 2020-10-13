@@ -22,7 +22,7 @@ emailApp.post('/emails/unsubscribe', async (req, res) => {
   // submit to Sendgrid api
   const status = await unsubscribeFromSendgridList(email, list_group)
 
-  return res.json(status)
+  return res.json({ status })
 })
 
 module.exports = emailApp
