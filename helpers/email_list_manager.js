@@ -2,8 +2,9 @@ const Promise = require("bluebird");
 const request = Promise.promisify(require("request"));
 
 const LIST_IDS_BY_GROUP_NAME = {
+  tests: ["ce8add92-f51b-4fef-aff4-d4d4820928d4"],
   letters: ["15c349bb-f878-44a0-8dee-55fc33f33aa8"],
-  "35mm_price_updates": ["0d94c573-507e-4c2b-9b99-3664bae9eeb0"]
+  price_updates_35: ["0d94c573-507e-4c2b-9b99-3664bae9eeb0"]
 };
 
 const headers = {
@@ -11,12 +12,12 @@ const headers = {
   Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`
 };
 
-async function seubscribeOneToSendgridList(contact, list_group) {
+async function upsertOneSendgrid(contact, list_group) {
   const options = {
     uri: "https://api.sendgrid.com/v3/marketing/contacts",
     body: JSON.stringify({
       contacts: [contact],
-      list_ids: LIST_IDS_BY_GROUP_NAME[list_group]
+      list_ids: list_group ? LIST_IDS_BY_GROUP_NAME[list_group] : undefined
     }),
     method: "PUT",
     headers
@@ -32,7 +33,7 @@ async function seubscribeOneToSendgridList(contact, list_group) {
   });
 }
 
-async function unsubscribeOneFromSendgridList(email, list_group) {
+async function removeOneFromListSendgrid(email, list_group) {
   // first we need to find contact id
   const searchOptions = {
     uri: "https://api.sendgrid.com/v3/marketing/contacts/search",
@@ -82,7 +83,7 @@ async function unsubscribeOneFromSendgridList(email, list_group) {
 }
 
 module.exports = {
-  seubscribeOneToSendgridList,
-  unsubscribeOneFromSendgridList,
+  upsertOneSendgrid,
+  removeOneFromListSendgrid,
   LIST_IDS_BY_GROUP_NAME
 };

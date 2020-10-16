@@ -2,7 +2,7 @@ const express = require('express')
 const emailApp = express()
 
 const {
-  unsubscribeOneFromSendgridList,
+  removeOneFromListSendgrid,
   LIST_IDS_BY_GROUP_NAME
 } = require('../../helpers/email_list_manager')
 
@@ -20,7 +20,7 @@ emailApp.post('/emails/unsubscribe', async (req, res) => {
     return res.json({ status: 'error' })
 
   // submit to Sendgrid api
-  const status = await unsubscribeOneFromSendgridList(email, list_group)
+  const status = await removeOneFromListSendgrid(email, list_group)
 
   return res.json({ status })
 })

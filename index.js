@@ -1,11 +1,11 @@
-require('dotenv').config()
+require("dotenv").config();
 
-const app = require('./app')
-const port = process.env.PORT || 8080
+const app = require("./app");
+const port = process.env.PORT || 8080;
 
-app.listen(port, function (err) {
+app.listen(port, function(err) {
   if (err) {
-    throw err
+    throw err;
   }
-  console.log(`server is listening on ${port}...`)
-})
+  console.log(`server is listening on ${port}...`);
+});
