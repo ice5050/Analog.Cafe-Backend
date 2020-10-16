@@ -152,7 +152,8 @@ userApp.put(
       await upsertOneSendgrid({
         email: user.email,
         custom_fields: {
-          w6_T: req.body.title || user.title
+          w6_T: req.body.title || user.title,
+          w2_T: user.id // make sure the ID is up to date
         }
       })
 
