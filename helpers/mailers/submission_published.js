@@ -13,7 +13,7 @@ function submissionPublishedEmail(author, article) {
     subject: "Your submission has been published!",
     templateId: "3395e29a-4ef7-48ae-9056-c6c037ff2461",
     substitutions: {
-      "first_name | there": author.title,
+      analog_profile_name: author.title,
       article_url: `${process.env.ANALOG_FRONTEND_URL}/r/${article.slug}`,
       article_tag: `${article.tag
         .replace(/-/g, " ")

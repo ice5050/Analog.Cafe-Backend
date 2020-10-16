@@ -30,8 +30,11 @@ const TOKEN_EXPIRES_IN = '365d'
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt')
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
 
-const { subscribeToSendgridList } = require('../../helpers/email_list_manager')
-const NEWBIE_DEFAULT_LIST_GROUP = 'letters'
+const { upsertOneSendgrid } = require('../../helpers/email_list_manager')
+
+// all new users get subscribed to "letters" list group on SendGrid
+const isDev = process.env.ANALOG_FRONTEND_URL.indexOf('localhost:3000') > -1
+const NEWBIE_DEFAULT_LIST_GROUP = isDev ? 'tests' : 'letters'
 
 setupPassport()
 
@@ -166,18 +169,17 @@ function setupPassport () {
           })
           welcomeEmail(user.email, user.title)
 
-          // subscribe to default email list
-          NEWBIE_DEFAULT_LIST_GROUP &&
-            (await subscribeToSendgridList(
-              {
-                email,
-                unique_name: name,
-                custom_fields: {
-                  w2_T: username || sanitizeUsername(name)
-                }
-              },
-              NEWBIE_DEFAULT_LIST_GROUP
-            ))
+          // insert contact info to SendGrid & subscribe to default list group
+          await upsertOneSendgrid(
+            {
+              email,
+              custom_fields: {
+                w6_T: name || username,
+                w2_T: username || sanitizeUsername(name)
+              }
+            },
+            NEWBIE_DEFAULT_LIST_GROUP
+          )
         } else {
           user.email = email
           user.twitterName = profile.displayName
@@ -226,18 +228,17 @@ function setupPassport () {
           })
           welcomeEmail(user.email, user.title)
 
-          // subscribe to default email list
-          NEWBIE_DEFAULT_LIST_GROUP &&
-            (await subscribeToSendgridList(
-              {
-                email,
-                unique_name: profile.displayName,
-                custom_fields: {
-                  w2_T: id
-                }
-              },
-              NEWBIE_DEFAULT_LIST_GROUP
-            ))
+          // insert contact info to SendGrid & subscribe to default list group
+          await upsertOneSendgrid(
+            {
+              email,
+              custom_fields: {
+                w6_T: profile.displayName || id,
+                w2_T: id
+              }
+            },
+            NEWBIE_DEFAULT_LIST_GROUP
+          )
         } else {
           user.facebookName = profile.displayName
           user = await user.save()
@@ -307,8 +308,9 @@ authApp.post('/auth/email', async (req, res) => {
   expired.setMinutes(expired.getMinutes() + CODE_EXPIRED)
 
   let user = await User.findOne({ email })
+  let name
   if (!user) {
-    const name = email
+    name = email
       .split('@')[0]
       .split('+')[0]
       .replace(/[^a-z0-9\_\-\.]/gi, '')
@@ -316,20 +318,19 @@ authApp.post('/auth/email', async (req, res) => {
     const id = sanitizeUsername(name)
     user = await User.create({ id, email, title: name })
 
-    welcomeEmail(user.email, user.title)
+    welcomeEmail(user.email, name)
 
-    // subscribe to default email list
-    NEWBIE_DEFAULT_LIST_GROUP &&
-      (await subscribeToSendgridList(
-        {
-          email,
-          unique_name: name,
-          custom_fields: {
-            w2_T: id
-          }
-        },
-        NEWBIE_DEFAULT_LIST_GROUP
-      ))
+    // insert contact info to SendGrid & subscribe to default list group
+    await upsertOneSendgrid(
+      {
+        email,
+        custom_fields: {
+          w6_T: name,
+          w2_T: id
+        }
+      },
+      NEWBIE_DEFAULT_LIST_GROUP
+    )
   }
   const dateTimeNow = new Date()
   const limitSendEmail = new Date(
@@ -347,7 +348,7 @@ authApp.post('/auth/email', async (req, res) => {
     `${req.protocol}://${req.get('host')}`,
     user
   )
-  signInEmail(user.email, signInURL)
+  signInEmail(user.email, name || user.title, signInURL)
   res.sendStatus(200)
 })
 

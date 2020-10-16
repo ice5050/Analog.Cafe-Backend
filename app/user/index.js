@@ -11,6 +11,7 @@ const { toShowingObject, parseButtons } = require('../../helpers/user')
 const cloudinary = require('../../helpers/cloudinary')
 const { getImageRatio } = require('../../helpers/submission')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
+const { upsertOneSendgrid } = require('../../helpers/email_list_manager')
 
 const userApp = express()
 const multipartMiddleware = multipart()
@@ -139,12 +140,23 @@ userApp.put(
     }
     let user = await User.findOne({ id: req.user.id })
     if (user) {
+      // update user in database
       user.title = req.body.title || user.title
       user.text = req.body.text || user.text
       user.image = (uploadedImage && uploadedImage.public_id) || user.image
       user.buttons = buttons || user.buttons
       const isTitleModified = user.isModified('title')
       await user.save()
+
+      // update user title/name on SendGrid
+      await upsertOneSendgrid({
+        email: user.email,
+        custom_fields: {
+          w6_T: req.body.title || user.title
+        }
+      })
+
+      // run jobs to update user credentials on all associated content
       if (isTitleModified) {
         await Image.update(
           { 'author.id': user.id },
