@@ -7,7 +7,7 @@ function imageRepostedEmail(email, userName, article) {
     subject: "Your image has been featured!",
     templateId: "def171aa-7c65-4463-a62f-08ad06de3fee",
     substitutions: {
-      "first_name | there": userName,
+      analog_profile_name: userName,
       article_url: `${process.env.ANALOG_FRONTEND_URL}/r/${article.slug}`
     }
   });

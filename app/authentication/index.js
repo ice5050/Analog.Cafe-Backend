@@ -30,7 +30,11 @@ const TOKEN_EXPIRES_IN = '365d'
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt')
 jwtOptions.secretOrKey = process.env.APPLICATION_SECRET
 
-const { subscribeToSendgridList } = require('../../helpers/email_list_manager')
+const {
+  seubscribeOneToSendgridList
+} = require('../../helpers/email_list_manager')
+
+// all new users get subscribed to "letters" list group on SendGrid
 const NEWBIE_DEFAULT_LIST_GROUP = 'letters'
 
 setupPassport()
@@ -168,11 +172,11 @@ function setupPassport () {
 
           // subscribe to default email list
           NEWBIE_DEFAULT_LIST_GROUP &&
-            (await subscribeToSendgridList(
+            (await seubscribeOneToSendgridList(
               {
                 email,
-                unique_name: name,
                 custom_fields: {
+                  w6_T: name || username,
                   w2_T: username || sanitizeUsername(name)
                 }
               },
@@ -228,11 +232,11 @@ function setupPassport () {
 
           // subscribe to default email list
           NEWBIE_DEFAULT_LIST_GROUP &&
-            (await subscribeToSendgridList(
+            (await seubscribeOneToSendgridList(
               {
                 email,
-                unique_name: profile.displayName,
                 custom_fields: {
+                  w6_T: profile.displayName || id,
                   w2_T: id
                 }
               },
@@ -307,8 +311,9 @@ authApp.post('/auth/email', async (req, res) => {
   expired.setMinutes(expired.getMinutes() + CODE_EXPIRED)
 
   let user = await User.findOne({ email })
+  let name
   if (!user) {
-    const name = email
+    name = email
       .split('@')[0]
       .split('+')[0]
       .replace(/[^a-z0-9\_\-\.]/gi, '')
@@ -316,15 +321,15 @@ authApp.post('/auth/email', async (req, res) => {
     const id = sanitizeUsername(name)
     user = await User.create({ id, email, title: name })
 
-    welcomeEmail(user.email, user.title)
+    welcomeEmail(user.email, name)
 
     // subscribe to default email list
     NEWBIE_DEFAULT_LIST_GROUP &&
-      (await subscribeToSendgridList(
+      (await seubscribeOneToSendgridList(
         {
           email,
-          unique_name: name,
           custom_fields: {
+            w6_T: name,
             w2_T: id
           }
         },
@@ -347,7 +352,7 @@ authApp.post('/auth/email', async (req, res) => {
     `${req.protocol}://${req.get('host')}`,
     user
   )
-  signInEmail(user.email, signInURL)
+  signInEmail(user.email, name || user.title, signInURL)
   res.sendStatus(200)
 })
 

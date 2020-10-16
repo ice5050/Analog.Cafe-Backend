@@ -11,7 +11,7 @@ const headers = {
   Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`
 };
 
-async function subscribeToSendgridList(contact, list_group) {
+async function seubscribeOneToSendgridList(contact, list_group) {
   const options = {
     uri: "https://api.sendgrid.com/v3/marketing/contacts",
     body: JSON.stringify({
@@ -32,7 +32,7 @@ async function subscribeToSendgridList(contact, list_group) {
   });
 }
 
-async function unsubscribeFromSendgridList(email, list_group) {
+async function unsubscribeOneFromSendgridList(email, list_group) {
   // first we need to find contact id
   const searchOptions = {
     uri: "https://api.sendgrid.com/v3/marketing/contacts/search",
@@ -82,7 +82,7 @@ async function unsubscribeFromSendgridList(email, list_group) {
 }
 
 module.exports = {
-  subscribeToSendgridList,
-  unsubscribeFromSendgridList,
+  seubscribeOneToSendgridList,
+  unsubscribeOneFromSendgridList,
   LIST_IDS_BY_GROUP_NAME
 };

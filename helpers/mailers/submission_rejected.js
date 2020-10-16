@@ -12,7 +12,7 @@ function submissionRejectedEmail(author) {
     subject: "Your submission has not been published.",
     templateId: "ebe7ca14-6637-4a81-b6db-c5e1118cc348",
     substitutions: {
-      "first_name | there": author.title
+      analog_profile_name: author.title
     }
   });
 }
