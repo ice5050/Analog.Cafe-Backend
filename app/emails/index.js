@@ -1,5 +1,10 @@
 const express = require('express')
 const emailApp = express()
+const { authenticationMiddleware } = require('../../helpers/authenticate')
+const User = require('../../models/mongo/user')
+const {
+  findSendgridContactByEmail
+} = require('../../helpers/email_list_manager')
 
 const {
   removeOneFromListSendgrid,
@@ -26,13 +31,12 @@ emailApp.post('/emails/unsubscribe', async (req, res) => {
 })
 
 emailApp.post(
-  '/emails/list-subscriptions',
+  '/emails/list-remove',
   authenticationMiddleware,
   async (req, res) => {
-    const email = req.body.email
+    const email = req.user.email
     const list_group = req.body.list || 'undefined'
 
-    if (!isValidEmail(email)) return res.json({ status: 'error' })
     if (!LIST_IDS_BY_GROUP_NAME[list_group][0])
       return res.json({ status: 'error' })
 
@@ -40,6 +44,26 @@ emailApp.post(
     const status = await removeOneFromListSendgrid(email, list_group)
 
     return res.json({ status })
+  }
+)
+
+emailApp.get(
+  '/emails/list-subscriptions',
+  authenticationMiddleware,
+  async (req, res) => {
+    const email = req.user.email
+    const contact = await findSendgridContactByEmail(email)
+    if (contact.error) return res.json({ error: contact.error })
+
+    const reverseLookup = {}
+    Object.keys(LIST_IDS_BY_GROUP_NAME).forEach(key => {
+      reverseLookup[LIST_IDS_BY_GROUP_NAME[key][0]] = key
+    })
+    const sendgrid = contact.list_ids.map(id => {
+      return reverseLookup[id]
+    })
+
+    return res.json({ sendgrid })
   }
 )
 
