@@ -25,4 +25,22 @@ emailApp.post('/emails/unsubscribe', async (req, res) => {
   return res.json({ status })
 })
 
+emailApp.post(
+  '/emails/list-subscriptions',
+  authenticationMiddleware,
+  async (req, res) => {
+    const email = req.body.email
+    const list_group = req.body.list || 'undefined'
+
+    if (!isValidEmail(email)) return res.json({ status: 'error' })
+    if (!LIST_IDS_BY_GROUP_NAME[list_group][0])
+      return res.json({ status: 'error' })
+
+    // submit to Sendgrid api
+    const status = await removeOneFromListSendgrid(email, list_group)
+
+    return res.json({ status })
+  }
+)
+
 module.exports = emailApp
