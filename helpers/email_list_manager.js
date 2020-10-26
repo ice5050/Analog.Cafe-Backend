@@ -12,6 +12,39 @@ const headers = {
   Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`
 };
 
+async function findSendgridContactByEmail(email) {
+  // first we need to find contact id
+  const searchOptions = {
+    uri: "https://api.sendgrid.com/v3/marketing/contacts/search",
+    method: "POST",
+    body: JSON.stringify({
+      query: `email = '${email}'`
+    }),
+    headers
+  };
+
+  const searchResult = await new Promise((resolve, reject) => {
+    request(searchOptions, function(error, response) {
+      if (error) {
+        resolve(error);
+      } else {
+        resolve(response.body);
+      }
+    });
+  });
+
+  let data;
+  try {
+    data = JSON.parse(searchResult).result[0];
+  } catch (error) {
+    // didn't receive a coherent response
+  }
+
+  // couldn't find email in sendgrid
+  if (!data || !data.id) return { error: "Couldn't find Sendgrid contact." };
+  return data;
+}
+
 async function upsertOneSendgrid(contact, list_group) {
   const options = {
     uri: "https://api.sendgrid.com/v3/marketing/contacts",
@@ -35,38 +68,14 @@ async function upsertOneSendgrid(contact, list_group) {
 
 async function removeOneFromListSendgrid(email, list_group) {
   // first we need to find contact id
-  const searchOptions = {
-    uri: "https://api.sendgrid.com/v3/marketing/contacts/search",
-    method: "POST",
-    body: JSON.stringify({
-      query: `email = '${email}'`
-    }),
-    headers
-  };
-
-  const searchResult = await new Promise((resolve, reject) => {
-    request(searchOptions, function(error, response) {
-      if (error) {
-        resolve(error);
-      } else {
-        resolve(response.body);
-      }
-    });
-  });
-
-  let foundContact;
-  try {
-    foundContact = JSON.parse(searchResult).result[0];
-  } catch (error) {
-    // didn't receive a coherent response
-  }
+  const contact = await findSendgridContactByEmail(email);
 
   // couldn't find email in sendgrid
-  if (!foundContact || !foundContact.id) return "error";
+  if (!contact || !contact.id) return "error";
 
   // proceed with unsubscribe action
   const unsubscribeOptions = {
-    uri: `https://api.sendgrid.com/v3/marketing/lists/${LIST_IDS_BY_GROUP_NAME[list_group][0]}/contacts?contact_ids=${foundContact.id}`,
+    uri: `https://api.sendgrid.com/v3/marketing/lists/${LIST_IDS_BY_GROUP_NAME[list_group][0]}/contacts?contact_ids=${contact.id}`,
     method: "DELETE",
     headers
   };
@@ -85,5 +94,6 @@ async function removeOneFromListSendgrid(email, list_group) {
 module.exports = {
   upsertOneSendgrid,
   removeOneFromListSendgrid,
+  findSendgridContactByEmail,
   LIST_IDS_BY_GROUP_NAME
 };
