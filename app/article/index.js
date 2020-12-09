@@ -216,7 +216,7 @@ articleApp.get('/rss', async (req, res) => {
   const articles = await query.exec()
   articleFeed.items = []
   articles.forEach(a => {
-    const url = `https://www.analog.cafe/r/${a.slug}?utm_source=api&utm_medium=RSS&utm_campaign=Feedly`
+    const url = `https://www.analog.cafe/r/${a.slug}?utm_source=api&utm_medium=RSS`
     const image = a.poster && imageFroth({ src: a.poster })
 
     // smarter name joiner with punctuation
