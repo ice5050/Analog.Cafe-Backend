@@ -39,6 +39,7 @@
     "mongoose": "^5.8.0",
     "mongoose-timestamp-date-unix": "^0.6.2",
     "mongoose-ts": "0.1.0",
+    "newrelic": "^7.0.2",
     "passport": "^0.4.1",
     "passport-facebook": "^3.0.0",
     "passport-jwt": "^4.0.0",
