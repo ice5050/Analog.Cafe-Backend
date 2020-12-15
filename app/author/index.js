@@ -27,10 +27,13 @@ authorApp.get('/authors', async (req, res) => {
     .sort({ updatedAt: 'desc' })
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
-    .cache(300)
 
-  const users = await query.exec()
-  const count = await countQuery.countDocuments().exec()
+  // cache user counters for 30 minutes
+  const users = await query.cache(60 * 30).exec()
+  const count = await countQuery
+    .countDocuments()
+    .cache(60 * 30)
+    .exec()
 
   res.json({
     status: 'ok',
