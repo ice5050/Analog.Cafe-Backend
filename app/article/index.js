@@ -17,7 +17,6 @@ const {
   summarize
 } = require('../../helpers/submission')
 const { imageFroth } = require('../../helpers/image_froth')
-const uploadRSSAndSitemap = require('../../upload_rss_sitemap')
 const multipartMiddleware = multipart()
 const articleApp = express()
 
@@ -213,6 +212,8 @@ articleApp.get('/rss', async (req, res) => {
     )
     .limit(30)
     .sort({ 'date.published': 'desc' })
+    .cache()
+
   const articles = await query.exec()
   articleFeed.items = []
   articles.forEach(a => {
@@ -572,14 +573,6 @@ articleApp.delete(
     }
 
     res.status(200).json({ message: 'Article has been unpublished' })
-    if (process.env.API_DOMAIN_PROD === process.env.API_DOMAIN) {
-      uploadRSSAndSitemap(
-        process.env.API_DOMAIN,
-        true,
-        null,
-        process.env.S3_BUCKET
-      )
-    }
   }
 )
 
