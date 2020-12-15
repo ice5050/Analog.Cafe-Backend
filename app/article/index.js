@@ -212,7 +212,7 @@ articleApp.get('/rss', async (req, res) => {
     )
     .limit(30)
     .sort({ 'date.published': 'desc' })
-    .cache()
+    .cache(60 * 30) // RSS feed gets cached for 30 minutes
 
   const articles = await query.exec()
   articleFeed.items = []
