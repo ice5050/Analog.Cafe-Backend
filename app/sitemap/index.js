@@ -17,6 +17,7 @@ sitemapApp.get('/sitemap.xml', async (req, res) => {
   let articleRootUrl = '/r/'
   let articles = await Article.find({ status: 'published' })
     .select('slug')
+    .cache(60 * 30) // Sitemap articles get cached for 30 minutes
     .exec()
 
   const condition = {
@@ -25,6 +26,7 @@ sitemapApp.get('/sitemap.xml', async (req, res) => {
   let authorRootUrl = '/u/'
   let authors = await User.find(condition)
     .select('id')
+    .cache(60 * 30) // Sitemap users get cached for 30 minutes
     .exec()
 
   const articleUrls = [
