@@ -14,7 +14,9 @@ adApp.get('/ads', async (req, res) => {
   const ads = await Ad.find({ location })
     .limit(100)
     .sort({ 'price.usd': 'desc' })
+    .cache(60 * 10) // cache ads for 10 min
     .exec()
+
   const items = ads.map(ad => {
     return {
       ...ad.toObject(),
