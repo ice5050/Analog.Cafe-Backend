@@ -1,11 +1,15 @@
-const count = require('word-count')
+const cachegoose = require('cachegoose')
 const express = require('express')
+const count = require('word-count')
 const moment = require('moment')
+const Article = require('../../models/mongo/article')
+const Features = require('../../models/mongo/features')
+const User = require('../../models/mongo/user.js')
 const multipart = require('connect-multiparty')
-
-const { revalidateOnArticleUpdate } = require('../../helpers/cache')
+const articleFeed = require('./article-feed')
+const redisClient = require('../../helpers/redis')
+const Submission = require('../../models/mongo/submission')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
-const { imageFroth } = require('../../helpers/image_froth')
 const {
   parseContent,
   parseHeader,
@@ -13,13 +17,7 @@ const {
   uploadImgAsync,
   summarize
 } = require('../../helpers/submission')
-const Article = require('../../models/mongo/article')
-const Features = require('../../models/mongo/features')
-const Submission = require('../../models/mongo/submission')
-const User = require('../../models/mongo/user.js')
-const articleFeed = require('./article-feed')
-const redisClient = require('../../helpers/redis')
-
+const { imageFroth } = require('../../helpers/image_froth')
 const multipartMiddleware = multipart()
 const articleApp = express()
 
@@ -102,10 +100,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   let author
   if (authorId) {
-    author = await User.findOne({ id: authorId })
-      // cache author component of a list for 7 days
-      .cache(60 * 60 * 24 * 7, `list-author-${authorId}`)
-      .exec()
+    author = await User.findOne({ id: authorId }).exec()
     if (!author) {
       return res.status(404).json({ message: 'Author not found' })
     }
@@ -120,10 +115,7 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   // get feature array from database
   let features
   if (req.query.featured) {
-    features = await Features.findOne({ id: 'features' })
-      // cache features for 7 days
-      .cache(60 * 60 * 24 * 7, `list-features`)
-      .exec()
+    features = await Features.findOne({ id: 'features' }).exec()
 
     // features which are article ids get mapped to articles:
     const featuredArticleIds = features.feature.map(feature => feature.id)
@@ -147,19 +139,9 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     // if sorted by date, descending (highest numbers at the top)
     .sort({ [sortBy]: sortOrder })
 
-  // unique Redis cache key
-  const cacheKey = `${req.query.tag}-${authorId}-${collection}-${page}-${itemsPerPage}-${authorshipType}-${req.query.featured}`
-
   // run it
-  let articles = await query
-    // cache final list for 7 days
-    .cache(60 * 60 * 24 * 7, `list-exec-${cacheKey}`)
-    .exec()
-  const count = await countQuery
-    .countDocuments()
-    // cache list counter for 7 days
-    .cache(60 * 60 * 24 * 7, `list-count-${cacheKey}`)
-    .exec()
+  let articles = await query.exec()
+  const count = await countQuery.countDocuments().exec()
 
   // if this is a features list, it needs to be sorted based on feature array stored in DB
   if (features && features.feature) {
@@ -538,7 +520,11 @@ articleApp.put(
     uploadImgAsync(req, res, submission.id)
 
     // clear article caches
-    revalidateOnArticleUpdate({ articleId: req.params.articleId })
+    cachegoose.clearCache(`authors-${req.params.articleId}`)
+    cachegoose.clearCache(`article-${req.params.articleId}`)
+    cachegoose.clearCache(`next-article-${req.params.articleId}`)
+    cachegoose.clearCache(`rss`)
+
     res.json(submission.toObject())
   }
 )
@@ -609,7 +595,11 @@ articleApp.delete(
         .json({ message: 'Linked submission record can not be edited' })
     }
 
-    revalidateOnArticleUpdate({ articleId: req.params.articleId })
+    cachegoose.clearCache(`authors-${req.params.articleId}`)
+    cachegoose.clearCache(`article-${req.params.articleId}`)
+    cachegoose.clearCache(`next-article-${req.params.articleId}`)
+    cachegoose.clearCache(`rss`)
+
     res.status(200).json({ message: 'Article has been unpublished' })
   }
 )
