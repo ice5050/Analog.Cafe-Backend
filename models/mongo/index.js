@@ -7,8 +7,8 @@ const redisURL = process.env.REDIS_URL
 const redisPort = redisURL.substring(redisURL.lastIndexOf(':') + 1)
 const redisHost = redisURL
   .substring(0, redisURL.lastIndexOf(':'))
+  .replace('redis://h:', '')
   .replace('redis://', '')
-  .replace('h:', '')
 
 cachegoose(mongoose, {
   engine: 'redis',
