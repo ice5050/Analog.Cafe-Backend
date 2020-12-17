@@ -1,15 +1,11 @@
-const cachegoose = require('cachegoose')
-const express = require('express')
 const count = require('word-count')
+const express = require('express')
 const moment = require('moment')
-const Article = require('../../models/mongo/article')
-const Features = require('../../models/mongo/features')
-const User = require('../../models/mongo/user.js')
 const multipart = require('connect-multiparty')
-const articleFeed = require('./article-feed')
-const redisClient = require('../../helpers/redis')
-const Submission = require('../../models/mongo/submission')
+
+const { revalidateOnArticleUpdate } = require('../../helpers/cache')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
+const { imageFroth } = require('../../helpers/image_froth')
 const {
   parseContent,
   parseHeader,
@@ -17,7 +13,13 @@ const {
   uploadImgAsync,
   summarize
 } = require('../../helpers/submission')
-const { imageFroth } = require('../../helpers/image_froth')
+const Article = require('../../models/mongo/article')
+const Features = require('../../models/mongo/features')
+const Submission = require('../../models/mongo/submission')
+const User = require('../../models/mongo/user.js')
+const articleFeed = require('./article-feed')
+const redisClient = require('../../helpers/redis')
+
 const multipartMiddleware = multipart()
 const articleApp = express()
 
@@ -520,11 +522,7 @@ articleApp.put(
     uploadImgAsync(req, res, submission.id)
 
     // clear article caches
-    cachegoose.clearCache(`authors-${req.params.articleId}`)
-    cachegoose.clearCache(`article-${req.params.articleId}`)
-    cachegoose.clearCache(`next-article-${req.params.articleId}`)
-    cachegoose.clearCache(`rss`)
-
+    revalidateOnArticleUpdate({ articleId: req.params.articleId })
     res.json(submission.toObject())
   }
 )
@@ -595,11 +593,7 @@ articleApp.delete(
         .json({ message: 'Linked submission record can not be edited' })
     }
 
-    cachegoose.clearCache(`authors-${req.params.articleId}`)
-    cachegoose.clearCache(`article-${req.params.articleId}`)
-    cachegoose.clearCache(`next-article-${req.params.articleId}`)
-    cachegoose.clearCache(`rss`)
-
+    revalidateOnArticleUpdate({ articleId: req.params.articleId })
     res.status(200).json({ message: 'Article has been unpublished' })
   }
 )
