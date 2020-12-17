@@ -1,3 +1,4 @@
+const cachegoose = require('cachegoose')
 const express = require('express')
 const count = require('word-count')
 const moment = require('moment')
@@ -294,10 +295,16 @@ articleApp.get('/rss', async (req, res) => {
  *         description: Article not found.
  */
 articleApp.get('/articles/:articleSlug', async (req, res) => {
+  const slug = req.params.articleSlug
+  const articleId = slug.substring(slug.lastIndexOf('-') + 1)
+
   const article = await Article.findOne({
-    slug: req.params.articleSlug,
+    slug,
     status: 'published'
   })
+    // cache article for 24 hours with an invalidation key
+    .cache(60 * 60 * 24, `article-${articleId}`)
+
   if (!article) {
     return res.status(404).json({
       message: 'Article not found'
@@ -309,6 +316,8 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     return { id: author.id }
   })
   const authorObjects = await User.find({ $or: authorIdQueries })
+    // cache article authors for 24 hours with an invalidation key
+    .cache(60 * 60 * 24, `authors-${articleId}`)
 
   // complete article author objects with extended data on authors
   const completeAuthorObjects = authorObjects.map(author => {
@@ -343,6 +352,7 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     status: 'published'
   })
     .sort({ 'date.published': 'desc' })
+    .cache(60 * 60 * 24, `next-article-${articleId}`)
     .exec()
 
   res.json({
@@ -502,6 +512,12 @@ articleApp.put(
     submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
     uploadImgAsync(req, res, submission.id)
+
+    // clear article caches
+    cachegoose.clearCache(`authors-${req.params.articleId}`)
+    cachegoose.clearCache(`article-${req.params.articleId}`)
+    cachegoose.clearCache(`next-article-${req.params.articleId}`)
+
     res.json(submission.toObject())
   }
 )
@@ -571,6 +587,10 @@ articleApp.delete(
         .status(422)
         .json({ message: 'Linked submission record can not be edited' })
     }
+
+    cachegoose.clearCache(`authors-${req.params.articleId}`)
+    cachegoose.clearCache(`article-${req.params.articleId}`)
+    cachegoose.clearCache(`next-article-${req.params.articleId}`)
 
     res.status(200).json({ message: 'Article has been unpublished' })
   }
