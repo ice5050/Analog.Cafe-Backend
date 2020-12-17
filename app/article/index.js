@@ -102,7 +102,10 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   let author
   if (authorId) {
-    author = await User.findOne({ id: authorId }).exec()
+    author = await User.findOne({ id: authorId })
+      // cache author component of a list for 7 days
+      .cache(60 * 60 * 24 * 7, `list-author-${authorId}`)
+      .exec()
     if (!author) {
       return res.status(404).json({ message: 'Author not found' })
     }
@@ -117,7 +120,10 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   // get feature array from database
   let features
   if (req.query.featured) {
-    features = await Features.findOne({ id: 'features' }).exec()
+    features = await Features.findOne({ id: 'features' })
+      // cache features for 7 days
+      .cache(60 * 60 * 24 * 7, `list-features`)
+      .exec()
 
     // features which are article ids get mapped to articles:
     const featuredArticleIds = features.feature.map(feature => feature.id)
@@ -141,9 +147,19 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
     // if sorted by date, descending (highest numbers at the top)
     .sort({ [sortBy]: sortOrder })
 
+  // unique Redis cache key
+  const cacheKey = `${req.query.tag}-${authorId}-${collection}-${page}-${itemsPerPage}-${authorshipType}-${req.query.featured}`
+
   // run it
-  let articles = await query.exec()
-  const count = await countQuery.countDocuments().exec()
+  let articles = await query
+    // cache final list for 7 days
+    .cache(60 * 60 * 24 * 7, `list-exec-${cacheKey}`)
+    .exec()
+  const count = await countQuery
+    .countDocuments()
+    // cache list counter for 7 days
+    .cache(60 * 60 * 24 * 7, `list-count-${cacheKey}`)
+    .exec()
 
   // if this is a features list, it needs to be sorted based on feature array stored in DB
   if (features && features.feature) {
