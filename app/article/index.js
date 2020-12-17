@@ -273,6 +273,10 @@ articleApp.get('/rss', async (req, res) => {
       enclosure: { url: image && image.src }
     })
   })
+
+  // cache 1hr header
+  res.set('Cache-Control', `public, max-age=${60 * 60}`)
+
   res.type('text/xml')
   res.send(articleFeed.xml())
 })
