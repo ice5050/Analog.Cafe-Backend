@@ -213,7 +213,8 @@ articleApp.get('/rss', async (req, res) => {
     )
     .limit(30)
     .sort({ 'date.published': 'desc' })
-    .cache(60 * 30) // RSS feed gets cached for 30 minutes
+    // cache RSS for 7 days with an invalidation key
+    .cache(60 * 60 * 24 * 7, 'rss')
 
   const articles = await query.exec()
   articleFeed.items = []
@@ -518,6 +519,7 @@ articleApp.put(
     cachegoose.clearCache(`authors-${req.params.articleId}`)
     cachegoose.clearCache(`article-${req.params.articleId}`)
     cachegoose.clearCache(`next-article-${req.params.articleId}`)
+    cachegoose.clearCache(`rss`)
 
     res.json(submission.toObject())
   }
@@ -592,6 +594,7 @@ articleApp.delete(
     cachegoose.clearCache(`authors-${req.params.articleId}`)
     cachegoose.clearCache(`article-${req.params.articleId}`)
     cachegoose.clearCache(`next-article-${req.params.articleId}`)
+    cachegoose.clearCache(`rss`)
 
     res.status(200).json({ message: 'Article has been unpublished' })
   }
