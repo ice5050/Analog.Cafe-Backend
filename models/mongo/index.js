@@ -2,18 +2,7 @@ const mongoose = require('mongoose')
 const Promise = require('bluebird')
 const cachegoose = require('cachegoose')
 
-// deconstruct Redis url for cachegoose
-const redisURL = process.env.REDIS_URL
-const redisPort = redisURL.substring(redisURL.lastIndexOf(':') + 1)
-const redisHost = redisURL
-  .substring(0, redisURL.lastIndexOf(':'))
-  .replace('redis://', '')
-
-cachegoose(mongoose, {
-  engine: 'redis',
-  port: redisPort,
-  host: redisHost
-})
+cachegoose(mongoose, process.env.REDIS_URL)
 
 mongoose.Promise = Promise
 

@@ -1,9 +1,8 @@
 const count = require('word-count')
 const express = require('express')
-const moment = require('moment')
 const multipart = require('connect-multiparty')
+const moment = require('moment')
 
-const { revalidateOnArticleUpdate } = require('../../helpers/cache')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const {
   parseContent,
@@ -411,9 +410,9 @@ submissionApp.put(
     const date = moment().unix()
     const edit = req.body.editedBy
       ? {
-          ...parseContent(req.body.editedBy),
-          date
-        }
+        ...parseContent(req.body.editedBy),
+        date
+      }
       : { id: 'unknown', name: 'Unknown', date }
     const pastEdits = submission.edits || []
     const edits = [...pastEdits, edit]
@@ -666,7 +665,6 @@ submissionApp.post(
     }
 
     if (submission) {
-      revalidateOnArticleUpdate({ submissionId: req.params.submissionId })
       res.json(submission)
     } else {
       res.status(422).json({ message: 'Submission can not be approved' })
