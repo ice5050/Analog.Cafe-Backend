@@ -1,19 +1,17 @@
-const { revalidateOnArticleUpdate } = require('../../helpers/cache')
-
 const express = require('express')
-const fetch = require('isomorphic-unfetch')
-const multipart = require('connect-multiparty')
 const shortid = require('shortid')
+const fetch = require('isomorphic-unfetch')
 
-const { authenticationMiddleware } = require('../../helpers/authenticate')
-const { getImageRatio } = require('../../helpers/submission')
-const { toShowingObject, parseButtons } = require('../../helpers/user')
-const { upsertOneSendgrid } = require('../../helpers/email_list_manager')
-const Article = require('../../models/mongo/article')
+const User = require('../../models/mongo/user')
 const Image = require('../../models/mongo/image')
 const Submission = require('../../models/mongo/submission')
-const User = require('../../models/mongo/user')
+const Article = require('../../models/mongo/article')
+const multipart = require('connect-multiparty')
+const { toShowingObject, parseButtons } = require('../../helpers/user')
 const cloudinary = require('../../helpers/cloudinary')
+const { getImageRatio } = require('../../helpers/submission')
+const { authenticationMiddleware } = require('../../helpers/authenticate')
+const { upsertOneSendgrid } = require('../../helpers/email_list_manager')
 
 const userApp = express()
 const multipartMiddleware = multipart()
@@ -312,7 +310,7 @@ userApp.put(
  *              description: Array of urls to be purged from cache
  *     responses:
  *       200:
- *         description: Return cache status.
+ *         description: Return edited user.
  *       401:
  *         description: No permission to access.
  */
@@ -338,25 +336,6 @@ userApp.delete('/admin/cache', authenticationMiddleware, async (req, res) => {
       const { success, errors, messages } = response
       res.json({ status: 'ok', success, errors, messages })
     })
-})
-
-/**
- * @swagger
- * /admin/cache/redis/list:
- *   delete:
- *     description: Clear Redis cache for lists, inc. features
- *     parameters:
- *     responses:
- *       200:
- *         description: Return edited user.
- */
-userApp.delete('/admin/cache/redis/list', (req, res) => {
-  revalidateOnArticleUpdate()
-  console.log('Sent request to invalidate Redis cache for lists.')
-  res.json({
-    status: 'ok',
-    message: 'Sent request to invalidate Redis cache.'
-  })
 })
 
 module.exports = userApp
