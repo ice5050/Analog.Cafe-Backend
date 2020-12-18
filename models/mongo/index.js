@@ -5,12 +5,11 @@ try {
   ;(async () => {
     const cachegoose = require('cachegoose')
     const redisClient = await require('../../helpers/redis')
-    console.log(`redisClient`, redisClient)
     cachegoose(mongoose, {
       engine: 'redis',
       port: redisClient.options.port,
       host: redisClient.options.host,
-      password: process.env.REDIS_AUTH
+      password: redisClient.options.password
     })
   })()
 } catch (error) {
