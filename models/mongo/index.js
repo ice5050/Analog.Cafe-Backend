@@ -3,18 +3,14 @@ const Promise = require('bluebird')
 const cachegoose = require('cachegoose')
 
 try {
-  // deconstruct Redis url for cachegoose
-  const redisURL = process.env.REDIS_URL
-  const redisPort = redisURL.substring(redisURL.lastIndexOf(':') + 1)
-  const redisHost = redisURL
-    .substring(0, redisURL.lastIndexOf(':'))
-    .replace('redis://h:', '')
-    .replace('redis://', '')
-
+  const redisClient = require('../../helpers/redis')
+  console.log(
+    `Connected \`cachegoose\` to Redis via ${redisClient.host}:${redisClient.port}`
+  )
   cachegoose(mongoose, {
     engine: 'redis',
-    port: redisPort,
-    host: redisHost
+    port: redisClient.port,
+    host: redisClient.host
   })
 } catch (error) {
   console.log(
