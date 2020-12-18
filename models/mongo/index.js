@@ -1,17 +1,19 @@
 const mongoose = require('mongoose')
 const Promise = require('bluebird')
-const cachegoose = require('cachegoose')
 
 try {
-  const redisClient = require('../../helpers/redis')
-  console.log(
-    `Connected \`cachegoose\` to Redis via ${redisClient.host}:${redisClient.port}`
-  )
-  cachegoose(mongoose, {
-    engine: 'redis',
-    port: redisClient.port,
-    host: redisClient.host
-  })
+  ;(async () => {
+    const cachegoose = require('cachegoose')
+    const redisClient = await require('../../helpers/redis')
+    console.log(
+      `Connected \`cachegoose\` to Redis via ${redisClient.options.host}:${redisClient.options.port}`
+    )
+    cachegoose(mongoose, {
+      engine: 'redis',
+      port: redisClient.options.port,
+      host: redisClient.options.host
+    })
+  })()
 } catch (error) {
   console.log(
     'Failed to connect `cachegoose` to Redis. Using local memory instead: ',
