@@ -103,8 +103,8 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   let author
   if (authorId) {
     author = await User.findOne({ id: authorId })
-      // cache author component of a list for 7 days
-      .cache(60 * 60 * 24 * 7, `list-author-${authorId}`)
+      // cache author component of a list indefinitely with an invalidation key
+      .cache(0, `list-author-${authorId}`)
       .exec()
     if (!author) {
       return res.status(404).json({ message: 'Author not found' })
@@ -121,8 +121,8 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
   let features
   if (req.query.featured) {
     features = await Features.findOne({ id: 'features' })
-      // cache features for 7 days
-      .cache(60 * 60 * 24 * 7, `list-features`)
+      // cache features indefinitely with an invalidation key
+      .cache(0, `list-features`)
       .exec()
 
     // features which are article ids get mapped to articles:
@@ -152,13 +152,13 @@ articleApp.get(['/articles', '/list'], async (req, res) => {
 
   // run it
   let articles = await query
-    // cache final list for 7 days
-    .cache(60 * 60 * 24 * 7, `list-exec-${cacheKey}`)
+    // cache final list indefinitely with an invalidation key
+    .cache(0, `list-exec-${cacheKey}`)
     .exec()
   const count = await countQuery
     .countDocuments()
-    // cache list counter for 7 days
-    .cache(60 * 60 * 24 * 7, `list-count-${cacheKey}`)
+    // cache list counter indefinitely with an invalidation key
+    .cache(0, `list-count-${cacheKey}`)
     .exec()
 
   // if this is a features list, it needs to be sorted based on feature array stored in DB
@@ -231,8 +231,8 @@ articleApp.get('/rss', async (req, res) => {
     )
     .limit(30)
     .sort({ 'date.published': 'desc' })
-    // cache RSS for 7 days with an invalidation key
-    .cache(60 * 60 * 24 * 7, 'rss')
+    // cache RSS indefinitely with an invalidation key
+    .cache(0, 'rss')
 
   const articles = await query.exec()
   articleFeed.items = []
@@ -325,8 +325,8 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     slug,
     status: 'published'
   })
-    // cache article for 7 days with an invalidation key
-    .cache(60 * 60 * 24 * 7, `article-${articleId}`)
+    // cache article for indefinitely with an invalidation key
+    .cache(0, `article-${articleId}`)
 
   if (!article) {
     return res.status(404).json({
@@ -339,8 +339,8 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     return { id: author.id }
   })
   const authorObjects = await User.find({ $or: authorIdQueries })
-    // cache article authors for 7 days with an invalidation key
-    .cache(60 * 60 * 24 * 7, `authors-${articleId}`)
+    // cache article authors indefinitely with an invalidation key
+    .cache(0, `authors-${articleId}`)
 
   // complete article author objects with extended data on authors
   const completeAuthorObjects = authorObjects.map(author => {
@@ -375,8 +375,8 @@ articleApp.get('/articles/:articleSlug', async (req, res) => {
     status: 'published'
   })
     .sort({ 'date.published': 'desc' })
-    // cache next article for 7 days with an invalidation key
-    .cache(60 * 60 * 24 * 7, `next-article-${articleId}`)
+    // cache next article indefinitely with an invalidation key
+    .cache(0, `next-article-${articleId}`)
     .exec()
 
   res.json({
