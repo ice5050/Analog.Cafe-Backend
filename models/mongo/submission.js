@@ -45,7 +45,8 @@ const submissionSchema = new Schema(
     status: { type: String, default: 'pending' },
     scheduledOrder: Number,
     summary: String,
-    content: Schema.Types.Mixed
+    content: Schema.Types.Mixed,
+    collections: Schema.Types.Mixed
   },
   { strict: false }
 )

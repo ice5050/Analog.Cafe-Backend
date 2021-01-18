@@ -408,6 +408,8 @@ submissionApp.put(
     const status = req.body.status
     const scheduledOrder = req.body.scheduledOrder
 
+    const collections = req.body.collections
+
     const date = moment().unix()
     const edit = req.body.editedBy
       ? {
@@ -432,7 +434,8 @@ submissionApp.put(
       [status ? 'status' : undefined]: req.body.status,
       [scheduledOrder ? 'scheduledOrder' : undefined]: req.body.scheduledOrder,
       [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined,
-      [edits ? 'edits' : undefined]: edits
+      [edits ? 'edits' : undefined]: edits,
+      [collections ? 'collections' : undefined]: collections
     })
 
     submission = await submission.save()
@@ -660,6 +663,7 @@ submissionApp.post(
     submission.status = 'scheduled'
     submission.scheduledOrder = req.body.scheduledOrder
     submission.tag = req.body.tag
+
     submission = await submission.save()
     if (Number(req.body.scheduledOrder) === 0) {
       submission = await publish(submission)

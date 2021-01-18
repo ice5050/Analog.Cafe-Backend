@@ -9,6 +9,7 @@ const revalidateOnArticleUpdate = props => {
     if (!props) return;
     const { articleId } = props;
     if (!articleId) return;
+
     cachegoose.clearCache(`authors-${articleId}`);
     cachegoose.clearCache(`article-${articleId}`);
     cachegoose.clearCache(`next-article-${articleId}`);
