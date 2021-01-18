@@ -198,6 +198,7 @@ async function updateSubmissionAuthors(submission) {
 
 async function publish(submission) {
   const author = await User.findOne({ id: submission.submittedBy.id });
+
   let article;
   if (submission.articleId) {
     article = await Article.findOne({ id: submission.articleId });
@@ -215,6 +216,8 @@ async function publish(submission) {
       published: article.date.published
     };
     article.status = "published";
+    article.collections = submission.collections;
+
     article = await article.save();
   } else {
     submission.articleId = submission.id;
@@ -233,7 +236,8 @@ async function publish(submission) {
       date: {
         published: moment().unix()
       },
-      status: "published"
+      status: "published",
+      collections: submission.collections
     });
     article = await article.save();
     if (author.email) {

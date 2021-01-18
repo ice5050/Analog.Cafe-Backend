@@ -36,7 +36,8 @@ const articleSchema = new Schema(
     featured: String,
     status: { type: String, default: 'published' },
     summary: String,
-    content: Schema.Types.Mixed
+    content: Schema.Types.Mixed,
+    collections: Schema.Types.Mixed
   },
   { strict: false }
 )

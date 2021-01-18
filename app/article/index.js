@@ -533,6 +533,9 @@ articleApp.put(
     submission.status = req.body.status || 'pending'
     submission.tag = tag || article.tag
 
+    // sync collections
+    submission.collections = article.collections
+
     submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
     uploadImgAsync(req, res, submission.id)
