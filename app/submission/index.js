@@ -263,6 +263,11 @@ submissionApp.post(
   multipartMiddleware,
   authenticationMiddleware,
   async (req, res) => {
+    if (req.user.suspend)
+      return res.status(403).json({
+        message: 'Suspended accounts can not send submissions'
+      })
+
     const content = parseContent(req.body.content)
     const header = parseHeader(req.body.header)
     const textContent = req.body.textContent
@@ -383,6 +388,11 @@ submissionApp.put(
   multipartMiddleware,
   authenticationMiddleware,
   async (req, res) => {
+    if (req.user.suspend)
+      return res.status(403).json({
+        message: 'Suspended accounts can not send submissions'
+      })
+
     let submission = await Submission.findOne({ id: req.params.submissionId })
     if (!submission) {
       return res.status(404).json({ message: 'Submission not found' })
