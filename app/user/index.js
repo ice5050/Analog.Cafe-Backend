@@ -45,24 +45,30 @@ const multipartMiddleware = multipart()
  *         description: Return users.
  */
 userApp.get('/users', authenticationMiddleware, async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(401).json({ message: 'No permission to access' })
-  }
+  let page = req.query.page || 1
+  let itemsPerPage = Number(req.query['items-per-page']) || 10
+  let querySelect =
+    'id title image text twitterId twitterName facebookId facebookName email role buttons suspend'
+  let sortBy = 'createdAt'
+  let sortOrder = 'asc'
 
-  const page = req.query.page || 1
-  const itemsPerPage = Number(req.query['items-per-page']) || 10
+  // non-admin forced params
+  if (req.user.role !== 'admin') {
+    page = 1
+    itemsPerPage = 10
+    querySelect = 'id title image text role buttons suspend'
+  }
 
   let queries = [User.find(), User.find()]
 
   let [query, countQuery] = queries
 
   query
-    .select(
-      'id title image text twitterId twitterName facebookId facebookName email role buttons suspend'
-    )
+    .select(querySelect)
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
-    .cache(300)
+    .sort({ [sortBy]: sortOrder })
+    .cache(0) //300
 
   const users = await query.exec()
   const count = await countQuery.countDocuments().exec()
