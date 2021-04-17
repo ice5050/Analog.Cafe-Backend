@@ -52,17 +52,17 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
   let sortBy = 'createdAt'
   let sortOrder = 'desc'
 
+  const now = Math.floor(+new Date() / 1000)
+
   // non-admin forced params
   if (req.user.role !== 'admin') {
     page = 1
     itemsPerPage = 10
-    querySelect = 'id title image text role buttons suspend'
+    querySelect = 'role'
   }
 
   let queries = [User.find(), User.find()]
-
   let [query, countQuery] = queries
-
   query
     .select(querySelect)
     .limit(itemsPerPage)
@@ -73,6 +73,30 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
   const users = await query.exec()
   const count = await countQuery.countDocuments().exec()
 
+  // stats queries
+  let statsQueries = []
+  for (var i = 0; i < 7; i++) {
+    statsQueries.push(
+      User.find({
+        createdAt: {
+          $gte: now - 60 * 60 * 24 * (i + 1) + '',
+          $lt: now - 60 * 60 * 24 * i + ''
+        }
+      })
+    )
+  }
+
+  const statsQueryPromises = []
+  statsQueries.forEach(async query =>
+    statsQueryPromises.push(query.countDocuments().exec())
+  )
+  const step24hr = await Promise.all(statsQueryPromises)
+  step24hr.map(count => ({
+    startsOn: now - 60 * 60 * 24 * (i + 1),
+    endsOn: now - 60 * 60 * 24 * i,
+    count: count
+  }))
+
   res.json({
     status: 'ok',
     page: {
@@ -81,6 +105,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
       'items-total': count,
       'items-per-page': itemsPerPage
     },
+    stats: { step24hr },
     items: users
   })
 })
