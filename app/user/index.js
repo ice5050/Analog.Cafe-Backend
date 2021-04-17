@@ -91,7 +91,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
           $gte: mark - 60 * 60 * 24 * (i + 1) + '',
           $lt: mark - 60 * 60 * 24 * i + ''
         }
-      }).cache(300)
+      }).cache(0)
     )
   }
   for (var i = 0; i < 24; i++) {
@@ -102,7 +102,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
           $gte: mark - 60 * 60 * 24 * avgDaysInMonth * (i + 1) + '',
           $lt: mark - 60 * 60 * 24 * avgDaysInMonth * i + ''
         }
-      }).cache(300)
+      }).cache(0)
     )
   }
 
