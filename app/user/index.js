@@ -52,6 +52,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
   let sortBy = 'createdAt'
   let sortOrder = 'desc'
 
+  const today = Math.floor(+new Date().setHours(0, 0, 0, 0) / 1000)
   const now = Math.floor(+new Date() / 1000)
 
   // non-admin forced params
@@ -79,11 +80,12 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
   // stats queries
   let statsQueries = []
   for (var i = 0; i < 7; i++) {
+    const mark = i ? today : now
     statsQueries.push(
       User.find({
         createdAt: {
-          $gte: now - 60 * 60 * 24 * (i + 1) + '',
-          $lt: now - 60 * 60 * 24 * i + ''
+          $gte: mark - 60 * 60 * 24 * (i + 1) + '',
+          $lt: mark - 60 * 60 * 24 * i + ''
         }
       }).cache(300)
     )
@@ -94,11 +96,14 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
     statsQueryPromises.push(query.countDocuments().exec())
   )
   const step24hr = await Promise.all(statsQueryPromises)
-  step24hr.map(count => ({
-    startsOn: now - 60 * 60 * 24 * (i + 1),
-    endsOn: now - 60 * 60 * 24 * i,
-    count: count
-  }))
+  step24hr.map((count, i) => {
+    const mark = i ? today : now
+    return {
+      startsOn: now - 60 * 60 * 24 * (i + 1),
+      endsOn: now - 60 * 60 * 24 * i,
+      count: count
+    }
+  })
 
   res.json({
     status: 'ok',
