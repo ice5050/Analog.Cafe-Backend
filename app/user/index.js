@@ -117,16 +117,16 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
   step24hr.map((count, i) => {
     const mark = i ? today : now
     return {
-      startsOn: now - 60 * 60 * 24 * (i + 1),
+      startsOn: mark - 60 * 60 * 24 * (i + 1),
       endsOn: now - 60 * 60 * 24 * i,
       count: count
     }
   })
   const step30d = await Promise.all(statsQueryPromises.month)
   step30d.map((count, i) => {
-    const mark = i ? today : now
+    const mark = i ? thisMonthsFirst : now
     return {
-      startsOn: now - 60 * 60 * 24 * avgDaysInMonth * (i + 1),
+      startsOn: mark - 60 * 60 * 24 * avgDaysInMonth * (i + 1),
       endsOn: now - 60 * 60 * 24 * avgDaysInMonth * i,
       count: count
     }
