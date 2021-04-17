@@ -52,8 +52,11 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
   let sortBy = 'createdAt'
   let sortOrder = 'desc'
 
+  const date = new Date()
   const today = Math.floor(+new Date().setHours(0, 0, 0, 0) / 1000)
   const now = Math.floor(+new Date() / 1000)
+  const thisMonthsFirst =
+    +new Date(date.getFullYear(), date.getMonth(), 1) / 1000
 
   // non-admin forced params
   if (req.user.role !== 'admin') {
@@ -78,10 +81,10 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
     .exec()
 
   // stats queries
-  let statsQueries = []
+  let statsQueries = { week: [], month: [] }
   for (var i = 0; i < 7; i++) {
     const mark = i ? today : now
-    statsQueries.push(
+    statsQueries.week.push(
       User.find({
         createdAt: {
           $gte: mark - 60 * 60 * 24 * (i + 1) + '',
@@ -90,17 +93,40 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
       }).cache(300)
     )
   }
+  for (var i = 0; i < 12; i++) {
+    const mark = i ? thisMonthsFirst : now
+    statsQueries.month.push(
+      User.find({
+        createdAt: {
+          $gte: mark - 60 * 60 * 24 * 30 * (i + 1) + '',
+          $lt: mark - 60 * 60 * 24 * 30 * i + ''
+        }
+      }).cache(300)
+    )
+  }
 
-  const statsQueryPromises = []
-  statsQueries.forEach(async query =>
-    statsQueryPromises.push(query.countDocuments().exec())
+  const statsQueryPromises = { week: [], month: [] }
+  statsQueries.week.forEach(async query =>
+    statsQueryPromises.week.push(query.countDocuments().exec())
   )
-  const step24hr = await Promise.all(statsQueryPromises)
+  statsQueries.month.forEach(async query =>
+    statsQueryPromises.month.push(query.countDocuments().exec())
+  )
+  const step24hr = await Promise.all(statsQueryPromises.week)
   step24hr.map((count, i) => {
     const mark = i ? today : now
     return {
       startsOn: now - 60 * 60 * 24 * (i + 1),
       endsOn: now - 60 * 60 * 24 * i,
+      count: count
+    }
+  })
+  const step30d = await Promise.all(statsQueryPromises.month)
+  step30d.map((count, i) => {
+    const mark = i ? today : now
+    return {
+      startsOn: now - 60 * 60 * 24 * 30 * (i + 1),
+      endsOn: now - 60 * 60 * 24 * 30 * i,
       count: count
     }
   })
@@ -113,7 +139,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
       'items-total': req.user.role !== 'admin' ? itemsPerPage : count,
       'items-per-page': itemsPerPage
     },
-    stats: req.user.role !== 'admin' ? {} : { step24hr },
+    stats: req.user.role !== 'admin' ? {} : { step24hr, step30d },
     items: users
   })
 })
