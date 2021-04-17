@@ -57,6 +57,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
   const now = Math.floor(+new Date() / 1000)
   const thisMonthsFirst =
     +new Date(date.getFullYear(), date.getMonth(), 1) / 1000
+  const avgDaysInMonth = 30.4375
 
   // non-admin forced params
   if (req.user.role !== 'admin') {
@@ -98,8 +99,8 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
     statsQueries.month.push(
       User.find({
         createdAt: {
-          $gte: mark - 60 * 60 * 24 * 30 * (i + 1) + '',
-          $lt: mark - 60 * 60 * 24 * 30 * i + ''
+          $gte: mark - 60 * 60 * 24 * avgDaysInMonth * (i + 1) + '',
+          $lt: mark - 60 * 60 * 24 * avgDaysInMonth * i + ''
         }
       }).cache(300)
     )
@@ -125,8 +126,8 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
   step30d.map((count, i) => {
     const mark = i ? today : now
     return {
-      startsOn: now - 60 * 60 * 24 * 30 * (i + 1),
-      endsOn: now - 60 * 60 * 24 * 30 * i,
+      startsOn: now - 60 * 60 * 24 * avgDaysInMonth * (i + 1),
+      endsOn: now - 60 * 60 * 24 * avgDaysInMonth * i,
       count: count
     }
   })
