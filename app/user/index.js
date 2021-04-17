@@ -68,10 +68,13 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
     .limit(itemsPerPage)
     .skip(itemsPerPage * (page - 1))
     .sort({ [sortBy]: sortOrder })
-    .cache(0) //300
+    .cache(300)
 
   const users = await query.exec()
-  const count = await countQuery.countDocuments().exec()
+  const count = await countQuery
+    .cache(300)
+    .countDocuments()
+    .exec()
 
   // stats queries
   let statsQueries = []
@@ -82,7 +85,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
           $gte: now - 60 * 60 * 24 * (i + 1) + '',
           $lt: now - 60 * 60 * 24 * i + ''
         }
-      })
+      }).cache(300)
     )
   }
 
