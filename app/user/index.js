@@ -94,7 +94,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
       }).cache(300)
     )
   }
-  for (var i = 0; i < 12; i++) {
+  for (var i = 0; i < 24; i++) {
     const mark = i ? thisMonthsFirst : now
     statsQueries.month.push(
       User.find({
