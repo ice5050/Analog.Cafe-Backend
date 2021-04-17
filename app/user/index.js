@@ -89,7 +89,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
       User.find({
         createdAt: {
           $gte: today - 60 * 60 * 24 * i + '',
-          $lt: mark - 60 * 60 * 24 * (i + i ? 1 : 0) + ''
+          $lt: mark - 60 * 60 * 24 * (i - 1) + ''
         }
       }).cache(300)
     )
@@ -100,7 +100,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
       User.find({
         createdAt: {
           $gte: thisMonthsFirst - 60 * 60 * 24 * avgDaysInMonth * i + '',
-          $lt: mark - 60 * 60 * 24 * avgDaysInMonth * (i + i ? 1 : 0) + ''
+          $lt: mark - 60 * 60 * 24 * avgDaysInMonth * (i - 1) + ''
         }
       }).cache(300)
     )
