@@ -104,11 +104,11 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
     status: 'ok',
     page: {
       current: page,
-      total: Math.ceil(count / itemsPerPage),
-      'items-total': count,
+      total: req.user.role !== 'admin' ? 1 : Math.ceil(count / itemsPerPage),
+      'items-total': req.user.role !== 'admin' ? itemsPerPage : count,
       'items-per-page': itemsPerPage
     },
-    stats: { step24hr },
+    stats: req.user.role !== 'admin' ? {} : { step24hr },
     items: users
   })
 })
