@@ -50,7 +50,7 @@ userApp.get('/users', authenticationMiddleware, async (req, res) => {
   let querySelect =
     'id title image text twitterId twitterName facebookId facebookName email role buttons suspend'
   let sortBy = 'createdAt'
-  let sortOrder = 'asc'
+  let sortOrder = 'desc'
 
   // non-admin forced params
   if (req.user.role !== 'admin') {
