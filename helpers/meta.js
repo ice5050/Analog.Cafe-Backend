@@ -7,6 +7,7 @@ const scrubSummary = summary =>
         )
         .replace("☞", "")
         .replace("What’s new? ", "")
+        .replace("✪ Note: ", "")
         .trimLeft()
     : summary;
 
