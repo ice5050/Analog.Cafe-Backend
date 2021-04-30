@@ -537,6 +537,9 @@ articleApp.put(
     // sync collections
     submission.collections = article.collections
 
+    // sync affiliate info
+    submission.affiliate = article.affiliate
+
     submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
     uploadImgAsync(req, res, submission.id)

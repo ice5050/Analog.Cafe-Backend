@@ -419,6 +419,7 @@ submissionApp.put(
     const scheduledOrder = req.body.scheduledOrder
 
     const collections = req.body.collections
+    const affiliate = req.body.affiliate
 
     const date = moment().unix()
     const edit = req.body.editedBy
@@ -445,7 +446,8 @@ submissionApp.put(
       [scheduledOrder ? 'scheduledOrder' : undefined]: req.body.scheduledOrder,
       [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined,
       [edits ? 'edits' : undefined]: edits,
-      [collections ? 'collections' : undefined]: collections
+      [collections ? 'collections' : undefined]: collections,
+      [affiliate ? 'affiliate' : undefined]: affiliate
     })
 
     submission = await submission.save()
