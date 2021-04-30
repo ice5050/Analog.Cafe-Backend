@@ -3,7 +3,6 @@ const express = require('express')
 const moment = require('moment')
 const multipart = require('connect-multiparty')
 
-const { revalidateOnArticleUpdate } = require('../../helpers/cache')
 const { authenticationMiddleware } = require('../../helpers/authenticate')
 const { imageFroth } = require('../../helpers/image_froth')
 const {
@@ -13,6 +12,8 @@ const {
   uploadImgAsync,
   summarize
 } = require('../../helpers/submission')
+const { revalidateOnArticleUpdate } = require('../../helpers/cache')
+const { scrubSummary } = require('../../helpers/meta')
 const Article = require('../../models/mongo/article')
 const Features = require('../../models/mongo/features')
 const Submission = require('../../models/mongo/submission')
@@ -274,7 +275,7 @@ articleApp.get('/rss', async (req, res) => {
       description:
         (image && image.src
           ? `<p><img src="${image.src}" alt="" class="webfeedsFeaturedVisual" width="600" height="auto" /></p>`
-          : '') + `<p>${a.summary}</p>`,
+          : '') + `<p>${scrubSummary(a.summary)}</p>`,
       author: authorNameList(
         a.authors
           .filter(

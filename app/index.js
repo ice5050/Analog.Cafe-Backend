@@ -1,21 +1,27 @@
+const bodyParser = require('body-parser')
+const compression = require('compression')
+const cors = require('cors')
 const express = require('express')
 const passport = require('passport')
-const bodyParser = require('body-parser')
+const redis = require('redis')
 const session = require('express-session')
-const cors = require('cors')
-const compression = require('compression')
+
 const RedisStore = require('connect-redis')(session)
 
 const corsOptions = {
   origin: process.env.ANALOG_CONNECTION_WHITELIST.split(',')
 }
 
+const redisClient = redis.createClient({
+  url: process.env.REDIS_URL
+})
+
 const app = express()
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(
   session({
-    store: new RedisStore({ url: process.env.REDIS_URL }),
+    store: new RedisStore({ client: redisClient }),
     secret: process.env.APPLICATION_SECRET,
     resave: false,
     saveUninitialized: false
