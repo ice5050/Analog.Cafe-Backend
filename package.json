@@ -13,7 +13,7 @@
     "url": "https://github.com/dmitrizzle/Analog.Cafe"
   },
   "dependencies": {
-    "@roast-cms/image-froth": "^0.1.0",
+    "@roast-cms/image-froth": "^0.2.3",
     "@sendgrid/mail": "^6.4.0",
     "aws-sdk": "^2.327.0",
     "bluebird": "^3.7.1",
@@ -24,7 +24,7 @@
     "commander": "^2.16.0",
     "compression": "^1.7.1",
     "connect-multiparty": "^2.2.0",
-    "connect-redis": "3.3.0",
+    "connect-redis": "^5.2.0",
     "cors": "^2.8.4",
     "dotenv": "^4.0.0",
     "eslint": "^6.5.1",
@@ -45,7 +45,7 @@
     "passport-jwt": "^4.0.0",
     "passport-twitter": "^1.0.4",
     "prettier": "^1.18.2",
-    "redis": "^2.8.0",
+    "redis": "^3.1.2",
     "redis-delete-pattern": "^0.1.0",
     "request": "^2.88.0",
     "rss": "^1.2.2",
