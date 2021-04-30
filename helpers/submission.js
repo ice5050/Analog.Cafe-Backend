@@ -1,15 +1,17 @@
 const Chance = require("chance");
-const slugify = require("slugify");
-const sizeOf = require("image-size");
-const shortid = require("shortid");
 const moment = require("moment");
-const Image = require("../models/mongo/image");
+const shortid = require("shortid");
+const sizeOf = require("image-size");
+const slugify = require("slugify");
+
+const { scrubSummary } = require("./meta");
 const Article = require("../models/mongo/article");
+const Image = require("../models/mongo/image");
 const Submission = require("../models/mongo/submission");
 const User = require("../models/mongo/user");
-const redisClient = require("../helpers/redis");
 const cloudinary = require("../helpers/cloudinary");
 const imageRepostedEmail = require("../helpers/mailers/image_reposted");
+const redisClient = require("../helpers/redis");
 const submissionPublishedEmail = require("../helpers/mailers/submission_published");
 const submissionRejectedEmail = require("../helpers/mailers/submission_rejected");
 
@@ -300,13 +302,15 @@ async function reject(submission) {
 }
 
 function summarize(textContent) {
-  return trimByCharToSentence(
-    textContent
-      .replace(/([.!?…])/g, "$1 ") // every common sentence ending always followed by a space
-      .replace(/\s+$/, "") // remove any trailing spaces
-      .replace(/^[ \t]+/, "") // remove any leading spaces
-      .replace(/(\s{2})+/g, " "), // remove any reoccuring (double) spaces
-    250
+  return scrubSummary(
+    trimByCharToSentence(
+      textContent
+        .replace(/([.!?…])/g, "$1 ") // every common sentence ending always followed by a space
+        .replace(/\s+$/, "") // remove any trailing spaces
+        .replace(/^[ \t]+/, "") // remove any leading spaces
+        .replace(/(\s{2})+/g, " "), // remove any reoccuring (double) spaces
+      250
+    )
   );
 }
 
