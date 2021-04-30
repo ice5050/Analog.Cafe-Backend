@@ -13,7 +13,8 @@ const corsOptions = {
 }
 
 const redisClient = redis.createClient({
-  url: process.env.REDIS_URL
+  url: process.env.REDIS_URL,
+  username: ''
 })
 
 const app = express()
