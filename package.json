@@ -45,7 +45,7 @@
     "passport-jwt": "^4.0.0",
     "passport-twitter": "^1.0.4",
     "prettier": "^1.18.2",
-    "redis": "^2.8.0",
+    "redis": "^3.1.1",
     "redis-delete-pattern": "^0.1.0",
     "request": "^2.88.0",
     "rss": "^1.2.2",
