@@ -414,12 +414,10 @@ submissionApp.put(
     const title = header && header.title
     const subtitle = header && header.subtitle
     const textContent = req.body.textContent
+
     const tag = req.body.tag
     const status = req.body.status
     const scheduledOrder = req.body.scheduledOrder
-
-    const collections = req.body.collections
-    const affiliate = req.body.affiliate
 
     const date = moment().unix()
     const edit = req.body.editedBy
@@ -445,9 +443,7 @@ submissionApp.put(
       [status ? 'status' : undefined]: req.body.status,
       [scheduledOrder ? 'scheduledOrder' : undefined]: req.body.scheduledOrder,
       [tag ? 'tag' : undefined]: req.user.role === 'admin' ? tag : undefined,
-      [edits ? 'edits' : undefined]: edits,
-      [collections ? 'collections' : undefined]: collections,
-      [affiliate ? 'affiliate' : undefined]: affiliate
+      [edits ? 'edits' : undefined]: edits
     })
 
     submission = await submission.save()
