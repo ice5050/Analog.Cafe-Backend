@@ -219,6 +219,7 @@ async function publish(submission) {
     };
     article.status = "published";
     article.collections = submission.collections;
+    console.log("submission.collections >> ", submission.collections);
     article.affiliate = submission.affiliate;
 
     article = await article.save();
