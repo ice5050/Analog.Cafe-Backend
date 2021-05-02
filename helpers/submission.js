@@ -219,6 +219,7 @@ async function publish(submission) {
     };
     article.status = "published";
     article.collections = submission.collections;
+    article.affiliate = submission.affiliate;
 
     article = await article.save();
   } else {
@@ -239,7 +240,8 @@ async function publish(submission) {
         published: moment().unix()
       },
       status: "published",
-      collections: submission.collections
+      collections: submission.collections,
+      affiliate: submission.affiliate
     });
     article = await article.save();
     if (author.email) {
