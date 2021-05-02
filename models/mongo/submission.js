@@ -46,7 +46,8 @@ const submissionSchema = new Schema(
     scheduledOrder: Number,
     summary: String,
     content: Schema.Types.Mixed,
-    collections: Schema.Types.Mixed
+    collections: Schema.Types.Mixed,
+    affiliate: Schema.Types.Mixed
   },
   { strict: false }
 )
