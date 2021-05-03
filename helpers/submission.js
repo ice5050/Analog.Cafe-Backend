@@ -220,12 +220,10 @@ async function publish(submission) {
     article.status = "published";
     article.collections = submission.collections;
     article.affiliate = submission.affiliate;
-    console.log("1 submission.affiliate", submission.affiliate);
 
     article = await article.save();
   } else {
     submission.articleId = submission.id;
-    console.log("2 article.affiliate", submission.affiliate);
     article = new Article({
       id: submission.id,
       slug: submission.slug,
