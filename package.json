@@ -69,7 +69,7 @@
   "scripts": {
     "precommit": "lint-staged",
     "start": "node --harmony index.js",
-    "dev": "nodemon --harmony index.js",
+    "dev": "NODE_ENV=development nodemon --harmony index.js",
     "db:seed": "node --harmony seeds/index.js",
     "db:clean": "node --harmony seeds/clean_db.js",
     "scheduler:publish": "node --harmony workers/publisher/index.js",
