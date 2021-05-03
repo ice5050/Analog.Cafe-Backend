@@ -534,11 +534,8 @@ articleApp.put(
     submission.status = req.body.status || 'pending'
     submission.tag = tag || article.tag
 
-    // sync collections
+    // pull collection from published article into submission:
     submission.collections = article.collections
-
-    // sync affiliate info
-    submission.affiliate = article.affiliate
 
     submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
