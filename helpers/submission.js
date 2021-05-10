@@ -90,7 +90,7 @@ async function findExistingAuthors(srcs) {
   return imageOwners;
 }
 
-async function uploadImgAsync(req, res, submissionId) {
+async function uploadImgAsync(req, res, submissionId, isCustomPoster) {
   const uploadedImgs = req.files.images;
   const keys = uploadedImgs ? Object.keys(uploadedImgs) : [];
   const numberOfImages = keys.length;
@@ -103,7 +103,7 @@ async function uploadImgAsync(req, res, submissionId) {
     firstImage.data &&
     firstImage.data.src &&
     !firstImage.data.src.includes("data:");
-  if (isFirstImageSuggestion) {
+  if (isFirstImageSuggestion && !isCustomPoster) {
     submission.poster = firstImage.data.src;
     await submission.save();
   }
@@ -128,7 +128,7 @@ async function uploadImgAsync(req, res, submissionId) {
       await deleteImageFromCloudinary(result.public_id);
       addImageURLToContent(k, duplicatedImage.id, submission.content.raw);
       // If it's the first image, use it as the submission's poster
-      if (i === 0 && !isFirstImageSuggestion) {
+      if (i === 0 && !isFirstImageSuggestion && isCustomPoster) {
         submission.poster = duplicatedImage.id;
       }
     } else {
@@ -274,10 +274,16 @@ async function findCoImageAuthors(submission) {
       })
   );
   submissionImages
-    .filter(
-      (image, index, self) =>
-        self.map(img => img.author.id).indexOf(image.author.id) === index
-    )
+    .filter((image, index, self) => {
+      if (image)
+        return (
+          self
+            .filter(entry => entry) // ensure no null entries from when the images have no authorship link
+            .map(img => img.author.id)
+            .indexOf(image.author.id) === index
+        );
+      return;
+    })
     .map(async image => {
       const imageAuthor =
         image && (await User.findOne({ id: image.author.id }));
@@ -339,6 +345,7 @@ function trimByCharToSentence(text = "", chars = 0) {
 
 module.exports = {
   getImageRatio,
+  getFirstImage,
   parseContent,
   parseHeader,
   rawImageCount,
