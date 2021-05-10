@@ -14,7 +14,8 @@ const {
   uploadImgAsync,
   publish,
   reject,
-  summarize
+  summarize,
+  getFirstImage
 } = require('../../helpers/submission')
 const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user')
@@ -426,8 +427,24 @@ submissionApp.put(
           date
         }
       : { id: 'unknown', name: 'Unknown', date }
-    const pastEdits = submission.edits || []
-    const edits = [...pastEdits, edit]
+    const previousEdits = submission.edits || []
+    const edits = [...previousEdits, edit]
+
+    // presist custom poster image
+    const previousPoster = submission.poster
+    const previousFirstImageGenerated = (() => {
+      const firstImageBlock = getFirstImage(submission.content.raw)
+      if (
+        firstImageBlock.data &&
+        firstImageBlock.data.src &&
+        !firstImageBlock.data.src.includes('data:')
+      )
+        return firstImageBlock.data.src
+      return null
+    })()
+    const isCustomPoster = submission.poster !== previousFirstImageGenerated
+
+    // presist custom description `summary`
 
     submission = Object.assign(submission, {
       [title ? 'title' : undefined]: title,
@@ -452,7 +469,10 @@ submissionApp.put(
     }
 
     redisClient.set(`${submission.id}_upload_progress`, '0')
-    uploadImgAsync(req, res, submission.id)
+
+    // presist custom poster image
+    uploadImgAsync(req, res, submission.id, isCustomPoster)
+
     res.json(submission.toObject())
   }
 )
