@@ -444,7 +444,15 @@ submissionApp.put(
     })()
     const isCustomPoster = submission.poster !== previousFirstImageGenerated
 
-    // presist custom description `summary`
+    // presist custom description/`summary`
+    const isCustomSummary = (() => {
+      if (!submission.summary) return false
+      if (!textContent) return false
+      const currentSummary = summarize(textContent)
+      if (!currentSummary) return false
+      if (currentSummary !== submission.summary) return true
+      return false
+    })()
 
     submission = Object.assign(submission, {
       [title ? 'title' : undefined]: title,
@@ -454,7 +462,9 @@ submissionApp.put(
         words: count(textContent)
       },
       [textContent ? 'summary' : undefined]: textContent
-        ? summarize(textContent)
+        ? isCustomSummary // presist custom description/`summary`
+          ? submission.summary
+          : summarize(textContent)
         : undefined,
       [content ? 'content' : undefined]: { raw: content },
       [status ? 'status' : undefined]: req.body.status,
@@ -469,10 +479,7 @@ submissionApp.put(
     }
 
     redisClient.set(`${submission.id}_upload_progress`, '0')
-
-    // presist custom poster image
     uploadImgAsync(req, res, submission.id, isCustomPoster)
-
     res.json(submission.toObject())
   }
 )
