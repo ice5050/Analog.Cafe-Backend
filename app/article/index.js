@@ -9,9 +9,9 @@ const {
   parseContent,
   parseHeader,
   rawImageCount,
-  uploadImgAsync,
-  summarize
+  uploadImgAsync
 } = require('../../helpers/submission')
+const { summarize } = require('../../helpers/summarize')
 const { revalidateOnArticleUpdate } = require('../../helpers/cache')
 const { scrubSummary } = require('../../helpers/meta')
 const Article = require('../../models/mongo/article')
@@ -20,6 +20,7 @@ const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user.js')
 const articleFeed = require('./article-feed')
 const redisClient = require('../../helpers/redis')
+const { isCustomPoster, isCustomSummary } = require('../../helpers/meta')
 
 const multipartMiddleware = multipart()
 const articleApp = express()
@@ -523,13 +524,22 @@ articleApp.put(
       })
       submission = await submission.save()
     }
+
+    // presist custom poster image
+    const isCustomPosterBuffer = isCustomPoster(submission)
+
+    // presist custom description/`summary`
+    const isCustomSummaryBuffer = isCustomSummary(submission, textContent)
+
     submission.title = header.title
     submission.subtitle = header.subtitle
     submission.stats = {
       images: rawImageCount(content),
       words: count(textContent)
     }
-    submission.summary = summarize(textContent)
+    submission.summary = isCustomSummaryBuffer
+      ? submission.summary
+      : summarize(textContent)
     submission.content = { raw: content }
     submission.status = req.body.status || 'pending'
     submission.tag = tag || article.tag
@@ -539,11 +549,19 @@ articleApp.put(
 
     submission = await submission.save()
     redisClient.set(`${submission.id}_upload_progress`, '0')
-    uploadImgAsync(req, res, submission.id)
+    uploadImgAsync(req, res, submission.id, isCustomPosterBuffer)
 
     // clear article caches
     revalidateOnArticleUpdate({ articleId: req.params.articleId })
-    res.json(submission.toObject())
+    res.json({
+      ...submission.toObject(),
+      message: {
+        flags: {
+          isCustomPoster: isCustomPosterBuffer,
+          isCustomSummary: isCustomSummaryBuffer
+        }
+      }
+    })
   }
 )
 

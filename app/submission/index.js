@@ -13,13 +13,13 @@ const {
   slugGenerator,
   uploadImgAsync,
   publish,
-  reject,
-  summarize,
-  getFirstImage
+  reject
 } = require('../../helpers/submission')
+const { summarize } = require('../../helpers/summarize')
 const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user')
 const redisClient = require('../../helpers/redis')
+const { isCustomPoster, isCustomSummary } = require('../../helpers/meta')
 
 const submissionApp = express()
 const multipartMiddleware = multipart()
@@ -431,24 +431,10 @@ submissionApp.put(
     const edits = [...previousEdits, edit]
 
     // presist custom poster image
-    const isCustomPoster = (() => {
-      const firstImageBlock = getFirstImage(submission.content.raw)
-      if (!firstImageBlock) return false
-      if (!firstImageBlock.data || !firstImageBlock.data.src) return false
-      if (firstImageBlock.data.src.includes('data:')) return false
-      if (!submission.poster) return false
-      return submission.poster !== firstImageBlock.data.src ? true : false
-    })()
+    const isCustomPosterBuffer = isCustomPoster(submission)
 
     // presist custom description/`summary`
-    const isCustomSummary = (() => {
-      if (!submission.summary) return false
-      if (!textContent) return false
-      const currentSummary = summarize(textContent)
-      if (!currentSummary) return false
-      if (currentSummary !== submission.summary) return true
-      return false
-    })()
+    const isCustomSummaryBuffer = isCustomSummary(submission, textContent)
 
     submission = Object.assign(submission, {
       [title ? 'title' : undefined]: title,
@@ -458,7 +444,7 @@ submissionApp.put(
         words: count(textContent)
       },
       [textContent ? 'summary' : undefined]: textContent
-        ? isCustomSummary // presist custom description/`summary`
+        ? isCustomSummaryBuffer // presist custom description/`summary`
           ? submission.summary
           : summarize(textContent)
         : undefined,
@@ -475,13 +461,13 @@ submissionApp.put(
     }
 
     redisClient.set(`${submission.id}_upload_progress`, '0')
-    uploadImgAsync(req, res, submission.id, isCustomPoster)
+    uploadImgAsync(req, res, submission.id, isCustomPosterBuffer)
     res.json({
       ...submission.toObject(),
       message: {
         flags: {
-          isCustomPoster,
-          isCustomSummary
+          isCustomPoster: isCustomPosterBuffer,
+          isCustomSummary: isCustomPosterBuffer
         }
       }
     })

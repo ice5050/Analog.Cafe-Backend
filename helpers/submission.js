@@ -14,6 +14,7 @@ const imageRepostedEmail = require("../helpers/mailers/image_reposted");
 const redisClient = require("../helpers/redis");
 const submissionPublishedEmail = require("../helpers/mailers/submission_published");
 const submissionRejectedEmail = require("../helpers/mailers/submission_rejected");
+const { getFirstImage } = require("./summarize");
 
 const chance = new Chance();
 
@@ -77,10 +78,6 @@ function getImageRatio(imgPath) {
 
 async function deleteImageFromCloudinary(publicId) {
   await cloudinary.v2.uploader.destroy(publicId);
-}
-
-function getFirstImage(rawContent) {
-  return rawContent.document.nodes.find(node => node.type === "image");
 }
 
 async function findExistingAuthors(srcs) {
@@ -309,43 +306,8 @@ async function reject(submission) {
   return submission;
 }
 
-function summarize(textContent) {
-  return scrubSummary(
-    trimByCharToSentence(
-      textContent
-        .replace(/([.!?…])/g, "$1 ") // every common sentence ending always followed by a space
-        .replace(/\s+$/, "") // remove any trailing spaces
-        .replace(/^[ \t]+/, "") // remove any leading spaces
-        .replace(/(\s{2})+/g, " "), // remove any reoccuring (double) spaces
-      250
-    )
-  );
-}
-
-function trimByCharToSentence(text = "", chars = 0) {
-  // string is broken down into sentences;
-  // this is done by splitting it into array between
-  // the most common sentence-ending punctuation marks:
-  // period, exclaimation, ellipsis and question mark;
-  // if string consists of a single statement, make an array
-  // anyways
-  const sentences = text.match(/[^\.!…\?]+[\.!…\?]+/g) || [text];
-  // store
-  let result = "";
-  // cycle through sentences array
-  sentences.forEach(sentence => {
-    // if the `result` store isn't long enough
-    // add a sentence, until we're out of available
-    // sentences
-    if (result.length < chars) result += sentence;
-  });
-  // return the trimmed sentence or empty string as default
-  return result;
-}
-
 module.exports = {
   getImageRatio,
-  getFirstImage,
   parseContent,
   parseHeader,
   rawImageCount,
@@ -359,6 +321,5 @@ module.exports = {
   imageNodesFromSubmission,
   updateSubmissionAuthors,
   publish,
-  reject,
-  summarize
+  reject
 };
