@@ -431,18 +431,14 @@ submissionApp.put(
     const edits = [...previousEdits, edit]
 
     // presist custom poster image
-    const previousPoster = submission.poster
-    const previousFirstImageGenerated = (() => {
+    const isCustomPoster = (() => {
       const firstImageBlock = getFirstImage(submission.content.raw)
-      if (
-        firstImageBlock.data &&
-        firstImageBlock.data.src &&
-        !firstImageBlock.data.src.includes('data:')
-      )
-        return firstImageBlock.data.src
-      return null
+      if (!firstImageBlock) return false
+      if (!firstImageBlock.data || !firstImageBlock.data.src) return false
+      if (firstImageBlock.data.src.includes('data:')) return false
+      if (!submission.poster) return false
+      return submission.poster !== firstImageBlock.data.src ? true : false
     })()
-    const isCustomPoster = submission.poster !== previousFirstImageGenerated
 
     // presist custom description/`summary`
     const isCustomSummary = (() => {
@@ -480,7 +476,15 @@ submissionApp.put(
 
     redisClient.set(`${submission.id}_upload_progress`, '0')
     uploadImgAsync(req, res, submission.id, isCustomPoster)
-    res.json(submission.toObject())
+    res.json({
+      ...submission.toObject(),
+      message: {
+        flags: {
+          isCustomPoster,
+          isCustomSummary
+        }
+      }
+    })
   }
 )
 
