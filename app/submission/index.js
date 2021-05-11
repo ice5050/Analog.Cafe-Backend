@@ -19,7 +19,7 @@ const { summarize } = require('../../helpers/summarize')
 const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user')
 const redisClient = require('../../helpers/redis')
-const { isCustomPoster, isCustomSummary } = require('../../helpers/meta')
+const { isCustomPoster, isCustomSummary } = require('../../helpers/is_custom')
 
 const submissionApp = express()
 const multipartMiddleware = multipart()

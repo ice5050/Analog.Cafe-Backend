@@ -20,7 +20,7 @@ const Submission = require('../../models/mongo/submission')
 const User = require('../../models/mongo/user.js')
 const articleFeed = require('./article-feed')
 const redisClient = require('../../helpers/redis')
-const { isCustomPoster, isCustomSummary } = require('../../helpers/meta')
+const { isCustomPoster, isCustomSummary } = require('../../helpers/is_custom')
 
 const multipartMiddleware = multipart()
 const articleApp = express()
