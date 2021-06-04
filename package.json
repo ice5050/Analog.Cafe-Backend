@@ -44,7 +44,7 @@
     "passport-facebook": "^3.0.0",
     "passport-jwt": "^4.0.0",
     "passport-twitter": "^1.0.4",
-    "prettier": "^1.18.2",
+    "prettier": "^2.3.0",
     "redis": "^3.1.2",
     "redis-delete-pattern": "^0.1.0",
     "request": "^2.88.0",
