@@ -51,7 +51,8 @@ app.use(
   require('./emails'),
   require('./favourite'),
   require('./user'),
-  require('./ad')
+  require('./ad'),
+  require('./etsy')
 )
 
 module.exports = app
