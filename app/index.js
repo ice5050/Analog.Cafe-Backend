@@ -5,6 +5,7 @@ const express = require('express')
 const passport = require('passport')
 const redis = require('redis')
 const session = require('express-session')
+const robots = require('express-robots-txt')
 
 const RedisStore = require('connect-redis')(session)
 
@@ -38,6 +39,7 @@ app.use(compression())
 app.get('/', (req, res) => {
   res.json({ status: 'Analog Cafe API' })
 })
+app.use(robots({ UserAgent: '*', Disallow: '/' }))
 
 app.use(
   require('./api'),

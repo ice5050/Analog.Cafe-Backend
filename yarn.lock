@@ -2765,6 +2765,11 @@ expect@^26.6.2:
     jest-message-util "^26.6.2"
     jest-regex-util "^26.0.0"
 
+express-robots-txt@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/express-robots-txt/-/express-robots-txt-0.5.0.tgz#fba93a96777d817d12cca0be4264ae1a4708bfc4"
+  integrity sha512-ISyI++3Yy1lZ982/gQK3RVbghxe2R+/+VDQ8EWrmAmNncyD4VITJR9jYiSbvfxRSVqcGjKWndKkYbgY6fVFdOA==
+
 express-session@^1.17.0:
   version "1.17.1"
   resolved "https://registry.yarnpkg.com/express-session/-/express-session-1.17.1.tgz#36ecbc7034566d38c8509885c044d461c11bf357"
