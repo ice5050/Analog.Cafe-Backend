@@ -18,4 +18,5 @@ yarn-error.log*
 
 # DB backups
 *.rdb
-mongo.dump/*
+/mongo.dump
+/dump
