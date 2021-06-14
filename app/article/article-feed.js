@@ -1,11 +1,11 @@
 const RSS = require('rss')
 const articleFeed = new RSS({
   title: 'Analog.Cafe',
-  description: 'Photo Essays & Film Photography',
+  description: 'Analogue photography: film, cameras, art, and techniques.',
   feed_url: process.env.API_DOMAIN_PROD + '/rss',
   site_url: 'https://www.analog.cafe',
-  favicon: 'https://www.analog.cafe/favicon.ico',
-  image_url: 'https://www.analog.cafe/apple-touch-icon-180x180.png',
+  favicon: 'https://www.analog.cafe/static/favicon.ico',
+  image_url: 'https://www.analog.cafe/static/apple-icon-180x180.png',
   managingEditor: 'Dmitri',
   copyright: 'Analog.Cafe',
   language: 'en',
