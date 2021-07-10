@@ -250,12 +250,19 @@ articleApp.get('/rss', async (req, res) => {
       } else if (authors.length === 2) {
         // joins all with "and" but no commas
         // example: "bob and sam"
-        compiledNameList = authors.join(' and ')
-      } else if (authors.length > 2) {
+        compiledNameList = authors.join(' with images by ')
+      } else if (authors.length === 3) {
+        compiledNameList =
+          authors[0] + ' with images by ' + authors.slice(1).join(' and ')
+      } else if (authors.length > 3) {
         // joins all with commas, but last one gets ", and" (oxford comma!)
         // example: "bob, joe, and sam"
         compiledNameList =
-          authors.slice(0, -1).join(', ') + ', and ' + authors.slice(-1)
+          authors[0] +
+          ' with images by ' +
+          authors.slice(1, -1).join(', ') +
+          ', and ' +
+          authors.slice(-1)
       }
       return compiledNameList
     }
@@ -281,7 +288,10 @@ articleApp.get('/rss', async (req, res) => {
         a.authors
           .filter(
             author =>
-              author && author.id !== 'unknown' && author.id !== 'not-listed'
+              author &&
+              author.id &&
+              author.id !== 'unknown' &&
+              author.id.indexOf('not-listed') < 0
           )
           .map(author => author.name.split(' ')[0])
       ),
